@@ -10,6 +10,7 @@ import { useAuthStore } from './stores/auth';
 import { LoginPage } from './pages/LoginPage';
 import { DashboardPage } from './pages/DashboardPage';
 import { KanbanPage } from './pages/KanbanPage';
+import { CampaignsPage } from './pages/CampaignsPage';
 import { ProtectedRoute } from './components/ProtectedRoute';
 import { LoadingSpinner } from './components/LoadingSpinner';
 import Sidebar from './components/layout/Sidebar';
@@ -62,6 +63,7 @@ function App() {
           <Route index element={<Navigate to="/kanban" replace />} />
           <Route path="dashboard" element={<DashboardPage />} />
           <Route path="kanban" element={<KanbanPage />} />
+          <Route path="campaigns" element={<CampaignsPage />} />
         </Route>
 
         <Route
