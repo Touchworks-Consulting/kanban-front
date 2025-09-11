@@ -8,10 +8,12 @@ import {
 } from 'react-router-dom';
 import { useAuthStore } from './stores/auth';
 import { LoginPage } from './pages/LoginPage';
+import { RegisterPage } from './pages/RegisterPage';
 import { DashboardPage } from './pages/DashboardPage';
 import { KanbanPage } from './pages/KanbanPage';
 import { CampaignsPage } from './pages/CampaignsPage';
 import { SettingsPage } from './pages/SettingsPage';
+import { UsersPage } from './pages/UsersPage';
 import { ProtectedRoute } from './components/ProtectedRoute';
 import { LoadingSpinner } from './components/LoadingSpinner';
 import Sidebar from './components/layout/Sidebar';
@@ -31,11 +33,15 @@ const AppLayout = () => (
 );
 
 function App() {
-  const { isAuthenticated, isLoading, refreshAuth } = useAuthStore();
+  const { isAuthenticated, isLoading, refreshAuth, token } = useAuthStore();
 
+  // Desabilita refresh automático agressivo; só tenta uma vez se já há token armazenado
   useEffect(() => {
-    refreshAuth();
-  }, [refreshAuth]);
+    if (token) {
+      refreshAuth();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   if (isLoading) {
     return (
@@ -48,10 +54,8 @@ function App() {
   return (
     <Router>
       <Routes>
-        <Route
-          path="/login"
-          element={isAuthenticated ? <Navigate to="/" /> : <LoginPage />}
-        />
+  <Route path="/login" element={isAuthenticated ? <Navigate to="/" /> : <LoginPage />} />
+  <Route path="/register" element={isAuthenticated ? <Navigate to="/" /> : <RegisterPage />} />
 
         <Route
           path="/"
@@ -66,6 +70,7 @@ function App() {
           <Route path="kanban" element={<KanbanPage />} />
           <Route path="campaigns" element={<CampaignsPage />} />
           <Route path="settings" element={<SettingsPage />} />
+          <Route path="users" element={<UsersPage />} />
           {/* Redirect antigo WhatsApp para configurações */}
           <Route path="whatsapp-config" element={<Navigate to="/settings" replace />} />
         </Route>

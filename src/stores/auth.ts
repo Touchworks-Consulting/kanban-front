@@ -1,11 +1,11 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { authService } from '../services';
-import type { LoginCredentials, RegisterData, Account } from '../types';
+import type { LoginCredentials, RegisterData, UserAccount } from '../types';
 
 interface AuthState {
   // State
-  account: Account | null;
+  account: UserAccount | null;
   token: string | null;
   isAuthenticated: boolean;
   isLoading: boolean;
@@ -67,17 +67,17 @@ export const useAuthStore = create<AuthState>()(
       register: async (data: RegisterData) => {
         set({ isLoading: true, error: null });
         try {
-          const response = await authService.register(data);
-           if (response.success && response.data) {
+          const { token, user } = await authService.register(data);
+          if (token && user) {
             set({
-              account: response.data.user,
-              token: response.data.token,
+              account: user,
+              token,
               isAuthenticated: true,
               isLoading: false,
               error: null,
             });
           } else {
-            throw new Error(response.message || 'Falha no registro');
+            throw new Error('Resposta de registro inválida');
           }
         } catch (err) {
           const error = err as any;

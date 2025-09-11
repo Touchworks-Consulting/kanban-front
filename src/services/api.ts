@@ -58,50 +58,66 @@ class ApiService {
 
     // Response interceptor
     this.api.interceptors.response.use(
-      (response: AxiosResponse) => response, // Deixando a resposta intacta por enquanto
+      (response: AxiosResponse) => response,
       async (error: AxiosError<ApiError>) => {
         const originalRequest = error.config as RetryableAxiosConfig;
-        
-        if (error.response?.status === 401 && originalRequest && !originalRequest._retry) {
+        const status = error.response?.status;
+        const url = originalRequest?.url || '';
+
+        // Não tentar refresh em endpoints de auth básicos
+        const isRefreshEndpoint = url.includes('/api/auth/refresh');
+        const isLoginOrRegister = url.includes('/api/auth/login') || url.includes('/api/auth/register') || url.includes('/api/auth/logout');
+
+        if (status === 401) {
+          // Se já tentamos ou é endpoint crítico de auth, só limpar e seguir
+            if (originalRequest._retry || isRefreshEndpoint || isLoginOrRegister) {
+            this.clearAuthData();
+            return Promise.reject(error);
+          }
+
+          // Impede múltiplos refresh concorrentes
           if (this.refreshing) {
             return new Promise((resolve) => {
               this.refreshQueue.push((token: string) => {
-                originalRequest.headers.Authorization = `Bearer ${token}`;
+                const hdrs: any = originalRequest.headers || {};
+                hdrs.Authorization = `Bearer ${token}`;
+                originalRequest.headers = hdrs;
                 resolve(this.api.request(originalRequest));
               });
             });
           }
 
+          // Não tentar refresh se não há token salvo
+          const existingToken = localStorage.getItem(STORAGE_KEYS.AUTH_TOKEN);
+          if (!existingToken) {
+            this.clearAuthData();
+            return Promise.reject(error);
+          }
+
           originalRequest._retry = true;
           this.refreshing = true;
-
           try {
-            const refreshToken = localStorage.getItem(STORAGE_KEYS.REFRESH_TOKEN);
-            if (!refreshToken) {
-              throw new Error('No refresh token');
-            }
+            // Chama refresh simples que usa Authorization atual
+            const refreshResponse = await this.api.post('/api/auth/refresh');
+            const newToken = (refreshResponse.data && refreshResponse.data.token) || (refreshResponse.data?.data?.token);
+            if (!newToken) throw new Error('Token de refresh ausente');
+            localStorage.setItem(STORAGE_KEYS.AUTH_TOKEN, newToken);
 
-            const response = await this.api.post('/api/auth/refresh', {
-              refreshToken,
-            });
-
-            const { token } = response.data.data;
-            localStorage.setItem(STORAGE_KEYS.AUTH_TOKEN, token);
-
-            this.refreshQueue.forEach((callback) => callback(token));
+            // Reexecutar fila
+            this.refreshQueue.forEach(cb => cb(newToken));
             this.refreshQueue = [];
 
-            originalRequest.headers.Authorization = `Bearer ${token}`;
+            const hdrs: any = originalRequest.headers || {};
+            hdrs.Authorization = `Bearer ${newToken}`;
+            originalRequest.headers = hdrs;
             return this.api.request(originalRequest);
-          } catch (refreshError) {
+          } catch (refreshErr) {
             this.clearAuthData();
-            window.location.href = '/login';
-            return Promise.reject(refreshError);
+            return Promise.reject(refreshErr);
           } finally {
             this.refreshing = false;
           }
         }
-
         return Promise.reject(error);
       }
     );
@@ -109,7 +125,7 @@ class ApiService {
 
   private clearAuthData() {
     localStorage.removeItem(STORAGE_KEYS.AUTH_TOKEN);
-    localStorage.removeItem(STORAGE_KEYS.REFRESH_TOKEN);
+  // Nenhum refresh token usado agora
     localStorage.removeItem(STORAGE_KEYS.USER_DATA);
     localStorage.removeItem(STORAGE_KEYS.ACCOUNT_DATA);
   }

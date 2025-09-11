@@ -1,6 +1,6 @@
 import { apiService } from './api';
 import { API_ENDPOINTS, STORAGE_KEYS } from '../constants';
-import type { LoginCredentials, RegisterData, AuthResponse, Account } from '../types';
+import type { LoginCredentials, RegisterData, AuthResponse, UserAccount } from '../types';
 
 class AuthService {
   async login(credentials: LoginCredentials): Promise<AuthResponse> {
@@ -58,17 +58,17 @@ class AuthService {
     return newToken;
   }
 
-  async getProfile(): Promise<Account> {
-    const response = await apiService.get<{ account: Account }>(API_ENDPOINTS.PROFILE);
+  async getProfile(): Promise<UserAccount> {
+    const response = await apiService.get<{ account: UserAccount }>(API_ENDPOINTS.PROFILE);
     return response.data.account;
   }
 
-  getCurrentUser(): Account | null {
+  getCurrentUser(): UserAccount | null {
     const accountData = localStorage.getItem(STORAGE_KEYS.ACCOUNT_DATA);
     return accountData ? JSON.parse(accountData) : null;
   }
 
-  getCurrentAccount(): Account | null {
+  getCurrentAccount(): UserAccount | null {
     const accountData = localStorage.getItem(STORAGE_KEYS.ACCOUNT_DATA);
     return accountData ? JSON.parse(accountData) : null;
   }

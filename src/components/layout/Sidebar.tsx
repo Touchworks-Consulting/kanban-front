@@ -6,6 +6,7 @@ import {
   KanbanSquare,
   Megaphone,
   Settings,
+  Users,
   PanelLeftClose,
   PanelRightClose,
 } from 'lucide-react';
@@ -14,6 +15,7 @@ const navItems = [
   { icon: LayoutDashboard, text: 'Dashboard', path: '/dashboard' },
   { icon: KanbanSquare, text: 'Kanban', path: '/kanban' },
   { icon: Megaphone, text: 'Campanhas', path: '/campaigns' },
+  { icon: Users, text: 'Usuários', path: '/users' },
   { icon: Settings, text: 'Configurações', path: '/settings' },
 ];
 

@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Navigate } from 'react-router-dom';
+import { Navigate, Link } from 'react-router-dom';
 import { useAuthStore } from '../stores';
 import { LoadingSpinner } from '../components/LoadingSpinner';
 
@@ -91,13 +91,9 @@ export function LoginPage() {
         </form>
         
         <div className="mt-6 text-center">
-          <p className="text-sm text-gray-600 mb-2">
-            Para testar, use qualquer email e senha.
+          <p className="text-sm text-gray-600">
+            Não tem conta? <Link to="/register" className="text-indigo-600 hover:underline">Registre-se</Link>
           </p>
-          <div className="bg-gray-50 p-3 rounded text-xs font-mono">
-            <div><strong>Exemplo:</strong> teste@exemplo.com</div>
-            <div><strong>Senha:</strong> 123456</div>
-          </div>
         </div>
       </div>
     </div>
