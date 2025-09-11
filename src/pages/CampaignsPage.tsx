@@ -7,6 +7,7 @@ import { LoadingSpinner } from '../components/LoadingSpinner';
 import { CampaignConfigModal } from '../components/campaigns/CampaignConfigModal';
 import { TriggerPhrasesModal } from '../components/campaigns/TriggerPhrasesModal';
 import { CampaignReportsModal } from '../components/campaigns/CampaignReportsModal';
+import { CreateCampaignModal } from '../components/campaigns/CreateCampaignModal';
 import type { Campaign } from '../types';
 
 export const CampaignsPage: React.FC = () => {
@@ -535,20 +536,10 @@ export const CampaignsPage: React.FC = () => {
 
       {/* Create Campaign Modal */}
       {showCreateModal && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-          <div className="bg-background rounded-lg p-6 w-full max-w-md">
-            <h2 className="text-lg font-semibold mb-4">Nova Campanha</h2>
-            <p className="text-muted-foreground">
-              Modal de criação será implementado em breve.
-            </p>
-            <Button 
-              onClick={() => setShowCreateModal(false)} 
-              className="mt-4"
-            >
-              Fechar
-            </Button>
-          </div>
-        </div>
+        <CreateCampaignModal
+          isOpen={showCreateModal}
+          onClose={() => setShowCreateModal(false)}
+        />
       )}
 
       {/* Modals */}
