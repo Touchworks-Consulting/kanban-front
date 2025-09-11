@@ -4,6 +4,7 @@ export interface Lead {
   phone?: string;
   email?: string;
   platform?: string;
+  channel?: string;
   campaign?: string;
   source_url?: string;
   message?: string;
@@ -55,6 +56,7 @@ export interface CreateLeadDto {
   phone?: string;
   email?: string;
   platform?: string;
+  channel?: string;
   campaign?: string;
   source_url?: string;
   message?: string;

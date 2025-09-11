@@ -1,0 +1,279 @@
+import React, { useState } from 'react';
+import { X, Save, Phone, Mail, User, DollarSign, MessageSquare } from 'lucide-react';
+import { Button } from '../ui/button';
+import type { CreateLeadDto } from '../../types';
+
+interface CreateLeadModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  onSubmit: (data: CreateLeadDto) => Promise<void>;
+  columnId?: string;
+  columnName?: string;
+}
+
+const platforms = [
+  'WhatsApp',
+  'Facebook',
+  'Instagram', 
+  'Google Ads',
+  'LinkedIn',
+  'Website',
+  'Telefone',
+  'Referência',
+  'Outros'
+];
+
+export const CreateLeadModal: React.FC<CreateLeadModalProps> = ({
+  isOpen,
+  onClose,
+  onSubmit,
+  columnId,
+  columnName,
+}) => {
+  const [formData, setFormData] = useState<CreateLeadDto>({
+    name: '',
+    phone: '',
+    email: '',
+    message: '',
+    platform: 'WhatsApp',
+    channel: 'WhatsApp',
+    campaign: '',
+    value: 0,
+    notes: '',
+    column_id: columnId || '',
+  });
+  const [loading, setLoading] = useState(false);
+
+  React.useEffect(() => {
+    if (columnId) {
+      setFormData(prev => ({ ...prev, column_id: columnId }));
+    }
+  }, [columnId]);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!formData.name.trim()) return;
+
+    setLoading(true);
+    try {
+      await onSubmit(formData);
+      setFormData({
+        name: '',
+        phone: '',
+        email: '',
+        message: '',
+        platform: 'WhatsApp',
+        channel: 'WhatsApp', 
+        campaign: '',
+        value: 0,
+        notes: '',
+        column_id: columnId || '',
+      });
+      onClose();
+    } catch (error) {
+      console.error('Error creating lead:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleClose = () => {
+    setFormData({
+      name: '',
+      phone: '',
+      email: '',
+      message: '',
+      platform: 'WhatsApp',
+      channel: 'WhatsApp',
+      campaign: '',
+      value: 0,
+      notes: '',
+      column_id: columnId || '',
+    });
+    onClose();
+  };
+
+  if (!isOpen) return null;
+
+  return (
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+      <div className="bg-background rounded-lg w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+        <div className="p-6 border-b">
+          <div className="flex items-center justify-between">
+            <div>
+              <h3 className="text-xl font-semibold text-foreground">
+                Novo Lead
+              </h3>
+              {columnName && (
+                <p className="text-sm text-muted-foreground mt-1">
+                  Será adicionado na coluna "{columnName}"
+                </p>
+              )}
+            </div>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={handleClose}
+              disabled={loading}
+            >
+              <X className="w-4 h-4" />
+            </Button>
+          </div>
+        </div>
+
+        <form onSubmit={handleSubmit} className="p-6 space-y-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-foreground mb-2">
+                <User className="w-4 h-4 inline mr-1" />
+                Nome *
+              </label>
+              <input
+                type="text"
+                value={formData.name}
+                onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
+                className="w-full px-3 py-2 border border-input bg-background rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
+                placeholder="Nome do lead"
+                required
+                disabled={loading}
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-foreground mb-2">
+                <Phone className="w-4 h-4 inline mr-1" />
+                Telefone
+              </label>
+              <input
+                type="tel"
+                value={formData.phone}
+                onChange={(e) => setFormData(prev => ({ ...prev, phone: e.target.value }))}
+                className="w-full px-3 py-2 border border-input bg-background rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
+                placeholder="(11) 99999-9999"
+                disabled={loading}
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-foreground mb-2">
+                <Mail className="w-4 h-4 inline mr-1" />
+                Email
+              </label>
+              <input
+                type="email"
+                value={formData.email}
+                onChange={(e) => setFormData(prev => ({ ...prev, email: e.target.value }))}
+                className="w-full px-3 py-2 border border-input bg-background rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
+                placeholder="email@exemplo.com"
+                disabled={loading}
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-foreground mb-2">
+                <DollarSign className="w-4 h-4 inline mr-1" />
+                Valor Estimado
+              </label>
+              <input
+                type="number"
+                value={formData.value}
+                onChange={(e) => setFormData(prev => ({ ...prev, value: parseFloat(e.target.value) || 0 }))}
+                className="w-full px-3 py-2 border border-input bg-background rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
+                placeholder="0"
+                min="0"
+                step="0.01"
+                disabled={loading}
+              />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-foreground mb-2">
+                Plataforma
+              </label>
+              <select
+                value={formData.platform}
+                onChange={(e) => setFormData(prev => ({ 
+                  ...prev, 
+                  platform: e.target.value,
+                  channel: e.target.value 
+                }))}
+                className="w-full px-3 py-2 border border-input bg-background rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
+                disabled={loading}
+              >
+                {platforms.map(platform => (
+                  <option key={platform} value={platform}>
+                    {platform}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div className="md:col-span-2">
+              <label className="block text-sm font-medium text-foreground mb-2">
+                Campanha
+              </label>
+              <input
+                type="text"
+                value={formData.campaign}
+                onChange={(e) => setFormData(prev => ({ ...prev, campaign: e.target.value }))}
+                className="w-full px-3 py-2 border border-input bg-background rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
+                placeholder="Nome da campanha ou origem"
+                disabled={loading}
+              />
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-foreground mb-2">
+              <MessageSquare className="w-4 h-4 inline mr-1" />
+              Mensagem Inicial
+            </label>
+            <textarea
+              value={formData.message}
+              onChange={(e) => setFormData(prev => ({ ...prev, message: e.target.value }))}
+              className="w-full px-3 py-2 border border-input bg-background rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
+              rows={3}
+              placeholder="Primeira mensagem ou interesse do lead..."
+              disabled={loading}
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-foreground mb-2">
+              Observações
+            </label>
+            <textarea
+              value={formData.notes}
+              onChange={(e) => setFormData(prev => ({ ...prev, notes: e.target.value }))}
+              className="w-full px-3 py-2 border border-input bg-background rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
+              rows={2}
+              placeholder="Observações adicionais..."
+              disabled={loading}
+            />
+          </div>
+
+          <div className="flex items-center justify-between pt-4">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={handleClose}
+              disabled={loading}
+            >
+              Cancelar
+            </Button>
+            
+            <Button
+              type="submit"
+              disabled={!formData.name.trim() || loading}
+            >
+              <Save className="w-4 h-4 mr-2" />
+              {loading ? 'Criando...' : 'Criar Lead'}
+            </Button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+};

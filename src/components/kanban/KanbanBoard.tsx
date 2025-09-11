@@ -21,10 +21,13 @@ import { Plus, AlertCircle } from 'lucide-react';
 import { useKanbanStore } from '../../stores';
 import { KanbanColumn } from './KanbanColumn';
 import { LeadCard } from './LeadCard';
+import { CreateColumnModal } from './CreateColumnModal';
+import { CreateLeadModal } from './CreateLeadModal';
+import { EditLeadModal } from './EditLeadModal';
 import { LoadingSpinner } from '../LoadingSpinner';
 import { Button } from '../ui/button';
 import { Alert, AlertDescription } from '../ui/alert';
-import type { Lead } from '../../types/kanban';
+import type { Lead, CreateColumnDto, CreateLeadDto, UpdateLeadDto } from '../../types/kanban';
 
 export const KanbanBoard: React.FC = () => {
   const {
@@ -34,11 +37,20 @@ export const KanbanBoard: React.FC = () => {
     fetchBoard,
     optimisticMoveLead,
     moveLead,
+    createColumn,
+    createLead,
+    updateLead,
+    deleteLead,
     clearError,
   } = useKanbanStore();
 
   const [activeId, setActiveId] = useState<string | null>(null);
   const [activeLead, setActiveLead] = useState<Lead | null>(null);
+  const [showCreateColumnModal, setShowCreateColumnModal] = useState(false);
+  const [showCreateLeadModal, setShowCreateLeadModal] = useState(false);
+  const [showEditLeadModal, setShowEditLeadModal] = useState(false);
+  const [selectedColumnForLead, setSelectedColumnForLead] = useState<{ id: string; name: string } | null>(null);
+  const [selectedLeadForEdit, setSelectedLeadForEdit] = useState<Lead | null>(null);
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -167,8 +179,11 @@ export const KanbanBoard: React.FC = () => {
   };
 
   const handleAddLead = (columnId: string) => {
-    // TODO: Open add lead modal
-    console.log('Add lead to column:', columnId);
+    const column = board?.columns.find(col => col.id === columnId);
+    if (column) {
+      setSelectedColumnForLead({ id: column.id, name: column.name });
+      setShowCreateLeadModal(true);
+    }
   };
 
   const handleEditColumn = (column: any) => {
@@ -182,18 +197,35 @@ export const KanbanBoard: React.FC = () => {
   };
 
   const handleEditLead = (lead: Lead) => {
-    // TODO: Open edit lead modal
-    console.log('Edit lead:', lead);
+    setSelectedLeadForEdit(lead);
+    setShowEditLeadModal(true);
+  };
+
+  const handleUpdateLead = async (id: string, data: UpdateLeadDto) => {
+    await updateLead(id, data);
+    setShowEditLeadModal(false);
+    setSelectedLeadForEdit(null);
   };
 
   const handleDeleteLead = async (leadId: string) => {
-    // TODO: Show confirmation and delete
-    console.log('Delete lead:', leadId);
+    await deleteLead(leadId);
+    setShowEditLeadModal(false);
+    setSelectedLeadForEdit(null);
   };
 
   const handleAddColumn = () => {
-    // TODO: Open add column modal
-    console.log('Add new column');
+    setShowCreateColumnModal(true);
+  };
+
+  const handleCreateColumn = async (data: CreateColumnDto) => {
+    await createColumn(data);
+    setShowCreateColumnModal(false);
+  };
+
+  const handleCreateLead = async (data: CreateLeadDto) => {
+    await createLead(data);
+    setShowCreateLeadModal(false);
+    setSelectedColumnForLead(null);
   };
 
   if (loading && !board) {
@@ -285,6 +317,37 @@ export const KanbanBoard: React.FC = () => {
           ) : null}
         </DragOverlay>
       </DndContext>
+
+      {/* Create Column Modal */}
+      <CreateColumnModal
+        isOpen={showCreateColumnModal}
+        onClose={() => setShowCreateColumnModal(false)}
+        onSubmit={handleCreateColumn}
+      />
+
+      {/* Create Lead Modal */}
+      <CreateLeadModal
+        isOpen={showCreateLeadModal}
+        onClose={() => {
+          setShowCreateLeadModal(false);
+          setSelectedColumnForLead(null);
+        }}
+        onSubmit={handleCreateLead}
+        columnId={selectedColumnForLead?.id}
+        columnName={selectedColumnForLead?.name}
+      />
+
+      {/* Edit Lead Modal */}
+      <EditLeadModal
+        isOpen={showEditLeadModal}
+        onClose={() => {
+          setShowEditLeadModal(false);
+          setSelectedLeadForEdit(null);
+        }}
+        onSubmit={handleUpdateLead}
+        onDelete={handleDeleteLead}
+        lead={selectedLeadForEdit}
+      />
     </div>
   );
 };
