@@ -1,0 +1,1 @@
+export { WhatsAppSettings } from './WhatsAppSettings';

@@ -11,6 +11,7 @@ import { LoginPage } from './pages/LoginPage';
 import { DashboardPage } from './pages/DashboardPage';
 import { KanbanPage } from './pages/KanbanPage';
 import { CampaignsPage } from './pages/CampaignsPage';
+import { SettingsPage } from './pages/SettingsPage';
 import { ProtectedRoute } from './components/ProtectedRoute';
 import { LoadingSpinner } from './components/LoadingSpinner';
 import Sidebar from './components/layout/Sidebar';
@@ -64,6 +65,9 @@ function App() {
           <Route path="dashboard" element={<DashboardPage />} />
           <Route path="kanban" element={<KanbanPage />} />
           <Route path="campaigns" element={<CampaignsPage />} />
+          <Route path="settings" element={<SettingsPage />} />
+          {/* Redirect antigo WhatsApp para configurações */}
+          <Route path="whatsapp-config" element={<Navigate to="/settings" replace />} />
         </Route>
 
         <Route

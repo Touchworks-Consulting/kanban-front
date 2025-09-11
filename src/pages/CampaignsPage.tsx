@@ -4,6 +4,9 @@ import { useCampaignsStore } from '../stores';
 import { Button } from '../components/ui/button';
 import { Alert, AlertDescription } from '../components/ui/alert';
 import { LoadingSpinner } from '../components/LoadingSpinner';
+import { CampaignConfigModal } from '../components/campaigns/CampaignConfigModal';
+import { TriggerPhrasesModal } from '../components/campaigns/TriggerPhrasesModal';
+import { CampaignReportsModal } from '../components/campaigns/CampaignReportsModal';
 import type { Campaign } from '../types';
 
 export const CampaignsPage: React.FC = () => {
@@ -21,6 +24,9 @@ export const CampaignsPage: React.FC = () => {
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [selectedCampaign, setSelectedCampaign] = useState<Campaign | null>(null);
   const [showSidePanel, setShowSidePanel] = useState(false);
+  const [showConfigModal, setShowConfigModal] = useState(false);
+  const [showPhrasesModal, setShowPhrasesModal] = useState(false);
+  const [showReportsModal, setShowReportsModal] = useState(false);
 
   useEffect(() => {
     fetchCampaigns();
@@ -110,12 +116,12 @@ export const CampaignsPage: React.FC = () => {
 
   const getChannelIcon = (channel: string) => {
     switch (channel.toLowerCase()) {
-      case 'instagram': return '📷';
-      case 'facebook': return '📘';
-      case 'whatsapp': return '📱';
-      case 'google ads': return '🔍';
-      case 'youtube': return '📺';
-      default: return '🌐';
+      case 'instagram': return 'IG';
+      case 'facebook': return 'FB';
+      case 'whatsapp': return 'WA';
+      case 'google ads': return 'GA';
+      case 'youtube': return 'YT';
+      default: return 'WEB';
     }
   };
 
@@ -126,6 +132,31 @@ export const CampaignsPage: React.FC = () => {
 
   const closeSidePanel = () => {
     setShowSidePanel(false);
+    setSelectedCampaign(null);
+  };
+
+  const openConfigModal = (campaign: Campaign) => {
+    setSelectedCampaign(campaign);
+    setShowConfigModal(true);
+    setShowSidePanel(false);
+  };
+
+  const openPhrasesModal = (campaign: Campaign) => {
+    setSelectedCampaign(campaign);
+    setShowPhrasesModal(true);
+    setShowSidePanel(false);
+  };
+
+  const openReportsModal = (campaign: Campaign) => {
+    setSelectedCampaign(campaign);
+    setShowReportsModal(true);
+    setShowSidePanel(false);
+  };
+
+  const closeAllModals = () => {
+    setShowConfigModal(false);
+    setShowPhrasesModal(false);
+    setShowReportsModal(false);
     setSelectedCampaign(null);
   };
 
@@ -473,15 +504,27 @@ export const CampaignsPage: React.FC = () => {
 
             {/* Actions */}
             <div className="space-y-2">
-              <Button className="w-full" variant="outline">
+              <Button 
+                className="w-full" 
+                variant="outline"
+                onClick={() => openConfigModal(selectedCampaign)}
+              >
                 <Settings className="w-4 h-4 mr-2" />
                 Configurar Campanha
               </Button>
-              <Button className="w-full" variant="outline">
+              <Button 
+                className="w-full" 
+                variant="outline"
+                onClick={() => openPhrasesModal(selectedCampaign)}
+              >
                 <MessageSquare className="w-4 h-4 mr-2" />
                 Gerenciar Frases
               </Button>
-              <Button className="w-full" variant="outline">
+              <Button 
+                className="w-full" 
+                variant="outline"
+                onClick={() => openReportsModal(selectedCampaign)}
+              >
                 <Eye className="w-4 h-4 mr-2" />
                 Ver Relatórios
               </Button>
@@ -506,6 +549,27 @@ export const CampaignsPage: React.FC = () => {
             </Button>
           </div>
         </div>
+      )}
+
+      {/* Modals */}
+      {selectedCampaign && (
+        <>
+          <CampaignConfigModal
+            campaign={selectedCampaign}
+            isOpen={showConfigModal}
+            onClose={closeAllModals}
+          />
+          <TriggerPhrasesModal
+            campaign={selectedCampaign}
+            isOpen={showPhrasesModal}
+            onClose={closeAllModals}
+          />
+          <CampaignReportsModal
+            campaign={selectedCampaign}
+            isOpen={showReportsModal}
+            onClose={closeAllModals}
+          />
+        </>
       )}
     </div>
   );
