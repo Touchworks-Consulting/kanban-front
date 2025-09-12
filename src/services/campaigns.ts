@@ -88,7 +88,12 @@ export const campaignsService = {
 
   // 🔍 DEBUG RELATÓRIOS DA CAMPANHA
   async debugCampaignReports(campaignId: string): Promise<any> {
-    const response = await api.get(`/api/campaigns/${campaignId}/debug-reports`);
+    const response = await api.get(`/api/campaigns/${campaignId}/debug-reports`, {
+      headers: {
+        'Cache-Control': 'no-cache',
+        'Pragma': 'no-cache'
+      }
+    });
     return response.data;
   },
 

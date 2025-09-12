@@ -96,10 +96,10 @@ export const CampaignReportsModal: React.FC<CampaignReportsModalProps> = ({
               totalInteractions: debugResponse.metrics.total_interactions, // NOVA MÉTRICA
               avgResponseTime: debugResponse.metrics.avg_response_time, // NOVA MÉTRICA
               totalPhrases: debugResponse.metrics.active_phrases,
-              conversionRate: parseFloat(debugResponse.metrics.comparative_conversion_rate), // TAXA COMPARATIVA
+              conversionRate: parseFloat(debugResponse.metrics.comparative_conversion_rate), // TAXA COMPARATIVA REAL
               totalRevenue: parseFloat(debugResponse.metrics.total_revenue || '0'),
               avgTicket: parseFloat(debugResponse.metrics.avg_ticket || '0'),
-              growthRate: (Math.random() - 0.5) * 40, // Mantém mock por enquanto
+              growthRate: debugResponse.metrics.growth_rate || 0, // CRESCIMENTO REAL VS PERÍODO ANTERIOR
             },
             dailyData: chartsData.daily_data, // DADOS REAIS DOS GRÁFICOS
             topPhrases: generateMockData(campaign).topPhrases, // Será substituído pelos dados reais
