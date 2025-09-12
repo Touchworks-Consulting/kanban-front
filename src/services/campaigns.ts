@@ -52,13 +52,13 @@ export const campaignsService = {
     return response.data;
   },
 
-  async updateTriggerPhrase(phraseId: string, data: UpdateTriggerPhraseDto): Promise<{ phrase: TriggerPhrase }> {
-    const response = await api.put(`/api/phrases/${phraseId}`, data);
+  async updateTriggerPhrase(campaignId: string, phraseId: string, data: UpdateTriggerPhraseDto): Promise<{ phrase: TriggerPhrase }> {
+    const response = await api.put(`/api/campaigns/${campaignId}/phrases/${phraseId}`, data);
     return response.data;
   },
 
-  async deleteTriggerPhrase(phraseId: string): Promise<{ message: string }> {
-    const response = await api.delete(`/api/phrases/${phraseId}`);
+  async deleteTriggerPhrase(campaignId: string, phraseId: string): Promise<{ message: string }> {
+    const response = await api.delete(`/api/campaigns/${campaignId}/phrases/${phraseId}`);
     return response.data;
   },
 

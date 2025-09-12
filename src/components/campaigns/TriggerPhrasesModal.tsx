@@ -76,7 +76,7 @@ export const TriggerPhrasesModal: React.FC<TriggerPhrasesModalProps> = ({
     if (!editingPhrase || !formData.phrase.trim()) return;
     
     try {
-      await updateTriggerPhrase(editingPhrase.id, formData as UpdateTriggerPhraseDto);
+      await updateTriggerPhrase(campaign.id, editingPhrase.id, formData as UpdateTriggerPhraseDto);
       setEditingPhrase(null);
       setFormData({ phrase: '', creative_code: '', match_type: 'contains', is_active: true });
       
@@ -92,7 +92,7 @@ export const TriggerPhrasesModal: React.FC<TriggerPhrasesModalProps> = ({
   const handleDeletePhrase = async (phrase: TriggerPhrase) => {
     if (window.confirm(`Tem certeza que deseja deletar a frase "${phrase.phrase}"?`)) {
       try {
-        await deleteTriggerPhrase(phrase.id);
+        await deleteTriggerPhrase(campaign.id, phrase.id);
         
         // Notify parent component that phrases were updated
         if (onPhrasesUpdated) {

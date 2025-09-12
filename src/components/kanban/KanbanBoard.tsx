@@ -26,6 +26,7 @@ import { CreateLeadModal } from './CreateLeadModal';
 import { EditLeadModal } from './EditLeadModal';
 import { LoadingSpinner } from '../LoadingSpinner';
 import { Button } from '../ui/button';
+import { ScrollArea } from '../ui/scroll-area';
 import { Alert, AlertDescription } from '../ui/alert';
 import type { Lead, CreateColumnDto, CreateLeadDto, UpdateLeadDto } from '../../types/kanban';
 
@@ -261,7 +262,7 @@ export const KanbanBoard: React.FC = () => {
   const columnIds = board.columns.map(col => col.id);
 
   return (
-    <div className="h-full">
+    <div className="h-full flex flex-col">
       {error && (
         <Alert variant="destructive" className="mb-4">
           <AlertCircle className="h-4 w-4" />
@@ -281,32 +282,37 @@ export const KanbanBoard: React.FC = () => {
         onDragOver={handleDragOver}
         onDragEnd={handleDragEnd}
       >
-        <div className="flex gap-6 overflow-x-auto pb-6 kanban-scroll">
-          <SortableContext items={columnIds} strategy={horizontalListSortingStrategy}>
-            {board.columns.map((column) => (
-              <KanbanColumn
-                key={column.id}
-                column={column}
-                onAddLead={handleAddLead}
-                onEditColumn={handleEditColumn}
-                onDeleteColumn={handleDeleteColumn}
-                onEditLead={handleEditLead}
-                onDeleteLead={handleDeleteLead}
-              />
-            ))}
-          </SortableContext>
+        {/* Área das colunas com scroll independente */}
+        <div className="flex-1 overflow-hidden">
+          <ScrollArea className="w-full h-full">
+            <div className="flex gap-6 p-6 w-max min-w-full">
+              <SortableContext items={columnIds} strategy={horizontalListSortingStrategy}>
+                {board.columns.map((column) => (
+                  <KanbanColumn
+                    key={column.id}
+                    column={column}
+                    onAddLead={handleAddLead}
+                    onEditColumn={handleEditColumn}
+                    onDeleteColumn={handleDeleteColumn}
+                    onEditLead={handleEditLead}
+                    onDeleteLead={handleDeleteLead}
+                  />
+                ))}
+              </SortableContext>
 
-          {/* Add column button */}
-          <div className="flex-shrink-0">
-            <Button
-              variant="outline"
-              className="w-80 h-12 border-dashed"
-              onClick={handleAddColumn}
-            >
-              <Plus className="w-4 h-4 mr-2" />
-              Adicionar Coluna
-            </Button>
-          </div>
+              {/* Add column button */}
+              <div className="flex-shrink-0">
+                <Button
+                  variant="outline"
+                  className="w-80 sm:w-72 lg:w-80 h-12 border-dashed hover:border-solid hover:bg-muted/50 transition-all"
+                  onClick={handleAddColumn}
+                >
+                  <Plus className="w-4 h-4 mr-2" />
+                  Adicionar Coluna
+                </Button>
+              </div>
+            </div>
+          </ScrollArea>
         </div>
 
         <DragOverlay>

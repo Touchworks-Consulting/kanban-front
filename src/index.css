@@ -71,23 +71,28 @@
   }
 }
 
-/* Kanban custom scrollbars */
+/* Kanban custom scrollbars - Improved */
 .kanban-scroll::-webkit-scrollbar {
-  width: 10px;
+  width: 8px;
+  height: 8px;
 }
 .kanban-scroll::-webkit-scrollbar-track {
   background: transparent;
 }
 .kanban-scroll::-webkit-scrollbar-thumb {
-  background: rgba(100,100,100,0.35);
-  border-radius: 6px;
+  background: rgba(120, 120, 120, 0.3);
+  border-radius: 10px;
+  border: 2px solid transparent;
+  background-clip: content-box;
+  transition: background 0.2s ease;
+}
+.kanban-scroll::-webkit-scrollbar-thumb:hover {
+  background: rgba(140, 140, 140, 0.5);
   border: 2px solid transparent;
   background-clip: content-box;
 }
-.kanban-scroll::-webkit-scrollbar-thumb:hover {
-  background: rgba(130,130,130,0.55);
-  border: 2px solid transparent;
-  background-clip: content-box;
+.kanban-scroll::-webkit-scrollbar-corner {
+  background: transparent;
 }
 
 /* Line clamp utilities */

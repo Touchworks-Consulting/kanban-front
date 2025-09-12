@@ -5,6 +5,7 @@ import { Plus, MoreHorizontal, Edit, Trash2, DollarSign } from 'lucide-react';
 import type { KanbanColumn as ColumnType, Lead } from '../../types/kanban';
 import { LeadCard } from './LeadCard';
 import { Button } from '../ui/button';
+import { ScrollArea } from '../ui/scroll-area';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '../ui/dropdown-menu';
 import { cn } from '../../lib/utils';
 
@@ -48,8 +49,9 @@ export const KanbanColumn: React.FC<KanbanColumnProps> = ({
   return (
     <div 
       className={cn(
-        "flex flex-col w-80 bg-background rounded-lg border shadow-sm",
-        isOver && "ring-2 ring-primary/50"
+        "flex flex-col w-80 sm:w-72 lg:w-80 h-[calc(100vh-16rem)] bg-background rounded-lg border shadow-sm transition-all duration-200 flex-shrink-0",
+        isOver && "ring-2 ring-primary/50 shadow-lg scale-[1.02]",
+        isHovered && !isOver && "shadow-md"
       )}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
@@ -77,7 +79,7 @@ export const KanbanColumn: React.FC<KanbanColumnProps> = ({
               variant="ghost"
               className={cn(
                 "h-8 w-8 p-0 transition-opacity",
-                isHovered ? "opacity-100" : "opacity-0"
+                isHovered ? "opacity-100" : "opacity-0 sm:opacity-100 md:opacity-0"
               )}
               onClick={() => onAddLead(column.id)}
             >
@@ -93,7 +95,7 @@ export const KanbanColumn: React.FC<KanbanColumnProps> = ({
                 variant="ghost"
                 className={cn(
                   "h-8 w-8 p-0 transition-opacity",
-                  isHovered ? "opacity-100" : "opacity-0"
+                  isHovered ? "opacity-100" : "opacity-0 sm:opacity-100 md:opacity-0"
                 )}
               >
                 <MoreHorizontal className="w-4 h-4" />
@@ -135,40 +137,61 @@ export const KanbanColumn: React.FC<KanbanColumnProps> = ({
       {/* Column Content */}
       <div 
         ref={setNodeRef}
-        className="flex-1 p-4 space-y-3 overflow-y-auto kanban-scroll min-h-[200px]"
+        className={cn(
+          "flex-1 min-h-[200px] relative",
+          isOver && "bg-primary/5"
+        )}
       >
-        <SortableContext items={leadIds} strategy={verticalListSortingStrategy}>
-          {leads.map((lead) => (
-            <LeadCard
-              key={lead.id}
-              lead={lead}
-              onEdit={onEditLead}
-              onDelete={onDeleteLead}
-            />
-          ))}
-        </SortableContext>
+        <ScrollArea className="h-full">
+          <div className="p-4 space-y-3">
+            <SortableContext items={leadIds} strategy={verticalListSortingStrategy}>
+              {leads.map((lead) => (
+                <LeadCard
+                  key={lead.id}
+                  lead={lead}
+                  onEdit={onEditLead}
+                  onDelete={onDeleteLead}
+                />
+              ))}
+            </SortableContext>
 
-        {/* Empty state */}
-        {leads.length === 0 && (
-          <div className="flex flex-col items-center justify-center py-8 text-center">
-            <div className="w-12 h-12 rounded-full bg-muted flex items-center justify-center mb-3">
-              <Plus className="w-6 h-6 text-muted-foreground" />
-            </div>
-            <p className="text-sm text-muted-foreground mb-2">
-              Nenhum lead nesta coluna
-            </p>
-            {onAddLead && (
-              <Button
-                size="sm"
-                variant="outline"
-                onClick={() => onAddLead(column.id)}
-              >
-                <Plus className="w-4 h-4 mr-2" />
-                Adicionar Lead
-              </Button>
+            {/* Drop zone indicator */}
+            {isOver && leads.length > 0 && (
+              <div className="h-2 bg-primary/20 rounded-full animate-pulse" />
+            )}
+
+            {/* Empty state */}
+            {leads.length === 0 && (
+              <div className="flex flex-col items-center justify-center py-8 text-center">
+                <div className={cn(
+                  "w-12 h-12 rounded-full flex items-center justify-center mb-3 transition-colors",
+                  isOver ? "bg-primary/20" : "bg-muted"
+                )}>
+                  <Plus className={cn(
+                    "w-6 h-6",
+                    isOver ? "text-primary" : "text-muted-foreground"
+                  )} />
+                </div>
+                <p className={cn(
+                  "text-sm mb-2 transition-colors",
+                  isOver ? "text-primary font-medium" : "text-muted-foreground"
+                )}>
+                  {isOver ? "Solte o lead aqui" : "Nenhum lead nesta coluna"}
+                </p>
+                {onAddLead && !isOver && (
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => onAddLead(column.id)}
+                  >
+                    <Plus className="w-4 h-4 mr-2" />
+                    Adicionar Lead
+                  </Button>
+                )}
+              </div>
             )}
           </div>
-        )}
+        </ScrollArea>
       </div>
     </div>
   );

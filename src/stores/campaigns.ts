@@ -30,8 +30,8 @@ interface CampaignsState {
   
   fetchTriggerPhrases: (campaignId: string) => Promise<void>;
   createTriggerPhrase: (campaignId: string, data: CreateTriggerPhraseDto) => Promise<void>;
-  updateTriggerPhrase: (phraseId: string, data: UpdateTriggerPhraseDto) => Promise<void>;
-  deleteTriggerPhrase: (phraseId: string) => Promise<void>;
+  updateTriggerPhrase: (campaignId: string, phraseId: string, data: UpdateTriggerPhraseDto) => Promise<void>;
+  deleteTriggerPhrase: (campaignId: string, phraseId: string) => Promise<void>;
   
   testPhraseMatch: (message: string) => Promise<PhraseMatchResult>;
   simulateWebhook: (data: any) => Promise<void>;
@@ -171,10 +171,10 @@ export const useCampaignsStore = create<CampaignsState>()(
       },
 
       // Update trigger phrase
-      updateTriggerPhrase: async (phraseId: string, data: UpdateTriggerPhraseDto) => {
+      updateTriggerPhrase: async (campaignId: string, phraseId: string, data: UpdateTriggerPhraseDto) => {
         try {
           set({ error: null });
-          const response = await campaignsService.updateTriggerPhrase(phraseId, data);
+          const response = await campaignsService.updateTriggerPhrase(campaignId, phraseId, data);
           
           const { triggerPhrases } = get();
           const updatedPhrases = triggerPhrases.map(phrase =>
@@ -189,10 +189,10 @@ export const useCampaignsStore = create<CampaignsState>()(
       },
 
       // Delete trigger phrase
-      deleteTriggerPhrase: async (phraseId: string) => {
+      deleteTriggerPhrase: async (campaignId: string, phraseId: string) => {
         try {
           set({ error: null });
-          await campaignsService.deleteTriggerPhrase(phraseId);
+          await campaignsService.deleteTriggerPhrase(campaignId, phraseId);
           
           const { triggerPhrases } = get();
           set({
