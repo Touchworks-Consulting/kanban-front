@@ -3,16 +3,18 @@ import { X, Plus, Trash2, AlertCircle } from 'lucide-react';
 import { useCampaignsStore } from '../../stores';
 import { Button } from '../ui/button';
 import { Alert, AlertDescription } from '../ui/alert';
-import { PLATFORMS, CHANNELS, type CreateCampaignDto } from '../../types';
+import { PLATFORMS, CHANNELS, type CreateCampaignDto, type Campaign } from '../../types';
 
 interface CreateCampaignModalProps {
   isOpen: boolean;
   onClose: () => void;
+  onSuccess?: (campaign: Campaign) => void;
 }
 
 export const CreateCampaignModal: React.FC<CreateCampaignModalProps> = ({
   isOpen,
-  onClose
+  onClose,
+  onSuccess
 }) => {
   const { createCampaign, error, clearError } = useCampaignsStore();
   
@@ -76,7 +78,13 @@ export const CreateCampaignModal: React.FC<CreateCampaignModalProps> = ({
 
     setLoading(true);
     try {
-      await createCampaign(formData);
+      const createdCampaign = await createCampaign(formData);
+      
+      // Call success callback with the created campaign
+      if (onSuccess) {
+        onSuccess(createdCampaign);
+      }
+      
       onClose();
       // Reset form
       setFormData({

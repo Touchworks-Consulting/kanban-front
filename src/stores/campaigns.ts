@@ -24,7 +24,7 @@ interface CampaignsState {
   // Actions
   fetchCampaigns: (params?: { platform?: string; is_active?: boolean }) => Promise<void>;
   fetchCampaign: (id: string) => Promise<void>;
-  createCampaign: (data: CreateCampaignDto) => Promise<void>;
+  createCampaign: (data: CreateCampaignDto) => Promise<Campaign>;
   updateCampaign: (id: string, data: UpdateCampaignDto) => Promise<void>;
   deleteCampaign: (id: string) => Promise<void>;
   
@@ -94,6 +94,8 @@ export const useCampaignsStore = create<CampaignsState>()(
           set({
             campaigns: [response.campaign, ...campaigns]
           });
+
+          return response.campaign;
         } catch (error: any) {
           set({ error: error.response?.data?.error || 'Erro ao criar campanha' });
           throw error;

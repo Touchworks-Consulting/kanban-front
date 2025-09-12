@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Plus, Search, Filter, Eye, Edit, Trash2, Target, TrendingUp, X, Settings, Users, MessageSquare, Calendar, MoreVertical } from 'lucide-react';
 import { useCampaignsStore } from '../stores';
+import { campaignsService } from '../services/campaigns';
 import { Button } from '../components/ui/button';
 import { Alert, AlertDescription } from '../components/ui/alert';
 import { LoadingSpinner } from '../components/LoadingSpinner';
@@ -153,6 +154,32 @@ export const CampaignsPage: React.FC = () => {
     setSelectedCampaign(campaign);
     setShowReportsModal(true);
     setShowSidePanel(false);
+  };
+
+  const handleCampaignCreated = (campaign: Campaign) => {
+    // If the performance panel is open for a campaign, update it with the latest data
+    if (selectedCampaign && selectedCampaign.id === campaign.id) {
+      setSelectedCampaign(campaign);
+    } else if (!selectedCampaign) {
+      // If no campaign is selected, automatically select the newly created one
+      setSelectedCampaign(campaign);
+      setShowSidePanel(true);
+    }
+  };
+
+  const handlePhrasesUpdated = async () => {
+    if (selectedCampaign) {
+      try {
+        // Use the campaigns service to fetch updated campaign data
+        const response = await campaignsService.getCampaign(selectedCampaign.id);
+        setSelectedCampaign(response.campaign);
+        
+        // Also refresh the campaigns list to keep it in sync
+        fetchCampaigns();
+      } catch (error) {
+        console.error('Error fetching updated campaign:', error);
+      }
+    }
   };
 
   const closeAllModals = () => {
@@ -523,6 +550,7 @@ export const CampaignsPage: React.FC = () => {
         <CreateCampaignModal
           isOpen={showCreateModal}
           onClose={() => setShowCreateModal(false)}
+          onSuccess={handleCampaignCreated}
         />
       )}
 
@@ -538,6 +566,7 @@ export const CampaignsPage: React.FC = () => {
             campaign={selectedCampaign}
             isOpen={showPhrasesModal}
             onClose={closeAllModals}
+            onPhrasesUpdated={handlePhrasesUpdated}
           />
           <CampaignReportsModal
             campaign={selectedCampaign}

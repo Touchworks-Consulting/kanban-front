@@ -10,12 +10,14 @@ interface TriggerPhrasesModalProps {
   campaign: Campaign;
   isOpen: boolean;
   onClose: () => void;
+  onPhrasesUpdated?: () => void;
 }
 
 export const TriggerPhrasesModal: React.FC<TriggerPhrasesModalProps> = ({
   campaign,
   isOpen,
   onClose,
+  onPhrasesUpdated
 }) => {
   const { 
     triggerPhrases,
@@ -60,6 +62,11 @@ export const TriggerPhrasesModal: React.FC<TriggerPhrasesModalProps> = ({
       await createTriggerPhrase(campaign.id, formData);
       setFormData({ phrase: '', creative_code: '', match_type: 'contains', is_active: true });
       setShowAddForm(false);
+      
+      // Notify parent component that phrases were updated
+      if (onPhrasesUpdated) {
+        onPhrasesUpdated();
+      }
     } catch (error) {
       // Error handled by store
     }
@@ -72,6 +79,11 @@ export const TriggerPhrasesModal: React.FC<TriggerPhrasesModalProps> = ({
       await updateTriggerPhrase(editingPhrase.id, formData as UpdateTriggerPhraseDto);
       setEditingPhrase(null);
       setFormData({ phrase: '', creative_code: '', match_type: 'contains', is_active: true });
+      
+      // Notify parent component that phrases were updated
+      if (onPhrasesUpdated) {
+        onPhrasesUpdated();
+      }
     } catch (error) {
       // Error handled by store
     }
@@ -81,6 +93,11 @@ export const TriggerPhrasesModal: React.FC<TriggerPhrasesModalProps> = ({
     if (window.confirm(`Tem certeza que deseja deletar a frase "${phrase.phrase}"?`)) {
       try {
         await deleteTriggerPhrase(phrase.id);
+        
+        // Notify parent component that phrases were updated
+        if (onPhrasesUpdated) {
+          onPhrasesUpdated();
+        }
       } catch (error) {
         // Error handled by store
       }
