@@ -93,7 +93,7 @@ export const CampaignReportsModal: React.FC<CampaignReportsModalProps> = ({
           setReportData({
             summary: {
               totalLeads: debugResponse.metrics.total_leads,
-              totalInteractions: debugResponse.metrics.total_interactions, // NOVA MÉTRICA
+              totalInteractions: Math.round(debugResponse.metrics.avg_conversion_time || 0), // TEMPO MÉDIO DE CONVERSÃO (em horas)
               avgResponseTime: debugResponse.metrics.avg_response_time, // NOVA MÉTRICA
               totalPhrases: debugResponse.metrics.active_phrases,
               conversionRate: parseFloat(debugResponse.metrics.comparative_conversion_rate), // TAXA COMPARATIVA REAL
@@ -211,15 +211,15 @@ export const CampaignReportsModal: React.FC<CampaignReportsModalProps> = ({
                 <div className="bg-card border rounded-lg p-4">
                   <div className="flex items-center justify-between">
                     <div>
-                      <p className="text-sm text-muted-foreground">Interações</p>
+                      <p className="text-sm text-muted-foreground">Tempo de Conversão</p>
                       <p className="text-2xl font-bold text-foreground">
-                        {reportData?.summary.totalInteractions || 0}
+                        {reportData?.summary.totalInteractions || 0}h
                       </p>
                     </div>
                     <MessageSquare className="w-8 h-8 text-green-500" />
                   </div>
                   <p className="text-sm text-muted-foreground mt-2">
-                    Total de interações com leads
+                    Tempo médio até conversão
                   </p>
                 </div>
 
