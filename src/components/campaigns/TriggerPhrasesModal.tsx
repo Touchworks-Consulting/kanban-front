@@ -3,6 +3,7 @@ import { X, Plus, Edit, Trash2, Save, MessageSquare, TestTube, Loader2, AlertCir
 import { Button } from '../ui/button';
 import { Alert, AlertDescription } from '../ui/alert';
 import { useCampaignsStore } from '../../stores';
+import { formatDate } from '../../utils/helpers';
 import type { Campaign, TriggerPhrase, CreateTriggerPhraseDto, UpdateTriggerPhraseDto } from '../../types';
 
 interface TriggerPhrasesModalProps {
@@ -36,6 +37,7 @@ export const TriggerPhrasesModal: React.FC<TriggerPhrasesModalProps> = ({
 
   const [formData, setFormData] = useState<CreateTriggerPhraseDto>({
     phrase: '',
+    creative_code: '',
     match_type: 'contains',
     is_active: true,
   });
@@ -56,7 +58,7 @@ export const TriggerPhrasesModal: React.FC<TriggerPhrasesModalProps> = ({
     
     try {
       await createTriggerPhrase(campaign.id, formData);
-      setFormData({ phrase: '', match_type: 'contains', is_active: true });
+      setFormData({ phrase: '', creative_code: '', match_type: 'contains', is_active: true });
       setShowAddForm(false);
     } catch (error) {
       // Error handled by store
@@ -69,7 +71,7 @@ export const TriggerPhrasesModal: React.FC<TriggerPhrasesModalProps> = ({
     try {
       await updateTriggerPhrase(editingPhrase.id, formData as UpdateTriggerPhraseDto);
       setEditingPhrase(null);
-      setFormData({ phrase: '', match_type: 'contains', is_active: true });
+      setFormData({ phrase: '', creative_code: '', match_type: 'contains', is_active: true });
     } catch (error) {
       // Error handled by store
     }
@@ -89,6 +91,7 @@ export const TriggerPhrasesModal: React.FC<TriggerPhrasesModalProps> = ({
     setEditingPhrase(phrase);
     setFormData({
       phrase: phrase.phrase,
+      creative_code: phrase.creative_code,
       match_type: phrase.match_type,
       is_active: phrase.is_active,
     });
@@ -98,7 +101,7 @@ export const TriggerPhrasesModal: React.FC<TriggerPhrasesModalProps> = ({
   const cancelEdit = () => {
     setEditingPhrase(null);
     setShowAddForm(false);
-    setFormData({ phrase: '', match_type: 'contains', is_active: true });
+    setFormData({ phrase: '', creative_code: '', match_type: 'contains', is_active: true });
   };
 
   const handleTestPhrase = async () => {
@@ -185,6 +188,14 @@ export const TriggerPhrasesModal: React.FC<TriggerPhrasesModalProps> = ({
                     className="w-full px-3 py-2 border border-input bg-background rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
                   />
                   
+                  <input
+                    type="text"
+                    value={formData.creative_code}
+                    onChange={(e) => setFormData(prev => ({ ...prev, creative_code: e.target.value }))}
+                    placeholder="Código do criativo (opcional)"
+                    className="w-full px-3 py-2 border border-input bg-background rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
+                  />
+                  
                   <div className="grid grid-cols-2 gap-3">
                     <select
                       value={formData.match_type}
@@ -211,7 +222,11 @@ export const TriggerPhrasesModal: React.FC<TriggerPhrasesModalProps> = ({
                   </div>
                   
                   <div className="flex gap-2">
-                    <Button onClick={handleAddPhrase} disabled={loading} size="sm">
+                    <Button 
+                      onClick={handleAddPhrase} 
+                      disabled={loading || !formData.phrase.trim()} 
+                      size="sm"
+                    >
                       {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
                     </Button>
                     <Button onClick={cancelEdit} variant="outline" size="sm">
@@ -232,6 +247,14 @@ export const TriggerPhrasesModal: React.FC<TriggerPhrasesModalProps> = ({
                     value={formData.phrase}
                     onChange={(e) => setFormData(prev => ({ ...prev, phrase: e.target.value }))}
                     placeholder="Digite a frase gatilho"
+                    className="w-full px-3 py-2 border border-input bg-background rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
+                  />
+                  
+                  <input
+                    type="text"
+                    value={formData.creative_code || ''}
+                    onChange={(e) => setFormData(prev => ({ ...prev, creative_code: e.target.value }))}
+                    placeholder="Código do criativo (opcional)"
                     className="w-full px-3 py-2 border border-input bg-background rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
                   />
                   
@@ -301,7 +324,7 @@ export const TriggerPhrasesModal: React.FC<TriggerPhrasesModalProps> = ({
                         </div>
                         <div className="text-sm text-muted-foreground">
                           Tipo: {getMatchTypeLabel(phrase.match_type)} • 
-                          Criada em {new Date(phrase.created_at).toLocaleDateString('pt-BR')}
+                          Criada em {formatDate(phrase.createdAt)}
                         </div>
                       </div>
                       <div className="flex gap-1">

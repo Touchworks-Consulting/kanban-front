@@ -118,7 +118,7 @@ export const EditLeadModal: React.FC<EditLeadModalProps> = ({
                 Editar Lead
               </h3>
               <p className="text-sm text-muted-foreground mt-1">
-                Criado em {new Date(lead.created_at).toLocaleDateString('pt-BR')}
+                Criado em {new Date(lead.createdAt).toLocaleDateString('pt-BR')}
               </p>
             </div>
             <div className="flex items-center gap-2">

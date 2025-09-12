@@ -3,6 +3,7 @@ import { X, Save, Loader2, AlertCircle } from 'lucide-react';
 import { Button } from '../ui/button';
 import { Alert, AlertDescription } from '../ui/alert';
 import { useCampaignsStore } from '../../stores';
+import { formatDate } from '../../utils/helpers';
 import type { Campaign, UpdateCampaignDto } from '../../types';
 
 interface CampaignConfigModalProps {
@@ -23,7 +24,6 @@ export const CampaignConfigModal: React.FC<CampaignConfigModalProps> = ({
     description: campaign.description || '',
     platform: campaign.platform,
     channel: campaign.channel,
-    creative_code: campaign.creative_code || '',
     is_active: campaign.is_active,
   });
 
@@ -36,7 +36,6 @@ export const CampaignConfigModal: React.FC<CampaignConfigModalProps> = ({
         description: campaign.description || '',
         platform: campaign.platform,
         channel: campaign.channel,
-        creative_code: campaign.creative_code || '',
         is_active: campaign.is_active,
       });
       setHasChanges(false);
@@ -54,7 +53,6 @@ export const CampaignConfigModal: React.FC<CampaignConfigModalProps> = ({
         description: campaign.description || '',
         platform: campaign.platform,
         channel: campaign.channel,
-        creative_code: campaign.creative_code || '',
         is_active: campaign.is_active,
       };
       
@@ -190,23 +188,6 @@ export const CampaignConfigModal: React.FC<CampaignConfigModalProps> = ({
               </div>
             </div>
 
-            {/* Creative Code */}
-            <div>
-              <label className="block text-sm font-medium text-foreground mb-2">
-                Código do Criativo
-              </label>
-              <input
-                type="text"
-                value={formData.creative_code}
-                onChange={(e) => handleInputChange('creative_code', e.target.value)}
-                className="w-full px-3 py-2 border border-input bg-background rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
-                placeholder="ex: CMP001, VIDEO_A, etc."
-              />
-              <p className="text-xs text-muted-foreground mt-1">
-                Código para identificar o criativo ou anúncio associado
-              </p>
-            </div>
-
             {/* Active Status */}
             <div>
               <div className="flex items-center gap-3">
@@ -247,13 +228,13 @@ export const CampaignConfigModal: React.FC<CampaignConfigModalProps> = ({
                 <div>
                   <span className="text-muted-foreground">Criado em:</span>
                   <span className="ml-2 font-medium">
-                    {new Date(campaign.created_at).toLocaleDateString('pt-BR')}
+                    {formatDate(campaign.createdAt)}
                   </span>
                 </div>
                 <div>
                   <span className="text-muted-foreground">Última atualização:</span>
                   <span className="ml-2 font-medium">
-                    {new Date(campaign.updated_at).toLocaleDateString('pt-BR')}
+                    {formatDate(campaign.updated_at)}
                   </span>
                 </div>
               </div>

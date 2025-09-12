@@ -8,8 +8,8 @@ export interface WhatsAppAccount {
   access_token?: string;
   is_active: boolean;
   account_id: string;
-  created_at: string;
-  updated_at: string;
+  createdAt: string;
+  updatedAt: string;
 }
 
 export interface CreateWhatsAppAccountDto {
@@ -35,5 +35,5 @@ export interface WebhookLog {
   campaign_matched: string | null;
   lead_created: boolean;
   error: string | null;
-  created_at: string;
+  createdAt: string;
 }

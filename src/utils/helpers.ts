@@ -4,11 +4,101 @@ export function cn(...inputs: ClassValue[]) {
   return clsx(inputs);
 }
 
-export function formatDate(date: string | Date, format: 'short' | 'long' | 'time' = 'short'): string {
-  const dateObj = typeof date === 'string' ? new Date(date) : date;
+export function formatDate(date: string | Date | number, format: 'short' | 'long' | 'time' | 'datetime' = 'short'): string {
+  console.log('🔍 formatDate DEBUG:', { 
+    date, 
+    type: typeof date, 
+    value: date, 
+    isEmpty: !date,
+    isNull: date === null,
+    isUndefined: date === undefined,
+    length: typeof date === 'string' ? date.length : 'N/A'
+  });
+  
+  if (!date) {
+    console.warn('❌ formatDate received empty/null/undefined value:', date);
+    return 'N/A';
+  }
+  
+  let dateObj: Date;
+  
+  console.log('✅ formatDate processing:', { date, type: typeof date, value: date });
+  
+  if (typeof date === 'number') {
+    // Handle Unix timestamp (both seconds and milliseconds)
+    console.log('Processing number timestamp:', date);
+    if (date < 1e10) {
+      // Assume seconds timestamp, convert to milliseconds
+      dateObj = new Date(date * 1000);
+      console.log('Converted seconds timestamp to date:', dateObj);
+    } else {
+      // Assume milliseconds timestamp
+      dateObj = new Date(date);
+      console.log('Used milliseconds timestamp as date:', dateObj);
+    }
+  } else if (typeof date === 'string') {
+    // Handle string timestamp first
+    if (/^\d+$/.test(date)) {
+      console.log('String contains only digits, treating as timestamp:', date);
+      const numTimestamp = parseInt(date, 10);
+      if (numTimestamp < 1e10) {
+        // Seconds timestamp
+        dateObj = new Date(numTimestamp * 1000);
+        console.log('Converted string seconds timestamp to date:', dateObj);
+      } else {
+        // Milliseconds timestamp
+        dateObj = new Date(numTimestamp);
+        console.log('Used string milliseconds timestamp as date:', dateObj);
+      }
+    } else {
+      // Handle ISO string with timezone info
+      let cleanDate = date;
+      
+      if (date.includes('T')) {
+        // Extract just the date and time part without timezone
+        cleanDate = date.replace(/[+-]\d{2}:\d{2}$|Z$/, '');
+        
+        // If it doesn't have a timezone designator, treat as local time
+        if (!date.includes('Z') && !date.match(/[+-]\d{2}:\d{2}$/)) {
+          dateObj = new Date(cleanDate);
+        } else {
+          // Parse as ISO string (will be treated as UTC)
+          dateObj = new Date(date);
+        }
+      } else if (date.includes('-') && date.length === 10) {
+        // YYYY-MM-DD format - treat as local date
+        const [year, month, day] = date.split('-').map(Number);
+        dateObj = new Date(year, month - 1, day);
+      } else {
+        // Try to parse as-is
+        dateObj = new Date(date);
+      }
+    }
+  } else if (date instanceof Date) {
+    dateObj = date;
+  } else {
+    console.warn('Invalid date type:', typeof date, date);
+    return 'Data inválida';
+  }
+  
+  // Check if date is valid
+  if (isNaN(dateObj.getTime())) {
+    console.warn('Invalid date after parsing:', date, 'resulted in:', dateObj);
+    return 'Data inválida';
+  }
   
   if (format === 'time') {
     return dateObj.toLocaleTimeString('pt-BR', {
+      hour: '2-digit',
+      minute: '2-digit',
+    });
+  }
+  
+  if (format === 'datetime') {
+    return dateObj.toLocaleString('pt-BR', {
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
       hour: '2-digit',
       minute: '2-digit',
     });

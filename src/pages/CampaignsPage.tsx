@@ -8,6 +8,7 @@ import { CampaignConfigModal } from '../components/campaigns/CampaignConfigModal
 import { TriggerPhrasesModal } from '../components/campaigns/TriggerPhrasesModal';
 import { CampaignReportsModal } from '../components/campaigns/CampaignReportsModal';
 import { CreateCampaignModal } from '../components/campaigns/CreateCampaignModal';
+import { formatDate } from '../utils/helpers';
 import type { Campaign } from '../types';
 
 export const CampaignsPage: React.FC = () => {
@@ -327,12 +328,6 @@ export const CampaignsPage: React.FC = () => {
                             <div className="flex items-center gap-2 text-sm text-muted-foreground">
                               <span>{getChannelIcon(campaign.channel)}</span>
                               <span>{campaign.channel}</span>
-                              {campaign.creative_code && (
-                                <>
-                                  <span>•</span>
-                                  <span className="font-mono text-xs">{campaign.creative_code}</span>
-                                </>
-                              )}
                             </div>
                           </div>
                         </div>
@@ -380,10 +375,7 @@ export const CampaignsPage: React.FC = () => {
                       {/* Date */}
                       <div className="col-span-1">
                         <span className="text-xs text-muted-foreground">
-                          {new Date(campaign.created_at).toLocaleDateString('pt-BR', {
-                            day: '2-digit',
-                            month: '2-digit'
-                          })}
+                          {formatDate(campaign.createdAt, 'short')}
                         </span>
                       </div>
 
@@ -486,18 +478,10 @@ export const CampaignsPage: React.FC = () => {
             <div className="mb-6">
               <h3 className="text-sm font-medium text-foreground mb-3">Detalhes</h3>
               <div className="space-y-2">
-                {selectedCampaign.creative_code && (
-                  <div className="flex justify-between">
-                    <span className="text-sm text-muted-foreground">Código:</span>
-                    <span className="text-sm font-mono text-foreground">
-                      {selectedCampaign.creative_code}
-                    </span>
-                  </div>
-                )}
                 <div className="flex justify-between">
                   <span className="text-sm text-muted-foreground">Criado em:</span>
                   <span className="text-sm text-foreground">
-                    {new Date(selectedCampaign.created_at).toLocaleDateString('pt-BR')}
+                    {formatDate(selectedCampaign.createdAt)}
                   </span>
                 </div>
               </div>

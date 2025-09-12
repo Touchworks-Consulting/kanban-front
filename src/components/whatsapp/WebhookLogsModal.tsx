@@ -3,6 +3,7 @@ import { X, Activity, CheckCircle, AlertCircle, RefreshCw } from 'lucide-react';
 import { Button } from '../ui/button';
 import { LoadingSpinner } from '../LoadingSpinner';
 import { useWhatsAppStore } from '../../stores';
+import { formatDate } from '../../utils/helpers';
 import type { WhatsAppAccount, WebhookLog } from '../../types';
 
 interface WebhookLogsModalProps {
@@ -35,10 +36,6 @@ export const WebhookLogsModal: React.FC<WebhookLogsModalProps> = ({
     return () => clearInterval(interval);
   }, [autoRefresh, isOpen, account.id, fetchWebhookLogs]);
 
-  const formatTimestamp = (timestamp: string) => {
-    const date = new Date(timestamp);
-    return date.toLocaleString('pt-BR');
-  };
 
   const getStatusIcon = (log: WebhookLog) => {
     if (!log.processed) {
@@ -141,7 +138,7 @@ export const WebhookLogsModal: React.FC<WebhookLogsModalProps> = ({
                           )}
                         </div>
                         <p className="text-sm text-muted-foreground">
-                          {formatTimestamp(log.created_at)}
+                          {formatDate(log.createdAt, 'datetime')}
                         </p>
                       </div>
                     </div>

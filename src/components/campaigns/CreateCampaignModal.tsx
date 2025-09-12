@@ -21,13 +21,12 @@ export const CreateCampaignModal: React.FC<CreateCampaignModalProps> = ({
     name: '',
     platform: 'Meta',
     channel: 'WhatsApp',
-    creative_code: '',
     description: '',
     trigger_phrases: []
   });
 
   const [triggerPhrase, setTriggerPhrase] = useState('');
-  const [keywords, setKeywords] = useState('');
+  const [creativeCode, setCreativeCode] = useState('');
 
   const handleInputChange = (field: keyof CreateCampaignDto, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }));
@@ -44,16 +43,11 @@ export const CreateCampaignModal: React.FC<CreateCampaignModalProps> = ({
   };
 
   const handleAddTriggerPhrase = () => {
-    if (!triggerPhrase.trim()) return;
-
-    const keywordsList = keywords
-      .split(',')
-      .map(k => k.trim())
-      .filter(k => k.length > 0);
+    if (!triggerPhrase.trim() || !creativeCode.trim()) return;
 
     const newPhrase = {
       phrase: triggerPhrase.trim(),
-      keywords: keywordsList,
+      creative_code: creativeCode.trim(),
       priority: formData.trigger_phrases ? formData.trigger_phrases.length + 1 : 1
     };
 
@@ -63,7 +57,7 @@ export const CreateCampaignModal: React.FC<CreateCampaignModalProps> = ({
     }));
 
     setTriggerPhrase('');
-    setKeywords('');
+    setCreativeCode('');
   };
 
   const handleRemoveTriggerPhrase = (index: number) => {
@@ -89,7 +83,6 @@ export const CreateCampaignModal: React.FC<CreateCampaignModalProps> = ({
         name: '',
         platform: 'Meta',
         channel: 'WhatsApp',
-        creative_code: '',
         description: '',
         trigger_phrases: []
       });
@@ -132,7 +125,7 @@ export const CreateCampaignModal: React.FC<CreateCampaignModalProps> = ({
             <div className="space-y-4">
               <h3 className="text-lg font-medium text-foreground">Informações Básicas</h3>
               
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-foreground mb-2">
                     Nome da Campanha *
@@ -144,19 +137,6 @@ export const CreateCampaignModal: React.FC<CreateCampaignModalProps> = ({
                     placeholder="Ex: Campanha Curso Online"
                     className="w-full px-3 py-2 rounded-md border border-input bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
                     required
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-foreground mb-2">
-                    Código Criativo
-                  </label>
-                  <input
-                    type="text"
-                    value={formData.creative_code}
-                    onChange={(e) => handleInputChange('creative_code', e.target.value)}
-                    placeholder="Ex: CUR001"
-                    className="w-full px-3 py-2 rounded-md border border-input bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
                   />
                 </div>
               </div>
@@ -225,7 +205,7 @@ export const CreateCampaignModal: React.FC<CreateCampaignModalProps> = ({
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                   <div>
                     <label className="block text-sm font-medium text-foreground mb-1">
-                      Frase Gatilho
+                      Frase Gatilho *
                     </label>
                     <input
                       type="text"
@@ -239,13 +219,13 @@ export const CreateCampaignModal: React.FC<CreateCampaignModalProps> = ({
 
                   <div>
                     <label className="block text-sm font-medium text-foreground mb-1">
-                      Palavras-chave (separadas por vírgula)
+                      Código do Criativo *
                     </label>
                     <input
                       type="text"
-                      value={keywords}
-                      onChange={(e) => setKeywords(e.target.value)}
-                      placeholder="curso, preço, informação"
+                      value={creativeCode}
+                      onChange={(e) => setCreativeCode(e.target.value)}
+                      placeholder="Ex: CUR001"
                       className="w-full px-3 py-2 rounded-md border border-input bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
                       onKeyPress={(e) => e.key === 'Enter' && e.preventDefault()}
                     />
@@ -255,7 +235,7 @@ export const CreateCampaignModal: React.FC<CreateCampaignModalProps> = ({
                 <Button
                   type="button"
                   onClick={handleAddTriggerPhrase}
-                  disabled={!triggerPhrase.trim()}
+                  disabled={!triggerPhrase.trim() || !creativeCode.trim()}
                   size="sm"
                   className="w-full md:w-auto"
                 >
@@ -275,11 +255,9 @@ export const CreateCampaignModal: React.FC<CreateCampaignModalProps> = ({
                     >
                       <div className="flex-1">
                         <div className="font-medium text-foreground">"{phrase.phrase}"</div>
-                        {phrase.keywords.length > 0 && (
-                          <div className="text-sm text-muted-foreground mt-1">
-                            Palavras-chave: {phrase.keywords.join(', ')}
-                          </div>
-                        )}
+                        <div className="text-sm text-muted-foreground mt-1">
+                          Código: <span className="font-mono">{phrase.creative_code}</span>
+                        </div>
                       </div>
                       <Button
                         type="button"

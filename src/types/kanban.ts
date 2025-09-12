@@ -17,8 +17,8 @@ export interface Lead {
   notes?: string;
   metadata?: Record<string, any>;
   account_id: string;
-  created_at: string;
-  updated_at: string;
+  createdAt: string;
+  updatedAt: string;
   column?: KanbanColumn;
   tags?: Tag[];
 }
@@ -32,8 +32,8 @@ export interface KanbanColumn {
   is_active: boolean;
   account_id: string;
   leads?: Lead[];
-  created_at: string;
-  updated_at: string;
+  createdAt: string;
+  updatedAt: string;
 }
 
 export interface Tag {

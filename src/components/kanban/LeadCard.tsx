@@ -14,7 +14,7 @@ import type { Lead } from '../../types/kanban';
 import { Avatar, AvatarFallback } from '../ui/avatar';
 import { Button } from '../ui/button';
 import { cn } from '../../lib/utils';
-import { format } from 'date-fns';
+import { formatDate } from '../../utils/helpers';
 
 interface LeadCardProps {
   lead: Lead;
@@ -173,10 +173,7 @@ export const LeadCard: React.FC<LeadCardProps> = ({ lead, onEdit, onDelete }) =>
         <div className="flex items-center gap-1 text-xs text-muted-foreground">
           <Calendar className="w-3 h-3" />
           <time>
-            {lead.created_at && !isNaN(new Date(lead.created_at).getTime()) 
-              ? format(new Date(lead.created_at), 'dd/MM')
-              : '—'
-            }
+            {formatDate(lead.createdAt, 'short')}
           </time>
         </div>
         

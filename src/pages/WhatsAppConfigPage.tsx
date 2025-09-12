@@ -5,6 +5,7 @@ import { Button } from '../components/ui/button';
 import { Alert, AlertDescription } from '../components/ui/alert';
 import { LoadingSpinner } from '../components/LoadingSpinner';
 import { WebhookLogsModal } from '../components/whatsapp/WebhookLogsModal';
+import { formatDate } from '../utils/helpers';
 import type { WhatsAppAccount, CreateWhatsAppAccountDto } from '../types';
 
 export const WhatsAppConfigPage: React.FC = () => {
@@ -278,7 +279,7 @@ export const WhatsAppConfigPage: React.FC = () => {
                           {account.is_active ? 'Ativa' : 'Inativa'}
                         </div>
                         <span className="text-xs text-muted-foreground">
-                          Criada em {new Date(account.created_at).toLocaleDateString('pt-BR')}
+                          Criada em {formatDate(account.createdAt)}
                         </span>
                       </div>
                     </div>
