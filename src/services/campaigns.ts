@@ -68,6 +68,30 @@ export const campaignsService = {
     return response.data;
   },
 
+  // 📊 RELATÓRIO DE FRASES MAIS EFICAZES
+  async getMostEffectivePhrases(campaignId: string, dateRange: string = '30'): Promise<{
+    campaign_name: string;
+    date_range: string;
+    total_leads: number;
+    effective_phrases: Array<{
+      phrase: string;
+      original_phrase: string;
+      volume: number;
+      percentage: string;
+    }>;
+  }> {
+    const response = await api.get(`/api/campaigns/${campaignId}/effective-phrases`, {
+      params: { date_range: dateRange }
+    });
+    return response.data;
+  },
+
+  // 🔍 DEBUG RELATÓRIOS DA CAMPANHA
+  async debugCampaignReports(campaignId: string): Promise<any> {
+    const response = await api.get(`/api/campaigns/${campaignId}/debug-reports`);
+    return response.data;
+  },
+
   // Webhook simulation (for testing)
   async simulateWhatsAppWebhook(data: {
     phone_id: string;

@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { X, BarChart3, Users, MessageSquare, Calendar, Download, Filter, TrendingUp, TrendingDown } from 'lucide-react';
 import { Button } from '../ui/button';
 import { LoadingSpinner } from '../LoadingSpinner';
+import { campaignsService } from '../../services/campaigns';
 import type { Campaign } from '../../types';
 
 interface CampaignReportsModalProps {
@@ -57,17 +58,55 @@ export const CampaignReportsModal: React.FC<CampaignReportsModalProps> = ({
   const [loading, setLoading] = useState(false);
   const [dateRange, setDateRange] = useState('30d');
   const [reportData, setReportData] = useState<any>(null);
+  const [effectivePhrases, setEffectivePhrases] = useState<any>(null);
+  const [debugData, setDebugData] = useState<any>(null);
 
   useEffect(() => {
-    if (isOpen) {
+    if (isOpen && campaign.id) {
       setLoading(true);
-      // Simular carregamento
-      setTimeout(() => {
-        setReportData(generateMockData(campaign));
-        setLoading(false);
-      }, 1000);
+      
+      // Buscar dados reais de frases eficazes e debug
+      const loadData = async () => {
+        try {
+          const dateRangeNumber = dateRange === '7d' ? '7' : dateRange === '30d' ? '30' : '90';
+          
+          // Buscar dados de debug primeiro (tem todas as métricas reais)
+          const debugResponse = await campaignsService.debugCampaignReports(campaign.id);
+          setDebugData(debugResponse);
+          console.log('🔍 DEBUG DATA:', debugResponse);
+          
+          // Buscar frases mais eficazes
+          const phrasesData = await campaignsService.getMostEffectivePhrases(campaign.id, dateRangeNumber);
+          setEffectivePhrases(phrasesData);
+          
+          // Usar dados reais para as métricas principais
+          setReportData({
+            summary: {
+              totalLeads: debugResponse.metrics.total_leads,
+              totalInteractions: debugResponse.metrics.total_interactions, // NOVA MÉTRICA
+              avgResponseTime: debugResponse.metrics.avg_response_time, // NOVA MÉTRICA
+              totalPhrases: debugResponse.metrics.active_phrases,
+              conversionRate: parseFloat(debugResponse.metrics.comparative_conversion_rate), // TAXA COMPARATIVA
+              totalRevenue: parseFloat(debugResponse.metrics.total_revenue || '0'),
+              avgTicket: parseFloat(debugResponse.metrics.avg_ticket || '0'),
+              growthRate: (Math.random() - 0.5) * 40, // Mantém mock por enquanto
+            },
+            dailyData: generateMockData(campaign).dailyData, // Mantém mock por enquanto
+            topPhrases: generateMockData(campaign).topPhrases, // Será substituído pelos dados reais
+            leadsByHour: generateMockData(campaign).leadsByHour, // Mantém mock por enquanto
+          });
+        } catch (error) {
+          console.error('Error loading campaign data:', error);
+          // Fallback para dados mockados
+          setReportData(generateMockData(campaign));
+        } finally {
+          setLoading(false);
+        }
+      };
+      
+      loadData();
     }
-  }, [isOpen, campaign]);
+  }, [isOpen, campaign, dateRange]);
 
   const handleExport = () => {
     // Aqui implementar export para CSV/Excel
@@ -162,15 +201,15 @@ export const CampaignReportsModal: React.FC<CampaignReportsModalProps> = ({
                 <div className="bg-card border rounded-lg p-4">
                   <div className="flex items-center justify-between">
                     <div>
-                      <p className="text-sm text-muted-foreground">Mensagens</p>
+                      <p className="text-sm text-muted-foreground">Interações</p>
                       <p className="text-2xl font-bold text-foreground">
-                        {reportData?.summary.totalMessages || 0}
+                        {reportData?.summary.totalInteractions || 0}
                       </p>
                     </div>
                     <MessageSquare className="w-8 h-8 text-green-500" />
                   </div>
                   <p className="text-sm text-muted-foreground mt-2">
-                    Últimos {dateRange === '7d' ? '7' : dateRange === '30d' ? '30' : '90'} dias
+                    Total de interações com leads
                   </p>
                 </div>
 
@@ -185,7 +224,7 @@ export const CampaignReportsModal: React.FC<CampaignReportsModalProps> = ({
                     <BarChart3 className="w-8 h-8 text-purple-500" />
                   </div>
                   <p className="text-sm text-muted-foreground mt-2">
-                    Leads / Mensagens totais
+                    Desta campanha vs todas campanhas
                   </p>
                 </div>
 
@@ -265,33 +304,55 @@ export const CampaignReportsModal: React.FC<CampaignReportsModalProps> = ({
                     <thead>
                       <tr className="border-b">
                         <th className="text-left py-2 px-4 font-medium text-muted-foreground">Frase</th>
-                        <th className="text-right py-2 px-4 font-medium text-muted-foreground">Disparos</th>
-                        <th className="text-right py-2 px-4 font-medium text-muted-foreground">Leads</th>
+                        <th className="text-right py-2 px-4 font-medium text-muted-foreground">Código</th>
+                        <th className="text-right py-2 px-4 font-medium text-muted-foreground">Volume</th>
                         <th className="text-right py-2 px-4 font-medium text-muted-foreground">Taxa</th>
                       </tr>
                     </thead>
                     <tbody>
-                      {reportData?.topPhrases.map((phrase: any, index: number) => (
-                        <tr key={index} className="border-b">
-                          <td className="py-3 px-4 font-medium text-foreground">
-                            "{phrase.phrase}"
-                          </td>
-                          <td className="py-3 px-4 text-right text-foreground">
-                            {phrase.matches}
-                          </td>
-                          <td className="py-3 px-4 text-right text-foreground">
-                            {phrase.leads}
-                          </td>
-                          <td className="py-3 px-4 text-right">
-                            <span className="bg-green-100 text-green-700 px-2 py-1 rounded text-sm">
-                              {((phrase.leads / phrase.matches) * 100).toFixed(1)}%
-                            </span>
+                      {effectivePhrases && effectivePhrases.effective_phrases.length > 0 ? (
+                        effectivePhrases.effective_phrases.map((phrase: any, index: number) => (
+                          <tr key={index} className="border-b">
+                            <td className="py-3 px-4 font-medium text-foreground">
+                              "{phrase.phrase}"
+                            </td>
+                            <td className="py-3 px-4 text-right text-muted-foreground text-sm">
+                              {phrase.phrase_code || 'N/A'}
+                            </td>
+                            <td className="py-3 px-4 text-right text-foreground">
+                              {phrase.volume}
+                            </td>
+                            <td className="py-3 px-4 text-right">
+                              <span className="bg-green-100 text-green-700 px-2 py-1 rounded text-sm">
+                                {phrase.percentage}%
+                              </span>
+                            </td>
+                          </tr>
+                        ))
+                      ) : (
+                        <tr>
+                          <td colSpan={4} className="py-8 text-center text-muted-foreground">
+                            {loading ? (
+                              <div className="flex items-center justify-center">
+                                <LoadingSpinner />
+                                <span className="ml-2">Carregando frases eficazes...</span>
+                              </div>
+                            ) : (
+                              "Nenhuma frase eficaz encontrada no período selecionado"
+                            )}
                           </td>
                         </tr>
-                      ))}
+                      )}
                     </tbody>
                   </table>
                 </div>
+                
+                {effectivePhrases && (
+                  <div className="mt-4 text-sm text-muted-foreground">
+                    <p>Total de leads analisados: <span className="font-medium">{effectivePhrases.total_leads}</span></p>
+                    <p>Período: <span className="font-medium">{effectivePhrases.date_range}</span></p>
+                  </div>
+                )}
               </div>
 
               {/* Recent Activity */}
@@ -315,6 +376,42 @@ export const CampaignReportsModal: React.FC<CampaignReportsModalProps> = ({
                   ))}
                 </div>
               </div>
+
+              {/* DEBUG DATA - Temporário para análise */}
+              {debugData && (
+                <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-6">
+                  <h3 className="text-lg font-medium text-yellow-800 mb-4">
+                    🔍 DEBUG - Dados Reais da Campanha
+                  </h3>
+                  <div className="space-y-2 text-sm">
+                    <p><strong>Total Leads:</strong> {debugData.metrics.total_leads}</p>
+                    <p><strong>Total Interações:</strong> {debugData.metrics.total_interactions}</p>
+                    <p><strong>Tempo Médio Resposta:</strong> {debugData.metrics.avg_response_time} min</p>
+                    <p><strong>Taxa Conversão Comparativa:</strong> {debugData.metrics.comparative_conversion_rate}% (vs {debugData.metrics.total_leads_all_campaigns} leads totais)</p>
+                    <p><strong>Ticket Médio:</strong> R$ {debugData.metrics.avg_ticket}</p>
+                    <p><strong>Receita Total:</strong> R$ {debugData.metrics.total_revenue}</p>
+                    <p><strong>Leads sem frase eficaz:</strong> {debugData.issues_found.leads_without_effective_phrase} → <span className="text-green-600">Agora usa mensagem como fallback</span></p>
+                    <p><strong>Leads sem referral:</strong> {debugData.issues_found.leads_without_referral}</p>
+                  </div>
+                  
+                  <details className="mt-4">
+                    <summary className="cursor-pointer font-medium text-yellow-800">
+                      Ver detalhes dos leads
+                    </summary>
+                    <div className="mt-2 max-h-60 overflow-y-auto">
+                      {debugData.leads_details.map((lead: any, index: number) => (
+                        <div key={index} className="border-b border-yellow-200 py-2">
+                          <p><strong>{lead.name}</strong> ({lead.phone})</p>
+                          <p><strong>Mensagem:</strong> {lead.message}</p>
+                          <p><strong>Frase eficaz:</strong> {lead.effective_phrase || lead.message || 'Nenhuma'}</p>
+                          <p><strong>Código da frase:</strong> {lead.phrase_code || 'N/A'}</p>
+                          <p><strong>Tem referral:</strong> {lead.has_referral ? 'Sim' : 'Não'}</p>
+                        </div>
+                      ))}
+                    </div>
+                  </details>
+                </div>
+              )}
             </div>
           )}
         </div>
