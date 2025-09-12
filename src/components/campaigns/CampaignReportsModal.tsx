@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { X, BarChart3, Users, MessageSquare, Calendar, Download, Filter, TrendingUp, TrendingDown } from 'lucide-react';
+import { X, BarChart3, Users, MessageSquare, Download, Filter, TrendingUp, TrendingDown } from 'lucide-react';
 import { Button } from '../ui/button';
 import { LoadingSpinner } from '../LoadingSpinner';
 import { campaignsService } from '../../services/campaigns';
+import { DailyLeadsChart } from '../charts/DailyLeadsChart';
+import { HourlyDistributionChart } from '../charts/HourlyDistributionChart';
 import type { Campaign } from '../../types';
 
 interface CampaignReportsModalProps {
@@ -60,6 +62,7 @@ export const CampaignReportsModal: React.FC<CampaignReportsModalProps> = ({
   const [reportData, setReportData] = useState<any>(null);
   const [effectivePhrases, setEffectivePhrases] = useState<any>(null);
   const [debugData, setDebugData] = useState<any>(null);
+  const [chartData, setChartData] = useState<any>(null);
 
   useEffect(() => {
     if (isOpen && campaign.id) {
@@ -78,6 +81,13 @@ export const CampaignReportsModal: React.FC<CampaignReportsModalProps> = ({
           // Buscar frases mais eficazes
           const phrasesData = await campaignsService.getMostEffectivePhrases(campaign.id, dateRangeNumber);
           setEffectivePhrases(phrasesData);
+
+          // 📊 Buscar dados dos gráficos
+          const chartsData = await campaignsService.getCampaignChartData(campaign.id, dateRangeNumber);
+          console.log('📊 CHART DATA RECEIVED:', chartsData);
+          console.log('📊 DAILY DATA:', chartsData?.daily_data);
+          console.log('📊 HOURLY DATA:', chartsData?.hourly_data);
+          setChartData(chartsData);
           
           // Usar dados reais para as métricas principais
           setReportData({
@@ -91,9 +101,9 @@ export const CampaignReportsModal: React.FC<CampaignReportsModalProps> = ({
               avgTicket: parseFloat(debugResponse.metrics.avg_ticket || '0'),
               growthRate: (Math.random() - 0.5) * 40, // Mantém mock por enquanto
             },
-            dailyData: generateMockData(campaign).dailyData, // Mantém mock por enquanto
+            dailyData: chartsData.daily_data, // DADOS REAIS DOS GRÁFICOS
             topPhrases: generateMockData(campaign).topPhrases, // Será substituído pelos dados reais
-            leadsByHour: generateMockData(campaign).leadsByHour, // Mantém mock por enquanto
+            leadsByHour: chartsData.hourly_data, // DADOS REAIS DOS GRÁFICOS
           });
         } catch (error) {
           console.error('Error loading campaign data:', error);
@@ -247,51 +257,10 @@ export const CampaignReportsModal: React.FC<CampaignReportsModalProps> = ({
               {/* Charts */}
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 {/* Daily Leads Chart */}
-                <div className="bg-card border rounded-lg p-6">
-                  <h3 className="text-lg font-medium text-foreground mb-4">
-                    Leads por Dia
-                  </h3>
-                  <div className="h-64">
-                    {/* Simple bar chart representation */}
-                    <div className="flex items-end justify-between h-full gap-1">
-                      {reportData?.dailyData.slice(-7).map((day: any, index: number) => (
-                        <div key={index} className="flex flex-col items-center flex-1">
-                          <div 
-                            className="bg-blue-500 w-full rounded-t"
-                            style={{ height: `${(day.leads / 20) * 100}%` }}
-                          />
-                          <span className="text-xs text-muted-foreground mt-1 rotate-45 origin-left">
-                            {new Date(day.date).getDate()}/{new Date(day.date).getMonth() + 1}
-                          </span>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                </div>
+                <DailyLeadsChart data={chartData?.daily_data || []} />
 
                 {/* Hourly Distribution */}
-                <div className="bg-card border rounded-lg p-6">
-                  <h3 className="text-lg font-medium text-foreground mb-4">
-                    Distribuição por Hora
-                  </h3>
-                  <div className="h-64">
-                    <div className="flex items-end justify-between h-full gap-0.5">
-                      {reportData?.leadsByHour.map((hour: any, index: number) => (
-                        <div key={index} className="flex flex-col items-center flex-1">
-                          <div 
-                            className="bg-green-500 w-full rounded-t"
-                            style={{ height: `${(hour.leads / 15) * 100}%` }}
-                          />
-                          {index % 4 === 0 && (
-                            <span className="text-xs text-muted-foreground mt-1">
-                              {hour.hour}h
-                            </span>
-                          )}
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                </div>
+                <HourlyDistributionChart data={chartData?.hourly_data || []} />
               </div>
 
               {/* Top Performing Phrases */}

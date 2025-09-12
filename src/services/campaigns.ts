@@ -92,6 +92,29 @@ export const campaignsService = {
     return response.data;
   },
 
+  // 📊 DADOS DOS GRÁFICOS
+  async getCampaignChartData(campaignId: string, dateRange: string = '30'): Promise<{
+    campaign_name: string;
+    date_range: string;
+    daily_data: Array<{
+      date: string;
+      leads: number;
+      day: string;
+    }>;
+    hourly_data: Array<{
+      hour: string;
+      leads: number;
+      hourNumber: number;
+    }>;
+    total_leads: number;
+    peak_hour: { hour: string; leads: number; };
+  }> {
+    const response = await api.get(`/api/campaigns/${campaignId}/chart-data`, {
+      params: { date_range: dateRange }
+    });
+    return response.data;
+  },
+
   // Webhook simulation (for testing)
   async simulateWhatsAppWebhook(data: {
     phone_id: string;
