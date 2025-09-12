@@ -3,6 +3,7 @@ import { X, BarChart3, Users, MessageSquare, Download, Filter, TrendingUp, Trend
 import { Button } from '../ui/button';
 import { LoadingSpinner } from '../LoadingSpinner';
 import { campaignsService } from '../../services/campaigns';
+import { dashboardService } from '../../services/dashboard';
 import { DailyLeadsChart } from '../charts/DailyLeadsChart';
 import { HourlyDistributionChart } from '../charts/HourlyDistributionChart';
 import type { Campaign } from '../../types';
@@ -63,20 +64,41 @@ export const CampaignReportsModal: React.FC<CampaignReportsModalProps> = ({
   const [effectivePhrases, setEffectivePhrases] = useState<any>(null);
   const [debugData, setDebugData] = useState<any>(null);
   const [chartData, setChartData] = useState<any>(null);
+  const [conversionTimeData, setConversionTimeData] = useState<any>(null);
 
   useEffect(() => {
     if (isOpen && campaign.id) {
       setLoading(true);
       
-      // Buscar dados reais de frases eficazes e debug
+      // Buscar dados reais de frases eficazes, debug e tempo de conversão
       const loadData = async () => {
         try {
           const dateRangeNumber = dateRange === '7d' ? '7' : dateRange === '30d' ? '30' : '90';
+          
+          // Configurar datas para filtro da nova API
+          const endDate = new Date();
+          const startDate = new Date();
+          startDate.setDate(startDate.getDate() - parseInt(dateRangeNumber));
+          
+          const dateFilter = {
+            start_date: startDate.toISOString().split('T')[0],
+            end_date: endDate.toISOString().split('T')[0]
+          };
           
           // Buscar dados de debug primeiro (tem todas as métricas reais)
           const debugResponse = await campaignsService.debugCampaignReports(campaign.id);
           setDebugData(debugResponse);
           console.log('🔍 DEBUG DATA:', debugResponse);
+          
+          // Buscar tempo médio de conversão usando nova API
+          const conversionResponse = await dashboardService.getConversionTimeByCampaign(dateFilter);
+          setConversionTimeData(conversionResponse);
+          console.log('⏰ CONVERSION TIME DATA:', conversionResponse);
+          
+          // Encontrar dados de conversão para esta campanha específica
+          const campaignConversionData = conversionResponse.conversionMetrics?.find(
+            (metric: any) => metric.campaign === campaign.name
+          );
           
           // Buscar frases mais eficazes
           const phrasesData = await campaignsService.getMostEffectivePhrases(campaign.id, dateRangeNumber);
@@ -93,13 +115,14 @@ export const CampaignReportsModal: React.FC<CampaignReportsModalProps> = ({
           setReportData({
             summary: {
               totalLeads: debugResponse.metrics.total_leads,
-              totalInteractions: Math.round(debugResponse.metrics.avg_conversion_time || 0), // TEMPO MÉDIO DE CONVERSÃO (em horas)
+              totalInteractions: campaignConversionData ? campaignConversionData.averageTimeToConversion.formatted : 'N/A', // TEMPO MÉDIO DE CONVERSÃO REAL
               avgResponseTime: debugResponse.metrics.avg_response_time, // NOVA MÉTRICA
               totalPhrases: debugResponse.metrics.active_phrases,
               conversionRate: parseFloat(debugResponse.metrics.comparative_conversion_rate), // TAXA COMPARATIVA REAL
               totalRevenue: parseFloat(debugResponse.metrics.total_revenue || '0'),
               avgTicket: parseFloat(debugResponse.metrics.avg_ticket || '0'),
               growthRate: debugResponse.metrics.growth_rate || 0, // CRESCIMENTO REAL VS PERÍODO ANTERIOR
+              conversionCount: campaignConversionData ? campaignConversionData.totalConversions : 0, // NÚMERO DE CONVERSÕES
             },
             dailyData: chartsData.daily_data, // DADOS REAIS DOS GRÁFICOS
             topPhrases: generateMockData(campaign).topPhrases, // Será substituído pelos dados reais
@@ -213,13 +236,16 @@ export const CampaignReportsModal: React.FC<CampaignReportsModalProps> = ({
                     <div>
                       <p className="text-sm text-muted-foreground">Tempo de Conversão</p>
                       <p className="text-2xl font-bold text-foreground">
-                        {reportData?.summary.totalInteractions || 0}h
+                        {reportData?.summary.totalInteractions || 'N/A'}
                       </p>
                     </div>
                     <MessageSquare className="w-8 h-8 text-green-500" />
                   </div>
                   <p className="text-sm text-muted-foreground mt-2">
-                    Tempo médio até conversão
+                    {reportData?.summary.conversionCount ? 
+                      `${reportData.summary.conversionCount} conversões no período` : 
+                      'Tempo médio até conversão'
+                    }
                   </p>
                 </div>
 
