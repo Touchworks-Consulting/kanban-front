@@ -22,8 +22,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '.
 import { DateRangePicker } from '../components/ui/date-range-picker';
 import { cn } from '../lib/utils';
 import {
-  TimelineChartInner,
-  mockTimelineData
+  TimelineChartInner
 } from '../components/dashboard/DashboardCharts';
 // Interface para dados consolidados do dashboard
 interface ConsolidatedDashboardData {
@@ -82,19 +81,13 @@ const SimpleFunnelChart = ({ data }: { data: any[] }) => {
   );
 };
 
-// Dados mock para o funil
-const createMockFunnelData = (totalLeads: number, wonLeads: number) => [
-  { label: 'Visitantes', value: totalLeads || 100 },
-  { label: 'Interessados', value: Math.floor((totalLeads || 100) * 0.7) },
-  { label: 'Qualificados', value: Math.floor((totalLeads || 100) * 0.4) },
-  { label: 'Propostas', value: Math.floor((totalLeads || 100) * 0.2) },
-  { label: 'Fechados', value: wonLeads || 10 }
-];
 
 export function DashboardPage() {
   // Estado consolidado para todos os dados do dashboard
   const [dashboardData, setDashboardData] = useState<ConsolidatedDashboardData | null>(null);
   const [conversionMetrics, setConversionMetrics] = useState<ConversionTimeMetric[]>([]);
+  const [timelineData, setTimelineData] = useState<Array<{ date: string; leads: number; conversions: number }>>([]);
+  const [funnelData, setFunnelData] = useState<Array<{ label: string; value: number }>>([]);
   
   // Estados para dados adicionais
   const [campaignStats, setCampaignStats] = useState({
@@ -146,10 +139,10 @@ export function DashboardPage() {
           case 'today':
             startDate = new Date(now.getFullYear(), now.getMonth(), now.getDate());
             break;
-          case 'last7days':
+          case '7':
             startDate = new Date(now.getTime() - (7 * 24 * 60 * 60 * 1000));
             break;
-          case 'last30days':
+          case 'month':
             startDate = new Date(now.getTime() - (30 * 24 * 60 * 60 * 1000));
             break;
           default:
@@ -164,9 +157,11 @@ export function DashboardPage() {
       }
 
       // Fazer chamadas paralelas para todos os dados
-      const [metricsResponse, conversionResponse] = await Promise.all([
+      const [metricsResponse, conversionResponse, timelineResponse, funnelResponse] = await Promise.all([
         dashboardService.getMetrics(filterParams),
-        dashboardService.getConversionTimeByCampaign(filterParams)
+        dashboardService.getConversionTimeByCampaign(filterParams),
+        dashboardService.getTimeline({ timeframe: 'week' }),
+        dashboardService.getConversionFunnel(filterParams)
       ]);
 
       // Buscar dados adicionais (sem filtros de data)
@@ -178,15 +173,33 @@ export function DashboardPage() {
 
         // Calcular estatísticas de campanhas
         const activeCampaigns = (campaignsResponse as any).campaigns.filter((c: any) => c.is_active);
+
+        // DEBUG: Ver estrutura das campanhas
+        console.log('📊 Dashboard - Exemplo de campanha:', (campaignsResponse as any).campaigns[0]);
+
+        // Calcular total de frases de todas as campanhas
+        const totalPhrases = (campaignsResponse as any).campaigns.reduce((total: number, campaign: any) => {
+          const phrasesCount = campaign.triggerPhrases?.length || campaign.trigger_phrases?.length || 0;
+          console.log(`📊 Campanha ${campaign.name}: ${phrasesCount} frases`);
+          return total + phrasesCount;
+        }, 0);
+
+        console.log('📊 Total de frases calculado:', totalPhrases);
+
         setCampaignStats({
           active: activeCampaigns.length,
           total: (campaignsResponse as any).campaigns.length,
-          totalPhrases: 0 // Será atualizado em uma chamada separada se necessário
+          totalPhrases: totalPhrases
         });
 
         // Calcular estatísticas do WhatsApp
         const accounts = (whatsappResponse as any).accounts || [];
-        const connectedWhatsApp = accounts.filter((w: any) => w.status === 'active' || w.status === 'connected');
+        console.log('📊 Dashboard - Contas WhatsApp:', accounts);
+        console.log('📊 Exemplo de conta WhatsApp:', accounts[0]);
+
+        const connectedWhatsApp = accounts.filter((w: any) => w.is_active === true);
+        console.log('📊 WhatsApp conectadas:', connectedWhatsApp.length, 'de', accounts.length);
+
         setWhatsappStats({
           connected: connectedWhatsApp.length,
           total: accounts.length
@@ -207,6 +220,21 @@ export function DashboardPage() {
 
       setDashboardData(consolidatedData);
       setConversionMetrics(conversionResponse.conversionMetrics);
+
+      // Processar dados da timeline para o formato do gráfico
+      const processedTimelineData = timelineResponse.data.map((item: any) => ({
+        date: item.date,
+        leads: item.count,
+        conversions: Math.floor(item.count * (consolidatedData.conversionRate / 100)) // Estimate conversions
+      }));
+      setTimelineData(processedTimelineData);
+
+      // Processar dados do funil
+      const processedFunnelData = funnelResponse.funnel.map((item: any) => ({
+        label: item.step || item.label || 'Etapa',
+        value: item.count || item.value || 0
+      }));
+      setFunnelData(processedFunnelData);
     } catch (err) {
       console.error('Erro ao carregar dados do dashboard:', err);
       setError('Erro ao carregar dados do dashboard');
@@ -478,8 +506,16 @@ export function DashboardPage() {
           </div>
           <div className="h-64">
             <div className="h-full">
-              <TimelineChartInner data={mockTimelineData} />
-              
+              {timelineData.length > 0 ? (
+                <TimelineChartInner data={timelineData} />
+              ) : (
+                <div className="flex items-center justify-center h-full text-muted-foreground">
+                  <div className="text-center">
+                    <TrendingUp className="w-8 h-8 mx-auto mb-2 opacity-50" />
+                    <p className="text-sm">Carregando dados temporais...</p>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         </div>
@@ -492,7 +528,16 @@ export function DashboardPage() {
           </div>
           <div className="h-64">
             <div className="h-full">
-              <SimpleFunnelChart data={createMockFunnelData(dashboardData?.totalLeads || 0, dashboardData?.wonLeads || 0)} />
+              {funnelData.length > 0 ? (
+                <SimpleFunnelChart data={funnelData} />
+              ) : (
+                <div className="flex items-center justify-center h-full text-muted-foreground">
+                  <div className="text-center">
+                    <TrendingUp className="w-8 h-8 mx-auto mb-2 opacity-50" />
+                    <p className="text-sm">Carregando funil de conversão...</p>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         </div>
