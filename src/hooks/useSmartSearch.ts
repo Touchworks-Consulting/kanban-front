@@ -148,11 +148,17 @@ export const useSmartSearch = (
 
   // API search function
   const performAPISearch = useCallback(async (searchFilters: FilterState) => {
-    if (!enableAPISearch) return;
-    
+    console.log('🔍 performAPISearch called with:', searchFilters);
+
+    if (!enableAPISearch) {
+      console.log('🔍 API search disabled');
+      return;
+    }
+
     const cacheKey = JSON.stringify(searchFilters);
-    
+
     if (searchCache.current.has(cacheKey)) {
+      console.log('🔍 Using cached API result');
       setSearchResult(prev => ({
         ...prev,
         apiResults: searchCache.current.get(cacheKey)!,
@@ -169,17 +175,22 @@ export const useSmartSearch = (
       abortController.current = new AbortController();
       
       setSearchResult(prev => ({ ...prev, isSearchingAPI: true }));
-      
+
+      console.log('🔍 Making API call to searchBoard');
+
       const response = await kanbanService.searchBoard({
         search: searchFilters.search || undefined,
         platform: searchFilters.platform !== 'all' ? searchFilters.platform : undefined,
         period: searchFilters.period !== 'all' ? searchFilters.period : undefined,
         dateRange: searchFilters.period === 'custom' && searchFilters.dateRange ? searchFilters.dateRange : undefined,
         valueRange: searchFilters.valueRange !== 'all' ? searchFilters.valueRange : undefined,
-        tags: searchFilters.tags.length > 0 ? searchFilters.tags : undefined
-      }, { 
-        signal: abortController.current.signal 
+        tags: searchFilters.tags.length > 0 ? searchFilters.tags : undefined,
+        sortBy: searchFilters.sortBy || undefined
+      }, {
+        signal: abortController.current.signal
       });
+
+      console.log('🔍 API response received:', response);
       
       if (response.board) {
         searchCache.current.set(cacheKey, response.board);
@@ -216,11 +227,13 @@ export const useSmartSearch = (
   // Main search handler
   const handleSearch = useCallback((searchFilters: FilterState) => {
     const searchTerm = searchFilters.search || '';
-    
-    setSearchResult(prev => ({ 
-      ...prev, 
+
+    console.log('🔍 useSmartSearch handleSearch called with:', searchFilters);
+
+    setSearchResult(prev => ({
+      ...prev,
       searchTerm,
-      searchPerformed: false 
+      searchPerformed: false
     }));
 
     // Clear previous timer
@@ -228,16 +241,27 @@ export const useSmartSearch = (
       clearTimeout(debounceTimer.current);
     }
 
-    // Perform instant local search
+    // Check if only sortBy changed (no other filters)
     const hasSearchTerm = searchTerm.length >= minSearchLength;
     const hasOtherFilters = Object.entries(searchFilters).some(([key, value]) => {
       if (key === 'search') return false; // Skip search term, already checked above
+      if (key === 'sortBy') return false; // Skip sortBy for this check
       if (key === 'dateRange') return searchFilters.period === 'custom' && value;
       if (Array.isArray(value)) return value.length > 0;
       return value !== 'all' && value !== '';
     });
-    
-    if (hasSearchTerm || hasOtherFilters) {
+
+    // If only sortBy changed, treat it as a filter requiring API search
+    const onlySortByChanged = !hasSearchTerm && !hasOtherFilters && searchFilters.sortBy && searchFilters.sortBy !== 'updated_desc';
+
+    console.log('🔍 Search conditions:', {
+      hasSearchTerm,
+      hasOtherFilters,
+      onlySortByChanged,
+      sortBy: searchFilters.sortBy
+    });
+
+    if (hasSearchTerm || hasOtherFilters || onlySortByChanged) {
       setSearchResult(prev => ({ ...prev, isSearchingLocal: true }));
       
       const localResult = performLocalSearch(searchFilters);
@@ -249,12 +273,18 @@ export const useSmartSearch = (
         searchPerformed: true
       }));
 
-      // Debounced API search - DESABILITADO: API não está filtrando por data corretamente
-      // if (enableAPISearch && (hasSearchTerm || hasOtherFilters)) {
-      //   debounceTimer.current = setTimeout(() => {
-      //     performAPISearch(searchFilters);
-      //   }, debounceMs);
-      // }
+      // Debounced API search - enabled for sortBy changes
+      if (enableAPISearch && (hasSearchTerm || hasOtherFilters || onlySortByChanged)) {
+        // Reduce debounce for sorting - it should be immediate
+        const delay = onlySortByChanged ? 50 : debounceMs;
+        console.log('🔍 Scheduling API search in', delay, 'ms');
+        debounceTimer.current = setTimeout(() => {
+          console.log('🔍 Performing API search with filters:', searchFilters);
+          performAPISearch(searchFilters);
+        }, delay);
+      } else {
+        console.log('🔍 Not scheduling API search - conditions not met');
+      }
     } else {
       // Clear results if search is too short
       setSearchResult(prev => ({
@@ -288,17 +318,22 @@ export const useSmartSearch = (
   // Return the best available result
   let result = board;
   
-  // Se temos filtros ativos, usar resultados filtrados
-  const hasActiveFilters = filters.search || 
-    filters.platform !== 'all' || 
-    filters.period !== 'all' || 
+  // Se temos filtros ativos OU ordenação diferente do padrão, usar resultados filtrados
+  const hasActiveFilters = filters.search ||
+    filters.platform !== 'all' ||
+    filters.period !== 'all' ||
     (filters.period === 'custom' && filters.dateRange) ||
-    filters.valueRange !== 'all' || 
-    filters.tags.length > 0;
+    filters.valueRange !== 'all' ||
+    filters.tags.length > 0 ||
+    (filters.sortBy && filters.sortBy !== 'updated_desc');
     
   if (hasActiveFilters) {
-    // Usar apenas resultados locais até API ser corrigida
-    if (searchResult.localResults) {
+    // Para ordenação, preferir resultados da API quando disponíveis
+    if (filters.sortBy && filters.sortBy !== 'updated_desc' && searchResult.apiResults) {
+      console.log('🔍 Using API results for sorting:', filters.sortBy);
+      result = searchResult.apiResults;
+    } else if (searchResult.localResults) {
+      console.log('🔍 Using local results for filtering');
       result = searchResult.localResults;
     }
   }

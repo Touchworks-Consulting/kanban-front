@@ -21,12 +21,14 @@ export interface SearchFilters {
   };
   valueRange?: string;
   tags?: string[];
+  sortBy?: string;
 }
 
 export const kanbanService = {
   // Board
-  async getBoard(): Promise<{ board: KanbanBoard }> {
-    const response = await api.get('/api/kanban/board');
+  async getBoard(sortBy?: string): Promise<{ board: KanbanBoard }> {
+    const url = sortBy ? `/api/kanban/board?sortBy=${sortBy}` : '/api/kanban/board';
+    const response = await api.get(url);
     return response.data as { board: KanbanBoard };
   },
 
@@ -45,6 +47,7 @@ export const kanbanService = {
     if (filters.tags && filters.tags.length > 0) {
       filters.tags.forEach(tag => params.append('tags', tag));
     }
+    if (filters.sortBy) params.append('sortBy', filters.sortBy);
 
     const url = `/api/kanban/board?${params.toString()}`;
 

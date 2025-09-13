@@ -42,6 +42,7 @@ export const KanbanBoard: React.FC = () => {
     updateLead,
     deleteLead,
     clearError,
+    reorderColumns,
   } = useKanbanStore();
 
   const [activeId, setActiveId] = useState<string | null>(null);
@@ -59,7 +60,8 @@ export const KanbanBoard: React.FC = () => {
     tags: [],
     valueRange: 'all',
     platform: 'all',
-    status: []
+    status: [],
+    sortBy: 'updated_desc'
   });
 
   // Smart search hook - handles local + API search with caching
@@ -107,13 +109,19 @@ export const KanbanBoard: React.FC = () => {
     const { active } = event;
     setActiveId(active.id as string);
 
-    // Find the active lead for drag overlay
+    // Check if we're dragging a column or a lead
     if (board) {
-      for (const column of board.columns) {
-        const lead = column.leads?.find(l => l.id === active.id);
-        if (lead) {
-          setActiveLead(lead);
-          break;
+      // Check if it's a column being dragged
+      const isColumn = board.columns.some(col => col.id === active.id);
+
+      if (!isColumn) {
+        // Find the active lead for drag overlay
+        for (const column of board.columns) {
+          const lead = column.leads?.find(l => l.id === active.id);
+          if (lead) {
+            setActiveLead(lead);
+            break;
+          }
         }
       }
     }
@@ -134,20 +142,57 @@ export const KanbanBoard: React.FC = () => {
 
   const handleDragEnd = async (event: any) => {
     const { active, over } = event;
-    
+
     setActiveId(null);
     setActiveLead(null);
 
     if (!over || !board) {
-      // Drag was cancelled - revert optimistic update
-      const { revertOptimisticMove } = useKanbanStore.getState();
-      revertOptimisticMove();
+      // Drag was cancelled - revert optimistic update if it was a lead
+      const isColumn = board.columns.some(col => col.id === active.id);
+      if (!isColumn) {
+        const { revertOptimisticMove } = useKanbanStore.getState();
+        revertOptimisticMove();
+      }
       return;
     }
 
     const activeId = active.id as string;
     const overId = over.id as string;
 
+    // Check if we're reordering columns
+    const activeColumn = board.columns.find(col => col.id === activeId);
+    const overColumn = board.columns.find(col => col.id === overId);
+
+    if (activeColumn) {
+      // Column reordering
+      if (activeId === overId) return; // Same column, no change
+
+      const activeIndex = board.columns.findIndex(col => col.id === activeId);
+      const overIndex = board.columns.findIndex(col => col.id === overId);
+
+      if (activeIndex === -1 || overIndex === -1) return;
+
+      // Create new column order
+      const newColumns = [...board.columns];
+      const [movedColumn] = newColumns.splice(activeIndex, 1);
+      newColumns.splice(overIndex, 0, movedColumn);
+
+      // Update column positions
+      const columnOrders = newColumns.map((col, index) => ({
+        id: col.id,
+        position: index
+      }));
+
+      try {
+        await reorderColumns(columnOrders);
+      } catch (error) {
+        console.error('Failed to reorder columns:', error);
+      }
+
+      return;
+    }
+
+    // Lead movement logic (existing code)
     // Find the final target column and position
     let targetColumn = board.columns.find(col => col.id === overId);
     let targetPosition = 0;

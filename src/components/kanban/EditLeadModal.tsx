@@ -2,7 +2,14 @@ import React, { useState, useEffect } from 'react';
 import { X, Save, Phone, Mail, User, DollarSign, MessageSquare, Trash2 } from 'lucide-react';
 import { Button } from '../ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
+import { apiService } from '../../services/api';
 import type { Lead, UpdateLeadDto } from '../../types';
+
+interface Campaign {
+  id: string;
+  name: string;
+  is_active: boolean;
+}
 
 interface EditLeadModalProps {
   isOpen: boolean;
@@ -54,6 +61,23 @@ export const EditLeadModal: React.FC<EditLeadModalProps> = ({
   });
   const [loading, setLoading] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [campaigns, setCampaigns] = useState<Campaign[]>([]);
+
+  // Buscar campanhas quando o modal abrir
+  useEffect(() => {
+    const fetchCampaigns = async () => {
+      if (!isOpen) return;
+
+      try {
+        const response = await apiService.get<{ campaigns: Campaign[] }>('/api/campaigns');
+        setCampaigns(response.data.campaigns || []);
+      } catch (error) {
+        console.error('Error fetching campaigns:', error);
+      }
+    };
+
+    fetchCampaigns();
+  }, [isOpen]);
 
   useEffect(() => {
     if (lead && isOpen) {
@@ -264,14 +288,27 @@ export const EditLeadModal: React.FC<EditLeadModalProps> = ({
             <label className="block text-sm font-medium text-foreground mb-2">
               Campanha
             </label>
-            <input
-              type="text"
+            <Select
               value={formData.campaign}
-              onChange={(e) => setFormData(prev => ({ ...prev, campaign: e.target.value }))}
-              className="w-full px-3 py-2 border border-input bg-background rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
-              placeholder="Nome da campanha ou origem"
+              onValueChange={(value) => setFormData(prev => ({ ...prev, campaign: value }))}
               disabled={loading}
-            />
+            >
+              <SelectTrigger className="w-full">
+                <SelectValue placeholder="Selecionar campanha" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="Orgânico">Orgânico</SelectItem>
+                <SelectItem value="Não identificada">Não identificada</SelectItem>
+                {campaigns
+                  .filter(campaign => campaign.is_active)
+                  .map(campaign => (
+                    <SelectItem key={campaign.id} value={campaign.name}>
+                      {campaign.name}
+                    </SelectItem>
+                  ))
+                }
+              </SelectContent>
+            </Select>
           </div>
 
           <div>

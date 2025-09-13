@@ -20,7 +20,7 @@ interface KanbanState {
   previousBoard: KanbanBoard | null; // Moved inside state to prevent memory leaks
 
   // Actions
-  fetchBoard: () => Promise<void>;
+  fetchBoard: (sortBy?: string) => Promise<void>;
   createLead: (data: CreateLeadDto) => Promise<void>;
   updateLead: (id: string, data: UpdateLeadDto) => Promise<void>;
   deleteLead: (id: string) => Promise<void>;
@@ -49,15 +49,15 @@ export const useKanbanStore = create<KanbanState>()(
       previousBoard: null,
 
       // Fetch board with columns and leads
-      fetchBoard: async () => {
+      fetchBoard: async (sortBy?: string) => {
         try {
           set({ loading: true, error: null });
-          const response = await kanbanService.getBoard();
+          const response = await kanbanService.getBoard(sortBy);
           set({ board: response.board, loading: false });
         } catch (error: any) {
-          set({ 
-            error: error.response?.data?.error || 'Erro ao carregar board', 
-            loading: false 
+          set({
+            error: error.response?.data?.error || 'Erro ao carregar board',
+            loading: false
           });
         }
       },
@@ -353,14 +353,24 @@ export const useKanbanStore = create<KanbanState>()(
         try {
           set({ error: null });
           const response = await kanbanService.reorderColumns({ columnOrders });
-          
+
           const { board } = get();
           if (!board) return;
+
+          // Preserve leads by merging existing columns with the reordered columns
+          // The backend only returns columns without leads, so we need to preserve the leads
+          const columnsWithLeads = response.columns.map((updatedColumn: any) => {
+            const existingColumn = board.columns.find(col => col.id === updatedColumn.id);
+            return {
+              ...updatedColumn,
+              leads: existingColumn?.leads || [] // Preserve leads from existing column
+            };
+          });
 
           set({
             board: {
               ...board,
-              columns: response.columns
+              columns: columnsWithLeads
             }
           });
         } catch (error: any) {

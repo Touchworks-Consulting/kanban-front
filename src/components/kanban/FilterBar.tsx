@@ -50,6 +50,7 @@ export interface FilterState {
   valueRange: string;
   platform: string;
   status: string[];
+  sortBy?: string;
 }
 
 interface FilterBarProps {
@@ -101,7 +102,6 @@ export const FilterBar: React.FC<FilterBarProps> = ({
 }) => {
   const [tagsOpen, setTagsOpen] = useState(false);
   const [filtersDialogOpen, setFiltersDialogOpen] = useState(false);
-  const [sortBy, setSortBy] = useState('updated_desc');
 
   const updateFilter = (key: keyof FilterState, value: any) => {
     onFiltersChange({
@@ -141,14 +141,16 @@ export const FilterBar: React.FC<FilterBarProps> = ({
   const hasActiveFilters = getActiveFiltersCount() > 0;
 
   const sortOptions = [
-    { label: 'Data de atualização do negócio', value: 'updated_desc', icon: ArrowUpDown },
-    { label: 'Próxima atividade (padrão)', value: 'activity_asc', icon: Calendar },
-    { label: 'Título do negócio', value: 'title_asc', icon: Tag },
-    { label: 'Valor de negócio', value: 'value_desc', icon: DollarSign },
-    { label: 'Pessoa vinculada', value: 'person_asc', icon: Tag },
-    { label: 'Organização vinculada', value: 'organization_asc', icon: Tag },
-    { label: 'Data de fechamento esperada', value: 'expected_close_asc', icon: Calendar },
-    { label: 'Negócio criado em', value: 'created_desc', icon: Calendar },
+    { label: 'Data de atualização (mais recente)', value: 'updated_desc', icon: ArrowUpDown },
+    { label: 'Data de atualização (mais antigo)', value: 'updated_asc', icon: ArrowUpDown },
+    { label: 'Próxima atividade (mais próxima)', value: 'activity_asc', icon: Calendar },
+    { label: 'Próxima atividade (mais distante)', value: 'activity_desc', icon: Calendar },
+    { label: 'Título (A-Z)', value: 'title_asc', icon: Tag },
+    { label: 'Título (Z-A)', value: 'title_desc', icon: Tag },
+    { label: 'Valor (maior-menor)', value: 'value_desc', icon: DollarSign },
+    { label: 'Valor (menor-maior)', value: 'value_asc', icon: DollarSign },
+    { label: 'Criado em (mais recente)', value: 'created_desc', icon: Calendar },
+    { label: 'Criado em (mais antigo)', value: 'created_asc', icon: Calendar },
   ];
 
   return (
@@ -503,7 +505,7 @@ export const FilterBar: React.FC<FilterBarProps> = ({
         <div className="flex items-center gap-2">
           <ArrowUpDown className="w-4 h-4 text-muted-foreground" />
           <span className="text-sm text-muted-foreground">Ordenar por:</span>
-          <Select value={sortBy} onValueChange={setSortBy}>
+          <Select value={filters.sortBy || 'updated_desc'} onValueChange={(value) => updateFilter('sortBy', value)}>
             <SelectTrigger className="w-auto min-w-48 h-8 text-sm">
               <SelectValue />
             </SelectTrigger>

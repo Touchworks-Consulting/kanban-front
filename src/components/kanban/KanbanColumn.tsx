@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import { useDroppable } from '@dnd-kit/core';
-import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable';
-import { Plus, MoreHorizontal, Edit, Trash2, DollarSign } from 'lucide-react';
+import { SortableContext, verticalListSortingStrategy, useSortable } from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
+import { Plus, MoreHorizontal, Edit, Trash2, DollarSign, GripVertical } from 'lucide-react';
 import type { KanbanColumn as ColumnType, Lead } from '../../types/kanban';
 import { LeadCard } from './LeadCard';
 import { Button } from '../ui/button';
@@ -27,10 +28,35 @@ export const KanbanColumn: React.FC<KanbanColumnProps> = ({
   onDeleteLead,
 }) => {
   const [isHovered, setIsHovered] = useState(false);
-  
-  const { setNodeRef, isOver } = useDroppable({
+
+  // Sortable for column reordering
+  const {
+    attributes,
+    listeners,
+    setNodeRef: setSortableNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({
     id: column.id,
   });
+
+  // Droppable for lead drops
+  const { setNodeRef: setDroppableNodeRef, isOver } = useDroppable({
+    id: column.id,
+  });
+
+  // Combine refs
+  const setNodeRef = (node: HTMLElement | null) => {
+    setSortableNodeRef(node);
+    setDroppableNodeRef(node);
+  };
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.5 : 1,
+  };
 
   const leads = column.leads || [];
   const leadIds = leads.map(lead => lead.id);
@@ -47,11 +73,15 @@ export const KanbanColumn: React.FC<KanbanColumnProps> = ({
   };
 
   return (
-    <div 
+    <div
+      ref={setNodeRef}
+      style={style}
+      {...attributes}
       className={cn(
         "flex flex-col w-80 sm:w-72 lg:w-80 h-[calc(100vh-20rem)] bg-background rounded-lg border shadow-sm transition-all duration-200 flex-shrink-0",
         isOver && "ring-2 ring-primary/50 shadow-lg scale-[1.02]",
-        isHovered && !isOver && "shadow-md"
+        isHovered && !isOver && "shadow-md",
+        isDragging && "z-50 shadow-2xl"
       )}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
@@ -59,7 +89,14 @@ export const KanbanColumn: React.FC<KanbanColumnProps> = ({
       {/* Column Header */}
       <div className="flex items-center justify-between p-4 border-b">
         <div className="flex items-center gap-2">
-          <div 
+          <div
+            {...listeners}
+            className="cursor-grab active:cursor-grabbing touch-none p-1 hover:bg-muted rounded-sm transition-colors"
+            aria-label="Drag column"
+          >
+            <GripVertical className="w-4 h-4 text-muted-foreground" />
+          </div>
+          <div
             className="w-3 h-3 rounded-full flex-shrink-0"
             style={{ backgroundColor: column.color }}
           />
@@ -135,8 +172,7 @@ export const KanbanColumn: React.FC<KanbanColumnProps> = ({
       )}
 
       {/* Column Content */}
-      <div 
-        ref={setNodeRef}
+      <div
         className={cn(
           "flex-1 min-h-[200px] relative",
           isOver && "bg-primary/5"
