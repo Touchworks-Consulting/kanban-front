@@ -16,6 +16,7 @@ import { SettingsPage } from './pages/SettingsPage';
 import { UsersPage } from './pages/UsersPage';
 import { ProtectedRoute } from './components/ProtectedRoute';
 import { LoadingSpinner } from './components/LoadingSpinner';
+import ErrorBoundary from './components/ErrorBoundary';
 import Sidebar from './components/layout/Sidebar';
 import Header from './components/layout/Header';
 
@@ -52,35 +53,88 @@ function App() {
   }
 
   return (
-    <Router>
-      <Routes>
-  <Route path="/login" element={isAuthenticated ? <Navigate to="/" /> : <LoginPage />} />
-  <Route path="/register" element={isAuthenticated ? <Navigate to="/" /> : <RegisterPage />} />
+    <ErrorBoundary>
+      <Router>
+        <Routes>
+          <Route
+            path="/login"
+            element={
+              <ErrorBoundary>
+                {isAuthenticated ? <Navigate to="/" /> : <LoginPage />}
+              </ErrorBoundary>
+            }
+          />
+          <Route
+            path="/register"
+            element={
+              <ErrorBoundary>
+                {isAuthenticated ? <Navigate to="/" /> : <RegisterPage />}
+              </ErrorBoundary>
+            }
+          />
 
-        <Route
-          path="/"
-          element={
-            <ProtectedRoute>
-              <AppLayout />
-            </ProtectedRoute>
-          }
-        >
-          <Route index element={<Navigate to="/kanban" replace />} />
-          <Route path="dashboard" element={<DashboardPage />} />
-          <Route path="kanban" element={<KanbanPage />} />
-          <Route path="campaigns" element={<CampaignsPage />} />
-          <Route path="settings" element={<SettingsPage />} />
-          <Route path="users" element={<UsersPage />} />
-          {/* Redirect antigo WhatsApp para configurações */}
-          <Route path="whatsapp-config" element={<Navigate to="/settings" replace />} />
-        </Route>
+          <Route
+            path="/"
+            element={
+              <ErrorBoundary>
+                <ProtectedRoute>
+                  <AppLayout />
+                </ProtectedRoute>
+              </ErrorBoundary>
+            }
+          >
+            <Route index element={<Navigate to="/kanban" replace />} />
+            <Route
+              path="dashboard"
+              element={
+                <ErrorBoundary>
+                  <DashboardPage />
+                </ErrorBoundary>
+              }
+            />
+            <Route
+              path="kanban"
+              element={
+                <ErrorBoundary>
+                  <KanbanPage />
+                </ErrorBoundary>
+              }
+            />
+            <Route
+              path="campaigns"
+              element={
+                <ErrorBoundary>
+                  <CampaignsPage />
+                </ErrorBoundary>
+              }
+            />
+            <Route
+              path="settings"
+              element={
+                <ErrorBoundary>
+                  <SettingsPage />
+                </ErrorBoundary>
+              }
+            />
+            <Route
+              path="users"
+              element={
+                <ErrorBoundary>
+                  <UsersPage />
+                </ErrorBoundary>
+              }
+            />
+            {/* Redirect antigo WhatsApp para configurações */}
+            <Route path="whatsapp-config" element={<Navigate to="/settings" replace />} />
+          </Route>
 
-        <Route
-          path="*"
-          element={<Navigate to={isAuthenticated ? '/' : '/login'} />}
-        />
-      </Routes>
-    </Router>
+          <Route
+            path="*"
+            element={<Navigate to={isAuthenticated ? '/' : '/login'} />}
+          />
+        </Routes>
+      </Router>
+    </ErrorBoundary>
   );
 }
 

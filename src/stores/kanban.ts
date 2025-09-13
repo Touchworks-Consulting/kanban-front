@@ -17,7 +17,8 @@ interface KanbanState {
   board: KanbanBoard | null;
   loading: boolean;
   error: string | null;
-  
+  previousBoard: KanbanBoard | null; // Moved inside state to prevent memory leaks
+
   // Actions
   fetchBoard: () => Promise<void>;
   createLead: (data: CreateLeadDto) => Promise<void>;
@@ -29,13 +30,14 @@ interface KanbanState {
   deleteColumn: (id: string) => Promise<void>;
   reorderColumns: (columnOrders: Array<{ id: string; position: number }>) => Promise<void>;
   clearError: () => void;
-  
+
   // Optimistic updates
   optimisticMoveLead: (leadId: string, sourceColumnId: string, targetColumnId: string, newPosition: number) => void;
   revertOptimisticMove: () => void;
-}
 
-let previousBoard: KanbanBoard | null = null;
+  // Cleanup
+  cleanup: () => void;
+}
 
 export const useKanbanStore = create<KanbanState>()(
   devtools(
@@ -44,6 +46,7 @@ export const useKanbanStore = create<KanbanState>()(
       board: null,
       loading: false,
       error: null,
+      previousBoard: null,
 
       // Fetch board with columns and leads
       fetchBoard: async () => {
@@ -155,7 +158,7 @@ export const useKanbanStore = create<KanbanState>()(
           if (!board) return;
 
           // Clear the previous board backup since the operation was successful
-          previousBoard = null;
+          set(state => ({ ...state, previousBoard: null }));
 
           // Update the lead with the response data to ensure consistency
           const updatedColumns = board.columns.map(column => ({
@@ -184,8 +187,11 @@ export const useKanbanStore = create<KanbanState>()(
         const { board } = get();
         if (!board) return;
 
-        // Store previous state for potential revert
-        previousBoard = JSON.parse(JSON.stringify(board));
+        // Store previous state for potential revert (deep clone to avoid references)
+        set(state => ({
+          ...state,
+          previousBoard: JSON.parse(JSON.stringify(board))
+        }));
 
         // Find the lead to move
         let leadToMove: Lead | null = null;
@@ -265,9 +271,12 @@ export const useKanbanStore = create<KanbanState>()(
 
       // Revert optimistic update
       revertOptimisticMove: () => {
+        const { previousBoard } = get();
         if (previousBoard) {
-          set({ board: previousBoard });
-          previousBoard = null;
+          set({
+            board: previousBoard,
+            previousBoard: null // Clear after revert
+          });
         }
       },
 
@@ -362,6 +371,14 @@ export const useKanbanStore = create<KanbanState>()(
 
       // Clear error
       clearError: () => set({ error: null }),
+
+      // Cleanup function to prevent memory leaks
+      cleanup: () => set({
+        board: null,
+        previousBoard: null,
+        loading: false,
+        error: null
+      }),
     }),
     {
       name: 'kanban-store',
