@@ -55,7 +55,7 @@ export const kanbanService = {
   // Columns
   async getColumns(): Promise<{ columns: KanbanColumn[] }> {
     const response = await api.get('/api/kanban/columns');
-    return response.data;
+    return response.data as { columns: KanbanColumn[] };
   },
 
   async createColumn(data: CreateColumnDto): Promise<{ column: KanbanColumn }> {

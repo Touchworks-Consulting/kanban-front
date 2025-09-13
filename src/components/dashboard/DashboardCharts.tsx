@@ -17,9 +17,9 @@ import {
   ResponsiveContainer,
   Legend
 } from 'recharts';
-import { 
-  TrendingUp, 
-  BarChart3, 
+import {
+  TrendingUp,
+  BarChart3,
   PieChart as PieIcon,
   Activity,
   Target
@@ -55,16 +55,16 @@ interface ChartCardProps {
 
 const ChartCard: React.FC<ChartCardProps> = ({ title, icon: Icon, children, className = "" }) => (
   <motion.div
-    className={`bg-card p-6 rounded-xl border shadow-sm ${className}`}
+    className={`bg-card p-6 rounded-xl border shadow-sm ${className} h-full flex flex-col`}
     initial={{ opacity: 0, scale: 0.95 }}
     animate={{ opacity: 1, scale: 1 }}
     transition={{ duration: 0.3 }}
   >
-    <div className="flex items-center gap-3 mb-6">
+    <div className="flex items-center gap-3 mb-4">
       <Icon className="w-5 h-5 text-primary" />
       <h3 className="text-lg font-semibold text-card-foreground">{title}</h3>
     </div>
-    {children}
+    <div className="flex-1">{children}</div>
   </motion.div>
 );
 
@@ -96,7 +96,7 @@ interface TimelineChartProps {
 
 export const TimelineChart: React.FC<TimelineChartProps> = ({ data }) => (
   <ChartCard title="Evolução Temporal" icon={TrendingUp}>
-    <ResponsiveContainer width="100%" height={300}>
+    <ResponsiveContainer width="100%" height="100%">
       <AreaChart data={data}>
         <defs>
           <linearGradient id="leadsGradient" x1="0" y1="0" x2="0" y2="1">
@@ -109,33 +109,41 @@ export const TimelineChart: React.FC<TimelineChartProps> = ({ data }) => (
           </linearGradient>
         </defs>
         <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-        <XAxis 
-          dataKey="date" 
-          stroke="hsl(var(--muted-foreground))"
-          fontSize={12}
-        />
+        <XAxis dataKey="date" stroke="hsl(var(--muted-foreground))" fontSize={12} />
         <YAxis stroke="hsl(var(--muted-foreground))" fontSize={12} />
         <Tooltip content={<CustomTooltip />} />
         <Legend />
-        <Area
-          type="monotone"
-          dataKey="leads"
-          stroke={COLORS.primary}
-          fillOpacity={1}
-          fill="url(#leadsGradient)"
-          name="Leads"
-        />
-        <Area
-          type="monotone"
-          dataKey="conversions"
-          stroke={COLORS.success}
-          fillOpacity={1}
-          fill="url(#conversionsGradient)"
-          name="Conversões"
-        />
+        <Area type="monotone" dataKey="leads" stroke={COLORS.primary} fillOpacity={1} fill="url(#leadsGradient)" name="Leads" />
+        <Area type="monotone" dataKey="conversions" stroke={COLORS.success} fillOpacity={1} fill="url(#conversionsGradient)" name="Conversões" />
       </AreaChart>
     </ResponsiveContainer>
   </ChartCard>
+);
+
+// Versão do TimelineChart sem o wrapper de card — para ser usada quando
+// o pai já fornece o card/decoração (evita cards aninhados).
+export const TimelineChartInner: React.FC<TimelineChartProps> = ({ data }) => (
+  <ResponsiveContainer width="100%" height="100%">
+    <AreaChart data={data}>
+      <defs>
+        <linearGradient id="leadsGradient" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="5%" stopColor={COLORS.primary} stopOpacity={0.3} />
+          <stop offset="95%" stopColor={COLORS.primary} stopOpacity={0} />
+        </linearGradient>
+        <linearGradient id="conversionsGradient" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="5%" stopColor={COLORS.success} stopOpacity={0.3} />
+          <stop offset="95%" stopColor={COLORS.success} stopOpacity={0} />
+        </linearGradient>
+      </defs>
+      <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+      <XAxis dataKey="date" stroke="hsl(var(--muted-foreground))" fontSize={12} />
+      <YAxis stroke="hsl(var(--muted-foreground))" fontSize={12} />
+      <Tooltip content={<CustomTooltip />} />
+      <Legend />
+      <Area type="monotone" dataKey="leads" stroke={COLORS.primary} fillOpacity={1} fill="url(#leadsGradient)" name="Leads" />
+      <Area type="monotone" dataKey="conversions" stroke={COLORS.success} fillOpacity={1} fill="url(#conversionsGradient)" name="Conversões" />
+    </AreaChart>
+  </ResponsiveContainer>
 );
 
 // Gráfico de funil de conversão
@@ -149,7 +157,7 @@ interface FunnelChartProps {
 
 export const FunnelChart: React.FC<FunnelChartProps> = ({ data }) => (
   <ChartCard title="Funil de Conversão" icon={BarChart3}>
-    <ResponsiveContainer width="100%" height={300}>
+  <ResponsiveContainer width="100%" height="100%">
       <BarChart data={data} layout="horizontal">
         <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
         <XAxis type="number" stroke="hsl(var(--muted-foreground))" fontSize={12} />
@@ -184,7 +192,7 @@ interface PieChartProps {
 
 export const StatusPieChart: React.FC<PieChartProps> = ({ data, title }) => (
   <ChartCard title={title} icon={PieIcon}>
-    <ResponsiveContainer width="100%" height={300}>
+  <ResponsiveContainer width="100%" height="100%">
       <PieChart>
         <Pie
           data={data}
@@ -221,7 +229,7 @@ interface CampaignPerformanceProps {
 
 export const CampaignPerformanceChart: React.FC<CampaignPerformanceProps> = ({ data }) => (
   <ChartCard title="Performance das Campanhas" icon={Target}>
-    <ResponsiveContainer width="100%" height={350}>
+  <ResponsiveContainer width="100%" height="100%">
       <BarChart data={data}>
         <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
         <XAxis 
@@ -264,7 +272,7 @@ interface MetricsLineChartProps {
 
 export const MetricsLineChart: React.FC<MetricsLineChartProps> = ({ data }) => (
   <ChartCard title="Métricas Combinadas" icon={Activity}>
-    <ResponsiveContainer width="100%" height={300}>
+  <ResponsiveContainer width="100%" height="100%">
       <LineChart data={data}>
         <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
         <XAxis 
