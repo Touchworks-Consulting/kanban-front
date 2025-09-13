@@ -5,15 +5,6 @@ export function cn(...inputs: ClassValue[]) {
 }
 
 export function formatDate(date: string | Date | number, format: 'short' | 'long' | 'time' | 'datetime' = 'short'): string {
-  console.log('🔍 formatDate DEBUG:', { 
-    date, 
-    type: typeof date, 
-    value: date, 
-    isEmpty: !date,
-    isNull: date === null,
-    isUndefined: date === undefined,
-    length: typeof date === 'string' ? date.length : 'N/A'
-  });
   
   if (!date) {
     console.warn('❌ formatDate received empty/null/undefined value:', date);
@@ -22,7 +13,6 @@ export function formatDate(date: string | Date | number, format: 'short' | 'long
   
   let dateObj: Date;
   
-  console.log('✅ formatDate processing:', { date, type: typeof date, value: date });
   
   if (typeof date === 'number') {
     // Handle Unix timestamp (both seconds and milliseconds)

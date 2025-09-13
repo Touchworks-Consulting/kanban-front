@@ -11,11 +11,45 @@ import type {
   ReorderColumnsDto 
 } from '../types';
 
+export interface SearchFilters {
+  search?: string;
+  platform?: string;
+  period?: string;
+  dateRange?: {
+    start: string;
+    end: string;
+  };
+  valueRange?: string;
+  tags?: string[];
+}
+
 export const kanbanService = {
   // Board
   async getBoard(): Promise<{ board: KanbanBoard }> {
     const response = await api.get('/api/kanban/board');
-    return response.data;
+    return response.data as { board: KanbanBoard };
+  },
+
+  // Board with filters
+  async searchBoard(filters: SearchFilters, options?: { signal?: AbortSignal }): Promise<{ board: KanbanBoard }> {
+    const params = new URLSearchParams();
+    
+    if (filters.search) params.append('search', filters.search);
+    if (filters.platform && filters.platform !== 'all') params.append('platform', filters.platform);
+    if (filters.period && filters.period !== 'all') params.append('period', filters.period);
+    if (filters.dateRange) {
+      params.append('dateStart', filters.dateRange.start);
+      params.append('dateEnd', filters.dateRange.end);
+    }
+    if (filters.valueRange && filters.valueRange !== 'all') params.append('valueRange', filters.valueRange);
+    if (filters.tags && filters.tags.length > 0) {
+      filters.tags.forEach(tag => params.append('tags', tag));
+    }
+
+    const url = `/api/kanban/board?${params.toString()}`;
+
+    const response = await api.get(url, options);
+    return response.data as { board: KanbanBoard };
   },
 
   // Columns

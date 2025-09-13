@@ -2,28 +2,27 @@ import React, { useEffect, useState } from 'react';
 import {
   DndContext,
   DragOverlay,
-  closestCenter,
   KeyboardSensor,
   PointerSensor,
   useSensor,
   useSensors,
   rectIntersection,
   pointerWithin,
-  getFirstCollision,
 } from '@dnd-kit/core';
 import {
-  arrayMove,
   SortableContext,
   sortableKeyboardCoordinates,
   horizontalListSortingStrategy,
 } from '@dnd-kit/sortable';
-import { Plus, AlertCircle } from 'lucide-react';
+import { Plus, AlertCircle, Search } from 'lucide-react';
 import { useKanbanStore } from '../../stores';
+import { useSmartSearch } from '../../hooks/useSmartSearch';
 import { KanbanColumn } from './KanbanColumn';
 import { LeadCard } from './LeadCard';
 import { CreateColumnModal } from './CreateColumnModal';
 import { CreateLeadModal } from './CreateLeadModal';
 import { EditLeadModal } from './EditLeadModal';
+import { FilterBar, type FilterState } from './FilterBar';
 import { LoadingSpinner } from '../LoadingSpinner';
 import { Button } from '../ui/button';
 import { ScrollArea } from '../ui/scroll-area';
@@ -52,6 +51,31 @@ export const KanbanBoard: React.FC = () => {
   const [showEditLeadModal, setShowEditLeadModal] = useState(false);
   const [selectedColumnForLead, setSelectedColumnForLead] = useState<{ id: string; name: string } | null>(null);
   const [selectedLeadForEdit, setSelectedLeadForEdit] = useState<Lead | null>(null);
+  
+  // Filter state
+  const [filters, setFilters] = useState<FilterState>({
+    search: '',
+    period: 'all',
+    tags: [],
+    valueRange: 'all',
+    platform: 'all',
+    status: []
+  });
+
+  // Smart search hook - handles local + API search with caching
+  const {
+    result: filteredBoard,
+    isSearching,
+    isSearchingAPI,
+    searchPerformed
+  } = useSmartSearch(filters, {
+    debounceMs: 300,
+    minSearchLength: 1,
+    enableAPISearch: true
+  });
+
+  const totalLeads = board ? board.columns.reduce((sum, col) => sum + (col.leads?.length || 0), 0) : 0;
+  const filteredLeadsCount = filteredBoard ? filteredBoard.columns.reduce((sum, col) => sum + (col.leads?.length || 0), 0) : 0;
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -275,6 +299,34 @@ export const KanbanBoard: React.FC = () => {
         </Alert>
       )}
 
+      {/* Filter Bar */}
+      <FilterBar 
+        filters={filters} 
+        onFiltersChange={setFilters}
+        totalLeads={totalLeads}
+        filteredLeads={filteredLeadsCount}
+        isSearching={isSearching}
+        isSearchingAPI={isSearchingAPI}
+        searchPerformed={searchPerformed}
+      />
+
+      {/* No Results Message */}
+      {searchPerformed && filteredLeadsCount === 0 && filters.search && (
+        <div className="px-6 py-4">
+          <div className="bg-muted/50 border border-dashed rounded-lg p-8 text-center">
+            <div className="text-muted-foreground">
+              <Search className="w-12 h-12 mx-auto mb-3 opacity-50" />
+              <h3 className="text-lg font-medium mb-2">Nenhum lead encontrado</h3>
+              <p className="text-sm">
+                Não encontramos leads com o termo "{filters.search}".
+                <br />
+                Tente buscar por nome, email, telefone ou campanha.
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
+
       <DndContext
         sensors={sensors}
         collisionDetection={collisionDetectionStrategy}
@@ -285,9 +337,9 @@ export const KanbanBoard: React.FC = () => {
         {/* Área das colunas com scroll independente */}
         <div className="flex-1 overflow-hidden">
           <ScrollArea className="w-full h-full">
-            <div className="flex gap-6 p-6 w-max min-w-full">
+            <div className="flex gap-4 px-6 pt-2 pb-6 w-max min-w-full">
               <SortableContext items={columnIds} strategy={horizontalListSortingStrategy}>
-                {board.columns.map((column) => (
+                {(filteredBoard ?? board).columns.map((column) => (
                   <KanbanColumn
                     key={column.id}
                     column={column}

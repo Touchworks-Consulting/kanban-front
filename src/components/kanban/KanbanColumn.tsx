@@ -49,7 +49,7 @@ export const KanbanColumn: React.FC<KanbanColumnProps> = ({
   return (
     <div 
       className={cn(
-        "flex flex-col w-80 sm:w-72 lg:w-80 h-[calc(100vh-16rem)] bg-background rounded-lg border shadow-sm transition-all duration-200 flex-shrink-0",
+        "flex flex-col w-80 sm:w-72 lg:w-80 h-[calc(100vh-20rem)] bg-background rounded-lg border shadow-sm transition-all duration-200 flex-shrink-0",
         isOver && "ring-2 ring-primary/50 shadow-lg scale-[1.02]",
         isHovered && !isOver && "shadow-md"
       )}
