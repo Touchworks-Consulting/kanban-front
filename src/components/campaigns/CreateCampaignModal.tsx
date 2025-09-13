@@ -3,6 +3,7 @@ import { X, Plus, Trash2, AlertCircle } from 'lucide-react';
 import { useCampaignsStore } from '../../stores';
 import { Button } from '../ui/button';
 import { Alert, AlertDescription } from '../ui/alert';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 import { PLATFORMS, CHANNELS, type CreateCampaignDto, type Campaign } from '../../types';
 
 interface CreateCampaignModalProps {
@@ -154,36 +155,44 @@ export const CreateCampaignModal: React.FC<CreateCampaignModalProps> = ({
                   <label className="block text-sm font-medium text-foreground mb-2">
                     Plataforma *
                   </label>
-                  <select
+                  <Select
                     value={formData.platform}
-                    onChange={(e) => handlePlatformChange(e.target.value as 'Meta' | 'Google')}
-                    className="w-full px-3 py-2 rounded-md border border-input bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+                    onValueChange={(value) => handlePlatformChange(value as 'Meta' | 'Google')}
                     required
                   >
-                    {PLATFORMS.map(platform => (
-                      <option key={platform} value={platform}>
-                        {platform}
-                      </option>
-                    ))}
-                  </select>
+                    <SelectTrigger className="w-full">
+                      <SelectValue placeholder="Selecionar plataforma" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {PLATFORMS.map(platform => (
+                        <SelectItem key={platform} value={platform}>
+                          {platform}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
 
                 <div>
                   <label className="block text-sm font-medium text-foreground mb-2">
                     Canal *
                   </label>
-                  <select
+                  <Select
                     value={formData.channel}
-                    onChange={(e) => handleInputChange('channel', e.target.value)}
-                    className="w-full px-3 py-2 rounded-md border border-input bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+                    onValueChange={(value) => handleInputChange('channel', value)}
                     required
                   >
-                    {CHANNELS[formData.platform].map(channel => (
-                      <option key={channel} value={channel}>
-                        {channel}
-                      </option>
-                    ))}
-                  </select>
+                    <SelectTrigger className="w-full">
+                      <SelectValue placeholder="Selecionar canal" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {CHANNELS[formData.platform].map(channel => (
+                        <SelectItem key={channel} value={channel}>
+                          {channel}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
               </div>
 

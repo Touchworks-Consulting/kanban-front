@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { X, Save, Phone, Mail, User, DollarSign, MessageSquare, Trash2 } from 'lucide-react';
 import { Button } from '../ui/button';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 import type { Lead, UpdateLeadDto } from '../../types';
 
 interface EditLeadModalProps {
@@ -167,18 +168,22 @@ export const EditLeadModal: React.FC<EditLeadModalProps> = ({
               <label className="block text-sm font-medium text-foreground mb-2">
                 Status
               </label>
-              <select
+              <Select
                 value={formData.status}
-                onChange={(e) => setFormData(prev => ({ ...prev, status: e.target.value as any }))}
-                className="w-full px-3 py-2 border border-input bg-background rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
+                onValueChange={(value) => setFormData(prev => ({ ...prev, status: value as any }))}
                 disabled={loading}
               >
-                {statusOptions.map(status => (
-                  <option key={status.value} value={status.value}>
-                    {status.label}
-                  </option>
-                ))}
-              </select>
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Selecionar status" />
+                </SelectTrigger>
+                <SelectContent>
+                  {statusOptions.map(status => (
+                    <SelectItem key={status.value} value={status.value}>
+                      {status.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
 
             <div>
@@ -232,22 +237,26 @@ export const EditLeadModal: React.FC<EditLeadModalProps> = ({
               <label className="block text-sm font-medium text-foreground mb-2">
                 Plataforma
               </label>
-              <select
+              <Select
                 value={formData.platform}
-                onChange={(e) => setFormData(prev => ({ 
+                onValueChange={(value) => setFormData(prev => ({ 
                   ...prev, 
-                  platform: e.target.value,
-                  channel: e.target.value 
+                  platform: value,
+                  channel: value 
                 }))}
-                className="w-full px-3 py-2 border border-input bg-background rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
                 disabled={loading}
               >
-                {platforms.map(platform => (
-                  <option key={platform} value={platform}>
-                    {platform}
-                  </option>
-                ))}
-              </select>
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Selecionar plataforma" />
+                </SelectTrigger>
+                <SelectContent>
+                  {platforms.map(platform => (
+                    <SelectItem key={platform} value={platform}>
+                      {platform}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
           </div>
 

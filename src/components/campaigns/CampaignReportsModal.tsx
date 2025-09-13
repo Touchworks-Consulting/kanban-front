@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { X, BarChart3, Users, MessageSquare, Download, Filter, TrendingUp, TrendingDown } from 'lucide-react';
 import { Button } from '../ui/button';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 import { LoadingSpinner } from '../LoadingSpinner';
 import { campaignsService } from '../../services/campaigns';
 import { dashboardService } from '../../services/dashboard';
@@ -176,15 +177,19 @@ export const CampaignReportsModal: React.FC<CampaignReportsModalProps> = ({
               </p>
             </div>
             <div className="flex items-center gap-2">
-              <select
+              <Select
                 value={dateRange}
-                onChange={(e) => setDateRange(e.target.value)}
-                className="px-3 py-2 border border-input bg-background rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+                onValueChange={(value) => setDateRange(value)}
               >
-                <option value="7d">Últimos 7 dias</option>
-                <option value="30d">Últimos 30 dias</option>
-                <option value="90d">Últimos 90 dias</option>
-              </select>
+                <SelectTrigger className="w-40">
+                  <SelectValue placeholder="Período" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="7d">Últimos 7 dias</SelectItem>
+                  <SelectItem value="30d">Últimos 30 dias</SelectItem>
+                  <SelectItem value="90d">Últimos 90 dias</SelectItem>
+                </SelectContent>
+              </Select>
               <Button variant="outline" size="sm" onClick={handleExport}>
                 <Download className="w-4 h-4 mr-2" />
                 Exportar

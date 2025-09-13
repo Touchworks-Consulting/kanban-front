@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { X, Save, Loader2, AlertCircle } from 'lucide-react';
 import { Button } from '../ui/button';
 import { Alert, AlertDescription } from '../ui/alert';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 import { useCampaignsStore } from '../../stores';
 import { formatDate } from '../../utils/helpers';
 import type { Campaign, UpdateCampaignDto } from '../../types';
@@ -153,38 +154,46 @@ export const CampaignConfigModal: React.FC<CampaignConfigModalProps> = ({
                 <label className="block text-sm font-medium text-foreground mb-2">
                   Plataforma *
                 </label>
-                <select
+                <Select
                   value={formData.platform}
-                  onChange={(e) => handleInputChange('platform', e.target.value)}
-                  className="w-full px-3 py-2 border border-input bg-background rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
+                  onValueChange={(value) => handleInputChange('platform', value)}
                   required
                 >
-                  <option value="Meta">Meta</option>
-                  <option value="Google">Google</option>
-                  <option value="Instagram">Instagram</option>
-                  <option value="WhatsApp">WhatsApp</option>
-                  <option value="YouTube">YouTube</option>
-                  <option value="TikTok">TikTok</option>
-                </select>
+                  <SelectTrigger className="w-full">
+                    <SelectValue placeholder="Selecionar plataforma" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="Meta">Meta</SelectItem>
+                    <SelectItem value="Google">Google</SelectItem>
+                    <SelectItem value="Instagram">Instagram</SelectItem>
+                    <SelectItem value="WhatsApp">WhatsApp</SelectItem>
+                    <SelectItem value="YouTube">YouTube</SelectItem>
+                    <SelectItem value="TikTok">TikTok</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
 
               <div>
                 <label className="block text-sm font-medium text-foreground mb-2">
                   Canal *
                 </label>
-                <select
+                <Select
                   value={formData.channel}
-                  onChange={(e) => handleInputChange('channel', e.target.value)}
-                  className="w-full px-3 py-2 border border-input bg-background rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
+                  onValueChange={(value) => handleInputChange('channel', value)}
                   required
                 >
-                  <option value="Facebook">Facebook</option>
-                  <option value="Instagram">Instagram</option>
-                  <option value="WhatsApp">WhatsApp</option>
-                  <option value="Google Ads">Google Ads</option>
-                  <option value="YouTube">YouTube</option>
-                  <option value="TikTok">TikTok</option>
-                </select>
+                  <SelectTrigger className="w-full">
+                    <SelectValue placeholder="Selecionar canal" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="Facebook">Facebook</SelectItem>
+                    <SelectItem value="Instagram">Instagram</SelectItem>
+                    <SelectItem value="WhatsApp">WhatsApp</SelectItem>
+                    <SelectItem value="Google Ads">Google Ads</SelectItem>
+                    <SelectItem value="YouTube">YouTube</SelectItem>
+                    <SelectItem value="TikTok">TikTok</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
             </div>
 

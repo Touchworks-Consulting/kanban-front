@@ -148,10 +148,29 @@ export const useKanbanStore = create<KanbanState>()(
       moveLead: async (id: string, data: MoveLeadDto) => {
         try {
           set({ error: null });
-          await kanbanService.moveLead(id, data);
+          const response = await kanbanService.moveLead(id, data);
           
-          // Refetch board to ensure consistency
-          await get().fetchBoard();
+          // Update the moved lead in the store without refetching entire board
+          const { board } = get();
+          if (!board) return;
+
+          // Clear the previous board backup since the operation was successful
+          previousBoard = null;
+
+          // Update the lead with the response data to ensure consistency
+          const updatedColumns = board.columns.map(column => ({
+            ...column,
+            leads: (column.leads || []).map(lead => 
+              lead.id === id ? response.lead : lead
+            ).sort((a, b) => a.position - b.position)
+          }));
+
+          set({
+            board: {
+              ...board,
+              columns: updatedColumns
+            }
+          });
         } catch (error: any) {
           // Revert optimistic update on error
           get().revertOptimisticMove();
@@ -177,25 +196,62 @@ export const useKanbanStore = create<KanbanState>()(
 
         if (!leadToMove) return;
 
-        // Update lead's column_id and position
-        const updatedLead = { ...leadToMove, column_id: targetColumnId, position: newPosition };
-
-        // Remove lead from source column
         const updatedColumns = board.columns.map(column => {
-          if (column.id === sourceColumnId) {
+          if (column.id === sourceColumnId && column.id === targetColumnId) {
+            // Moving within the same column
+            const leads = [...(column.leads || [])];
+            const currentIndex = leads.findIndex(lead => lead.id === leadId);
+            
+            if (currentIndex === -1) return column;
+            
+            // Remove the lead from its current position
+            const [movedLead] = leads.splice(currentIndex, 1);
+            
+            // Insert it at the new position
+            const actualPosition = Math.min(newPosition, leads.length);
+            leads.splice(actualPosition, 0, movedLead);
+            
+            // Update positions to maintain order
+            const reorderedLeads = leads.map((lead, index) => ({
+              ...lead,
+              position: index
+            }));
+
             return {
               ...column,
-              leads: (column.leads || []).filter(lead => lead.id !== leadId)
+              leads: reorderedLeads
             };
-          }
-          if (column.id === targetColumnId) {
-            const newLeads = [...(column.leads || []), updatedLead]
-              .sort((a, b) => a.position - b.position);
+          } else if (column.id === sourceColumnId) {
+            // Remove lead from source column
+            const remainingLeads = (column.leads || [])
+              .filter(lead => lead.id !== leadId)
+              .map((lead, index) => ({ ...lead, position: index }));
+              
             return {
               ...column,
-              leads: newLeads
+              leads: remainingLeads
+            };
+          } else if (column.id === targetColumnId) {
+            // Add lead to target column
+            const leads = [...(column.leads || [])];
+            const updatedLead = { ...leadToMove, column_id: targetColumnId, position: newPosition };
+            
+            // Insert at the specified position
+            const actualPosition = Math.min(newPosition, leads.length);
+            leads.splice(actualPosition, 0, updatedLead);
+            
+            // Update positions to maintain order
+            const reorderedLeads = leads.map((lead, index) => ({
+              ...lead,
+              position: index
+            }));
+
+            return {
+              ...column,
+              leads: reorderedLeads
             };
           }
+          
           return column;
         });
 

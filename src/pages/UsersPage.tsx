@@ -1,6 +1,13 @@
 import { useEffect, useState } from 'react';
 import { userService } from '../services';
 import { LoadingSpinner } from '../components/LoadingSpinner';
+import { 
+  Select, 
+  SelectContent, 
+  SelectItem, 
+  SelectTrigger, 
+  SelectValue 
+} from '../components/ui/select';
 
 interface UserRow { id: string; name: string; email: string; role?: string; is_active?: boolean; account_id?: string; user_id?: string; }
 
@@ -30,7 +37,10 @@ export function UsersPage() {
     setCreating(true);
     setError(null);
     try {
-      await userService.create(form);
+      await userService.create({
+        ...form,
+        role: form.role as "member" | "admin"
+      });
       setForm({ name: '', email: '', password: '', role: 'member' });
       await load();
     } catch (e: any) {
@@ -112,10 +122,15 @@ export function UsersPage() {
                 </div>
                 <div>
                   <label className="block text-xs font-medium">Perfil</label>
-                  <select className="mt-1 w-full border rounded px-2 py-1 text-sm" value={form.role} onChange={e => setForm(f => ({ ...f, role: e.target.value }))}>
-                    <option value="member">Membro</option>
-                    <option value="admin">Admin</option>
-                  </select>
+                  <Select value={form.role} onValueChange={(value: "member" | "admin") => setForm(f => ({ ...f, role: value }))}>
+                    <SelectTrigger className="mt-1 w-full">
+                      <SelectValue placeholder="Selecionar perfil" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="member">Membro</SelectItem>
+                      <SelectItem value="admin">Admin</SelectItem>
+                    </SelectContent>
+                  </Select>
                 </div>
                 <button type="submit" disabled={creating} className="w-full bg-primary text-white rounded py-2 text-sm disabled:opacity-50">
                   {creating ? 'Criando...' : 'Criar Usuário'}

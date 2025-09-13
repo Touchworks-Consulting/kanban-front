@@ -9,6 +9,7 @@ import { CampaignConfigModal } from '../components/campaigns/CampaignConfigModal
 import { TriggerPhrasesModal } from '../components/campaigns/TriggerPhrasesModal';
 import { CampaignReportsModal } from '../components/campaigns/CampaignReportsModal';
 import { CreateCampaignModal } from '../components/campaigns/CreateCampaignModal';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select';
 import { formatDate } from '../utils/helpers';
 import type { Campaign } from '../types';
 
@@ -244,15 +245,16 @@ export const CampaignsPage: React.FC = () => {
         
         <div className="flex items-center gap-2">
           <Filter className="w-4 h-4 text-muted-foreground" />
-          <select
-            value={platformFilter}
-            onChange={(e) => setPlatformFilter(e.target.value)}
-            className="px-3 py-2 rounded-md border border-input bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
-          >
-            <option value="all">Todas as plataformas</option>
-            <option value="Meta">Meta</option>
-            <option value="Google">Google</option>
-          </select>
+          <Select value={platformFilter} onValueChange={setPlatformFilter}>
+            <SelectTrigger className="w-48">
+              <SelectValue placeholder="Todas as plataformas" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Todas as plataformas</SelectItem>
+              <SelectItem value="Meta">Meta</SelectItem>
+              <SelectItem value="Google">Google</SelectItem>
+            </SelectContent>
+          </Select>
         </div>
       </div>
 

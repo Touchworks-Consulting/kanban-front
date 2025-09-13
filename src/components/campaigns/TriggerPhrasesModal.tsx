@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { X, Plus, Edit, Trash2, Save, MessageSquare, TestTube, Loader2, AlertCircle } from 'lucide-react';
 import { Button } from '../ui/button';
 import { Alert, AlertDescription } from '../ui/alert';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 import { useCampaignsStore } from '../../stores';
 import { formatDate } from '../../utils/helpers';
 import type { Campaign, TriggerPhrase, CreateTriggerPhraseDto, UpdateTriggerPhraseDto } from '../../types';
@@ -214,17 +215,21 @@ export const TriggerPhrasesModal: React.FC<TriggerPhrasesModalProps> = ({
                   />
                   
                   <div className="grid grid-cols-2 gap-3">
-                    <select
+                    <Select
                       value={formData.match_type}
-                      onChange={(e) => setFormData(prev => ({ ...prev, match_type: e.target.value as any }))}
-                      className="px-3 py-2 border border-input bg-background rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
+                      onValueChange={(value) => setFormData(prev => ({ ...prev, match_type: value as any }))}
                     >
-                      <option value="contains">Contém</option>
-                      <option value="exact">Exato</option>
-                      <option value="starts_with">Inicia com</option>
-                      <option value="ends_with">Termina com</option>
-                      <option value="regex">Regex</option>
-                    </select>
+                      <SelectTrigger className="w-full">
+                        <SelectValue placeholder="Tipo de correspondência" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="contains">Contém</SelectItem>
+                        <SelectItem value="exact">Exato</SelectItem>
+                        <SelectItem value="starts_with">Inicia com</SelectItem>
+                        <SelectItem value="ends_with">Termina com</SelectItem>
+                        <SelectItem value="regex">Regex</SelectItem>
+                      </SelectContent>
+                    </Select>
                     
                     <div className="flex items-center gap-2">
                       <input
@@ -276,17 +281,21 @@ export const TriggerPhrasesModal: React.FC<TriggerPhrasesModalProps> = ({
                   />
                   
                   <div className="grid grid-cols-2 gap-3">
-                    <select
+                    <Select
                       value={formData.match_type}
-                      onChange={(e) => setFormData(prev => ({ ...prev, match_type: e.target.value as any }))}
-                      className="px-3 py-2 border border-input bg-background rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
+                      onValueChange={(value) => setFormData(prev => ({ ...prev, match_type: value as any }))}
                     >
-                      <option value="contains">Contém</option>
-                      <option value="exact">Exato</option>
-                      <option value="starts_with">Inicia com</option>
-                      <option value="ends_with">Termina com</option>
-                      <option value="regex">Regex</option>
-                    </select>
+                      <SelectTrigger className="w-full">
+                        <SelectValue placeholder="Tipo de correspondência" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="contains">Contém</SelectItem>
+                        <SelectItem value="exact">Exato</SelectItem>
+                        <SelectItem value="starts_with">Inicia com</SelectItem>
+                        <SelectItem value="ends_with">Termina com</SelectItem>
+                        <SelectItem value="regex">Regex</SelectItem>
+                      </SelectContent>
+                    </Select>
                     
                     <div className="flex items-center gap-2">
                       <input

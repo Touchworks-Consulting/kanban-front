@@ -127,39 +127,9 @@ export const KanbanBoard: React.FC = () => {
     const activeId = active.id as string;
     const overId = over.id as string;
 
-    // Find active lead and its current column
-    let activeColumn = null;
-    let activeLead = null;
-    
-    for (const column of board.columns) {
-      const lead = column.leads?.find(l => l.id === activeId);
-      if (lead) {
-        activeColumn = column;
-        activeLead = lead;
-        break;
-      }
-    }
-
-    if (!activeColumn || !activeLead) return;
-
-    // Determine target column
-    let targetColumn = board.columns.find(col => col.id === overId);
-    
-    if (!targetColumn) {
-      // Over might be a lead, find its column
-      for (const column of board.columns) {
-        if (column.leads?.some(l => l.id === overId)) {
-          targetColumn = column;
-          break;
-        }
-      }
-    }
-
-    if (!targetColumn || targetColumn.id === activeColumn.id) return;
-
-    // Perform optimistic update
-    const newPosition = targetColumn.leads?.length || 0;
-    optimisticMoveLead(activeId, activeColumn.id, targetColumn.id, newPosition);
+    // Don't do optimistic updates during drag over - only on drag end
+    // This prevents unwanted intermediate states during drag
+    return;
   };
 
   const handleDragEnd = async (event: any) => {
@@ -168,7 +138,12 @@ export const KanbanBoard: React.FC = () => {
     setActiveId(null);
     setActiveLead(null);
 
-    if (!over || !board) return;
+    if (!over || !board) {
+      // Drag was cancelled - revert optimistic update
+      const { revertOptimisticMove } = useKanbanStore.getState();
+      revertOptimisticMove();
+      return;
+    }
 
     const activeId = active.id as string;
     const overId = over.id as string;
@@ -178,20 +153,43 @@ export const KanbanBoard: React.FC = () => {
     let targetPosition = 0;
 
     if (!targetColumn) {
-      // Over might be a lead, find its column
+      // Over might be a lead, find its column and position
       for (const column of board.columns) {
         const leadIndex = column.leads?.findIndex(l => l.id === overId);
         if (leadIndex !== undefined && leadIndex >= 0) {
           targetColumn = column;
+          // If dropping on a lead, insert before that lead
           targetPosition = leadIndex;
           break;
         }
       }
     } else {
+      // If dropping directly on column, add at the end
       targetPosition = targetColumn.leads?.length || 0;
     }
 
-    if (!targetColumn) return;
+    if (!targetColumn) {
+      // Revert if we can't find valid target column
+      const { revertOptimisticMove } = useKanbanStore.getState();
+      revertOptimisticMove();
+      return;
+    }
+
+    // Find the source column for optimistic update
+    let sourceColumn = null;
+    for (const column of board.columns) {
+      if (column.leads?.some(l => l.id === activeId)) {
+        sourceColumn = column;
+        break;
+      }
+    }
+
+    if (!sourceColumn) {
+      return;
+    }
+
+    // Apply optimistic update before API call
+    optimisticMoveLead(activeId, sourceColumn.id, targetColumn.id, targetPosition);
 
     try {
       await moveLead(activeId, {

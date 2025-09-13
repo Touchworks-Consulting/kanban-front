@@ -10,6 +10,8 @@ import {
   PanelLeftClose,
   PanelRightClose,
 } from 'lucide-react';
+import { AccountSwitcher } from '../AccountSwitcher';
+import { CreateAccountModal } from '../CreateAccountModal';
 
 const navItems = [
   { icon: LayoutDashboard, text: 'Dashboard', path: '/dashboard' },
@@ -21,6 +23,7 @@ const navItems = [
 
 const Sidebar = () => {
   const [isExpanded, setIsExpanded] = useState(true);
+  const [showCreateAccount, setShowCreateAccount] = useState(false);
   const location = useLocation();
 
   const sidebarVariants = {
@@ -39,6 +42,37 @@ const Sidebar = () => {
          <motion.div animate={{ opacity: isExpanded ? 1 : 0, width: isExpanded ? 'auto' : 0 }} className="overflow-hidden">
             <span className="font-bold text-lg whitespace-nowrap">Kanban Touch</span>
         </motion.div>
+      </div>
+
+      {/* Account Switcher */}
+      <div className="px-3 py-2 border-b border-border">
+        <AnimatePresence>
+          {isExpanded && (
+            <motion.div
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: 'auto' }}
+              exit={{ opacity: 0, height: 0 }}
+              className="bg-muted/30 rounded-lg p-2 mb-2"
+            >
+              <div className="text-xs text-muted-foreground mb-1">Conta Atual</div>
+              <AccountSwitcher
+                onCreateAccount={() => setShowCreateAccount(true)}
+                className="w-full"
+              />
+            </motion.div>
+          )}
+        </AnimatePresence>
+        {!isExpanded && (
+          <div className="flex justify-center">
+            <div className="w-10 h-10 flex items-center justify-center">
+              <AccountSwitcher
+                onCreateAccount={() => setShowCreateAccount(true)}
+                collapsed={true}
+                className="min-w-0"
+              />
+            </div>
+          </div>
+        )}
       </div>
 
       <nav className="flex-1 px-3 py-4 space-y-2">
@@ -71,7 +105,7 @@ const Sidebar = () => {
                 )}
               </AnimatePresence>
               {!isExpanded && (
-                <div className="absolute left-full ml-4 px-2 py-1 bg-popover text-popover-foreground text-xs rounded-md opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none">
+                <div className="absolute left-full ml-2 px-2 py-1 bg-popover text-popover-foreground text-xs rounded-md opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none z-[9999] border border-border shadow-lg">
                   {item.text}
                 </div>
               )}
@@ -103,6 +137,12 @@ const Sidebar = () => {
           </AnimatePresence>
         </button>
       </div>
+
+      {/* Create Account Modal */}
+      <CreateAccountModal
+        isOpen={showCreateAccount}
+        onClose={() => setShowCreateAccount(false)}
+      />
     </motion.aside>
   );
 };
