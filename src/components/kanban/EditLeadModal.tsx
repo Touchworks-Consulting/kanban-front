@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { X, Save, Phone, Mail, User, DollarSign, MessageSquare, Trash2 } from 'lucide-react';
+import { X, Save, Phone, Mail, User, DollarSign, MessageSquare, Trash2, Users } from 'lucide-react';
 import { Button } from '../ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 import { apiService } from '../../services/api';
+import { userService, type UserDto } from '../../services/users';
 import type { Lead, UpdateLeadDto } from '../../types';
 
 interface Campaign {
@@ -58,25 +59,32 @@ export const EditLeadModal: React.FC<EditLeadModalProps> = ({
     value: 0,
     notes: '',
     status: 'new',
+    assigned_to_user_id: '',
   });
   const [loading, setLoading] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [campaigns, setCampaigns] = useState<Campaign[]>([]);
+  const [users, setUsers] = useState<UserDto[]>([]);
 
-  // Buscar campanhas quando o modal abrir
+  // Buscar campanhas e usuários quando o modal abrir
   useEffect(() => {
-    const fetchCampaigns = async () => {
+    const fetchData = async () => {
       if (!isOpen) return;
 
       try {
-        const response = await apiService.get<{ campaigns: Campaign[] }>('/api/campaigns');
-        setCampaigns(response.data.campaigns || []);
+        const [campaignsResponse, usersResponse] = await Promise.all([
+          apiService.get<{ campaigns: Campaign[] }>('/api/campaigns'),
+          userService.list()
+        ]);
+
+        setCampaigns(campaignsResponse.data.campaigns || []);
+        setUsers(usersResponse || []);
       } catch (error) {
-        console.error('Error fetching campaigns:', error);
+        console.error('Error fetching data:', error);
       }
     };
 
-    fetchCampaigns();
+    fetchData();
   }, [isOpen]);
 
   useEffect(() => {
@@ -92,6 +100,7 @@ export const EditLeadModal: React.FC<EditLeadModalProps> = ({
         value: lead.value || 0,
         notes: lead.notes || '',
         status: lead.status || 'new',
+        assigned_to_user_id: lead.assigned_to_user_id || '',
       });
     }
   }, [lead, isOpen]);
@@ -206,6 +215,44 @@ export const EditLeadModal: React.FC<EditLeadModalProps> = ({
                       {status.label}
                     </SelectItem>
                   ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-foreground mb-2">
+                <Users className="w-4 h-4 inline mr-1" />
+                Vendedor Responsável
+              </label>
+              <Select
+                value={formData.assigned_to_user_id || ''}
+                onValueChange={(value) => setFormData(prev => ({
+                  ...prev,
+                  assigned_to_user_id: value === 'none' ? '' : value
+                }))}
+                disabled={loading}
+              >
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Selecionar vendedor" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">Não atribuído</SelectItem>
+                  {users
+                    .filter(user => user.is_active)
+                    .map(user => (
+                      <SelectItem key={user.id} value={user.id}>
+                        <div className="flex items-center gap-2">
+                          <span>{user.name}</span>
+                          <span className="text-xs text-muted-foreground">({user.email})</span>
+                          {user.role && (
+                            <span className="text-xs bg-muted px-1 rounded">
+                              {user.role}
+                            </span>
+                          )}
+                        </div>
+                      </SelectItem>
+                    ))
+                  }
                 </SelectContent>
               </Select>
             </div>

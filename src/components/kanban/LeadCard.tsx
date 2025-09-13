@@ -1,14 +1,15 @@
 import React from 'react';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import { 
-  Mail, 
-  Phone, 
-  DollarSign, 
-  MessageSquare, 
+import {
+  Mail,
+  Phone,
+  DollarSign,
+  MessageSquare,
   ExternalLink,
   Clock,
-  Calendar
+  Calendar,
+  User
 } from 'lucide-react';
 import type { Lead } from '../../types/kanban';
 import { Avatar, AvatarFallback } from '../ui/avatar';
@@ -118,6 +119,12 @@ export const LeadCard: React.FC<LeadCardProps> = ({ lead, onEdit, onDelete }) =>
           <div className="flex items-center gap-2 text-xs text-muted-foreground">
             <Mail className="w-3 h-3" />
             <span className="truncate">{lead.email}</span>
+          </div>
+        )}
+        {lead.assignedUser && (
+          <div className="flex items-center gap-2 text-xs text-blue-600">
+            <User className="w-3 h-3" />
+            <span className="truncate font-medium">{lead.assignedUser.name}</span>
           </div>
         )}
       </div>

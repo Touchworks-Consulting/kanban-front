@@ -17,6 +17,8 @@ export interface Lead {
   notes?: string;
   metadata?: Record<string, any>;
   account_id: string;
+  assigned_to_user_id?: string;
+  assignedUser?: User;
   createdAt: string;
   updatedAt: string;
   column?: KanbanColumn;
@@ -43,6 +45,15 @@ export interface Tag {
   account_id: string;
 }
 
+export interface User {
+  id: string;
+  name: string;
+  email: string;
+  role: 'owner' | 'admin' | 'member';
+  is_active: boolean;
+  account_id: string;
+}
+
 export interface KanbanBoard {
   columns: KanbanColumn[];
   account: {
@@ -65,6 +76,7 @@ export interface CreateLeadDto {
   position?: number;
   value?: number;
   notes?: string;
+  assigned_to_user_id?: string;
   tags?: string[];
 }
 

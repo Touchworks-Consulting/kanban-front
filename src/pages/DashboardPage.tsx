@@ -15,7 +15,7 @@ import {
   Phone,
   
 } from 'lucide-react';
-import { dashboardService, campaignsService, whatsappService, type ConversionTimeMetric } from '../services';
+import { dashboardService, campaignsService, whatsappService, type ConversionTimeMetric, type StageTimingMetric, type DetailedStageMetric, type StagnantLead } from '../services';
 import { DashboardSkeleton } from '../components/dashboard/DashboardSkeletons';
 import { Button } from '../components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select';
@@ -24,6 +24,12 @@ import { cn } from '../lib/utils';
 import {
   TimelineChartInner
 } from '../components/dashboard/DashboardCharts';
+import { StageTimingChart, EmptyStageTimingChart } from '../components/dashboard/StageTimingChart';
+import { StageMetricsTable } from '../components/dashboard/StageMetricsTable';
+import { StagnantLeadsCard } from '../components/dashboard/StagnantLeadsCard';
+import { SalesRankingTable } from '../components/dashboard/SalesRankingTable';
+import { SalesPerformanceChart } from '../components/dashboard/SalesPerformanceChart';
+import { ActivityConversionScatter } from '../components/dashboard/ActivityConversionScatter';
 // Interface para dados consolidados do dashboard
 interface ConsolidatedDashboardData {
   totalLeads: number;
@@ -88,6 +94,16 @@ export function DashboardPage() {
   const [conversionMetrics, setConversionMetrics] = useState<ConversionTimeMetric[]>([]);
   const [timelineData, setTimelineData] = useState<Array<{ date: string; leads: number; conversions: number }>>([]);
   const [funnelData, setFunnelData] = useState<Array<{ label: string; value: number }>>([]);
+
+  // Novos estados para análise de estágios
+  const [stageTimingData, setStageTimingData] = useState<StageTimingMetric[]>([]);
+  const [detailedStageMetrics, setDetailedStageMetrics] = useState<DetailedStageMetric[]>([]);
+  const [stagnantLeads, setStagnantLeads] = useState<{ leads: StagnantLead[]; threshold: number }>({ leads: [], threshold: 7 });
+
+  // Estados para dados do ranking de vendedores
+  const [salesRankingData, setSalesRankingData] = useState<any[]>([]);
+  const [salesPerformanceData, setSalesPerformanceData] = useState<any[]>([]);
+  const [activityConversionData, setActivityConversionData] = useState<any[]>([]);
   
   // Estados para dados adicionais
   const [campaignStats, setCampaignStats] = useState({
@@ -156,12 +172,30 @@ export function DashboardPage() {
         filterParams.end_date = appliedFilters.dateRange.end;
       }
 
-      // Fazer chamadas paralelas para todos os dados
-      const [metricsResponse, conversionResponse, timelineResponse, funnelResponse] = await Promise.all([
+      // Fazer chamadas paralelas para todos os dados incluindo as novas métricas de estágio e ranking de vendedores
+      const [
+        metricsResponse,
+        conversionResponse,
+        timelineResponse,
+        funnelResponse,
+        stageTimingResponse,
+        detailedStageResponse,
+        stagnantLeadsResponse,
+        salesRankingResponse,
+        salesPerformanceResponse,
+        activityConversionResponse
+      ] = await Promise.all([
         dashboardService.getMetrics(filterParams),
         dashboardService.getConversionTimeByCampaign(filterParams),
         dashboardService.getTimeline({ timeframe: 'week' }),
-        dashboardService.getConversionFunnel(filterParams)
+        dashboardService.getConversionFunnel(filterParams),
+        dashboardService.getStageTimingMetrics(filterParams),
+        dashboardService.getDetailedStageMetrics(filterParams),
+        dashboardService.getStagnantLeads({ days_threshold: 7 }),
+        // Novas chamadas para ranking de vendedores
+        dashboardService.getSalesRanking(filterParams).catch(err => ({ data: [] })),
+        dashboardService.getSalesPerformanceChart(filterParams).catch(err => ({ data: [] })),
+        dashboardService.getActivityConversionScatter(filterParams).catch(err => ({ data: [] }))
       ]);
 
       // Buscar dados adicionais (sem filtros de data)
@@ -235,6 +269,19 @@ export function DashboardPage() {
         value: item.count || item.value || 0
       }));
       setFunnelData(processedFunnelData);
+
+      // Definir dados das novas métricas de estágio
+      setStageTimingData(stageTimingResponse.stageMetrics);
+      setDetailedStageMetrics(detailedStageResponse.detailedMetrics);
+      setStagnantLeads({
+        leads: stagnantLeadsResponse.stagnantLeads,
+        threshold: stagnantLeadsResponse.threshold
+      });
+
+      // Definir dados do ranking de vendedores
+      setSalesRankingData(salesRankingResponse.data || []);
+      setSalesPerformanceData(salesPerformanceResponse.data || []);
+      setActivityConversionData(activityConversionResponse.data || []);
     } catch (err) {
       console.error('Erro ao carregar dados do dashboard:', err);
       setError('Erro ao carregar dados do dashboard');
@@ -495,7 +542,41 @@ export function DashboardPage() {
         </div>
       </div>
 
-      {/* Layout principal sem painéis redimensionáveis */}
+      {/* Nova seção: Gráfico de Tempo por Estágio (80%) + Leads Estagnados (20%) */}
+      <div className="grid grid-cols-5 gap-4 mb-6">
+        {/* Gráfico de Tempo por Estágio - 4 colunas (80%) */}
+        <div className="col-span-4 bg-card rounded-lg border p-4">
+          <div className="flex items-center gap-2 mb-4">
+            <BarChart3 className="w-5 h-5 text-primary" />
+            <h3 className="text-lg font-semibold">Tempo Médio por Estágio do Kanban</h3>
+            <span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded-full border border-blue-200">
+              Análise de Performance
+            </span>
+          </div>
+          <div className="h-80">
+            {stageTimingData && stageTimingData.length > 0 ? (
+              <StageTimingChart data={stageTimingData} />
+            ) : (
+              <EmptyStageTimingChart />
+            )}
+          </div>
+        </div>
+
+        {/* Leads Estagnados - 1 coluna (20%) */}
+        <div className="col-span-1">
+          <StagnantLeadsCard
+            leads={stagnantLeads.leads}
+            threshold={stagnantLeads.threshold}
+            className="h-full"
+            onLeadClick={(leadId) => {
+              console.log('Clicou no lead:', leadId);
+              // Aqui você pode navegar para o lead ou abrir um modal
+            }}
+          />
+        </div>
+      </div>
+
+      {/* Layout principal - grid original mantido */}
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-4 mb-6">
         {/* Evolução Temporal - 2 colunas para mais espaço horizontal */}
         <div className="lg:col-span-2 bg-card rounded-lg border p-4">
@@ -519,7 +600,7 @@ export function DashboardPage() {
             </div>
           </div>
         </div>
-        
+
         {/* Funil de Conversão - 1 coluna */}
         <div className="bg-card rounded-lg border p-4">
           <div className="flex items-center gap-2 mb-4">
@@ -633,6 +714,67 @@ export function DashboardPage() {
             <p className="text-sm">Nuvem de palavras será implementada</p>
             <p className="text-xs mt-1">Dados disponíveis no banco</p>
           </div>
+        </div>
+      </div>
+
+      {/* Nova seção: Tabela de Métricas Detalhadas por Estágio */}
+      <div className="mb-6">
+        <div className="bg-card rounded-lg border p-4">
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-2">
+              <Target className="w-5 h-5 text-primary" />
+              <h3 className="text-lg font-semibold">Métricas Detalhadas por Estágio</h3>
+              <span className="text-xs bg-purple-100 text-purple-800 px-2 py-1 rounded-full border border-purple-200">
+                Taxa de Conversão & Tempo Médio
+              </span>
+            </div>
+          </div>
+
+          {detailedStageMetrics && detailedStageMetrics.length > 0 ? (
+            <StageMetricsTable data={detailedStageMetrics} />
+          ) : (
+            <div className="text-center py-8 text-muted-foreground">
+              <Target className="w-12 h-12 mx-auto mb-4 opacity-50" />
+              <h3 className="text-lg font-medium mb-2">Métricas Detalhadas em Preparação</h3>
+              <p className="text-sm text-center max-w-md mx-auto">
+                As métricas detalhadas por estágio aparecerão aqui assim que houver
+                histórico suficiente de movimentações entre as colunas do kanban.
+              </p>
+              <div className="mt-4 text-xs bg-muted px-3 py-2 rounded inline-block">
+                💡 Mova alguns leads entre as colunas para gerar dados de conversão
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Nova seção: Ranking de Vendedores */}
+      <div className="mb-6">
+        <div className="bg-card rounded-lg border p-4">
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-2">
+              <Trophy className="w-5 h-5 text-primary" />
+              <h3 className="text-lg font-semibold">Ranking de Vendedores</h3>
+              <span className="text-xs bg-yellow-100 text-yellow-800 px-2 py-1 rounded-full border border-yellow-200">
+                Performance da Equipe
+              </span>
+            </div>
+          </div>
+
+          <SalesRankingTable data={salesRankingData} loading={isLoading} />
+        </div>
+      </div>
+
+      {/* Seção: Gráficos de Performance de Vendas */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-6">
+        {/* Gráfico de Performance de Vendas */}
+        <div className="bg-card rounded-lg border p-4">
+          <SalesPerformanceChart data={salesPerformanceData} loading={isLoading} />
+        </div>
+
+        {/* Gráfico de Dispersão: Atividades vs Conversão */}
+        <div className="bg-card rounded-lg border p-4">
+          <ActivityConversionScatter data={activityConversionData} loading={isLoading} />
         </div>
       </div>
     </div>
