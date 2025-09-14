@@ -4,6 +4,7 @@ import { Button } from '../ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 import { apiService } from '../../services/api';
 import { userService, type UserDto } from '../../services/users';
+import { useCustomStatuses } from '../../hooks/useCustomStatuses';
 import type { CreateLeadDto } from '../../types';
 
 interface Campaign {
@@ -39,6 +40,7 @@ export const CreateLeadModal: React.FC<CreateLeadModalProps> = ({
   columnId,
   columnName,
 }) => {
+  const { getInitialStatus } = useCustomStatuses();
   const [formData, setFormData] = useState<CreateLeadDto>({
     name: '',
     phone: '',
@@ -89,7 +91,14 @@ export const CreateLeadModal: React.FC<CreateLeadModalProps> = ({
 
     setLoading(true);
     try {
-      await onSubmit(formData);
+      // Get initial status and add it to form data
+      const initialStatus = getInitialStatus();
+      const leadData = {
+        ...formData,
+        status: initialStatus?.value || 'new' // fallback to 'new' if no initial status found
+      };
+
+      await onSubmit(leadData);
       setFormData({
         name: '',
         phone: '',

@@ -355,63 +355,6 @@ export const CampaignReportsModal: React.FC<CampaignReportsModalProps> = ({
                 )}
               </div>
 
-              {/* Recent Activity */}
-              <div className="bg-card border rounded-lg p-6">
-                <h3 className="text-lg font-medium text-foreground mb-4">
-                  Atividade Recente
-                </h3>
-                <div className="space-y-3">
-                  {Array.from({ length: 5 }, (_, i) => (
-                    <div key={i} className="flex items-center justify-between py-2 px-3 bg-muted rounded-lg">
-                      <div className="flex items-center gap-3">
-                        <div className="w-2 h-2 bg-green-500 rounded-full" />
-                        <span className="text-sm text-foreground">
-                          Lead capturado pela frase "quero saber mais"
-                        </span>
-                      </div>
-                      <span className="text-xs text-muted-foreground">
-                        há {Math.floor(Math.random() * 60) + 1} min
-                      </span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              {/* DEBUG DATA - Temporário para análise */}
-              {debugData && (
-                <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-6">
-                  <h3 className="text-lg font-medium text-yellow-800 mb-4">
-                    🔍 DEBUG - Dados Reais da Campanha
-                  </h3>
-                  <div className="space-y-2 text-sm">
-                    <p><strong>Total Leads:</strong> {debugData.metrics.total_leads}</p>
-                    <p><strong>Total Interações:</strong> {debugData.metrics.total_interactions}</p>
-                    <p><strong>Tempo Médio Resposta:</strong> {debugData.metrics.avg_response_time} min</p>
-                    <p><strong>Taxa Conversão Comparativa:</strong> {debugData.metrics.comparative_conversion_rate}% (vs {debugData.metrics.total_leads_all_campaigns} leads totais)</p>
-                    <p><strong>Ticket Médio:</strong> R$ {debugData.metrics.avg_ticket}</p>
-                    <p><strong>Receita Total:</strong> R$ {debugData.metrics.total_revenue}</p>
-                    <p><strong>Leads sem frase eficaz:</strong> {debugData.issues_found.leads_without_effective_phrase} → <span className="text-green-600">Agora usa mensagem como fallback</span></p>
-                    <p><strong>Leads sem referral:</strong> {debugData.issues_found.leads_without_referral}</p>
-                  </div>
-                  
-                  <details className="mt-4">
-                    <summary className="cursor-pointer font-medium text-yellow-800">
-                      Ver detalhes dos leads
-                    </summary>
-                    <div className="mt-2 max-h-60 overflow-y-auto">
-                      {debugData.leads_details.map((lead: any, index: number) => (
-                        <div key={index} className="border-b border-yellow-200 py-2">
-                          <p><strong>{lead.name}</strong> ({lead.phone})</p>
-                          <p><strong>Mensagem:</strong> {lead.message}</p>
-                          <p><strong>Frase eficaz:</strong> {lead.effective_phrase || lead.message || 'Nenhuma'}</p>
-                          <p><strong>Código da frase:</strong> {lead.phrase_code || 'N/A'}</p>
-                          <p><strong>Tem referral:</strong> {lead.has_referral ? 'Sim' : 'Não'}</p>
-                        </div>
-                      ))}
-                    </div>
-                  </details>
-                </div>
-              )}
             </div>
           )}
         </div>

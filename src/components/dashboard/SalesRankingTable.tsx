@@ -58,16 +58,15 @@ const RankingBadge: React.FC<{ position: number }> = ({ position }) => {
 };
 
 // Componente para formatação de receita
-const RevenueDisplay: React.FC<{ value: string }> = ({ value }) => {
-  const numericValue = parseFloat(value);
-  const formatted = numericValue.toLocaleString('pt-BR', {
+const RevenueDisplay: React.FC<{ value: number }> = ({ value }) => {
+  const formatted = value.toLocaleString('pt-BR', {
     style: 'currency',
     currency: 'BRL'
   });
 
   return (
     <div className="flex items-center gap-1">
-      <DollarSign className="w-3 h-3 text-green-600" />
+      
       <span className="font-medium text-green-700">{formatted}</span>
     </div>
   );
@@ -113,10 +112,6 @@ export const SalesRankingTable: React.FC<SalesRankingTableProps> = ({
 
   return (
     <div className={`w-full overflow-x-auto ${className}`}>
-      <div className="mb-4 flex items-center gap-2">
-        <Trophy className="w-5 h-5 text-yellow-600" />
-        <h3 className="text-lg font-semibold text-foreground">Ranking de Vendedores</h3>
-      </div>
 
       <table className="w-full text-sm">
         <thead>
@@ -153,7 +148,6 @@ export const SalesRankingTable: React.FC<SalesRankingTableProps> = ({
             </th>
             <th className="text-center py-3 px-4 font-medium text-xs uppercase tracking-wide text-muted-foreground">
               <div className="flex items-center justify-center gap-1">
-                <DollarSign className="w-3 h-3" />
                 Receita Total
               </div>
             </th>
@@ -229,6 +223,7 @@ export const SalesRankingTable: React.FC<SalesRankingTableProps> = ({
 
                 {/* Receita Total */}
                 <td className="py-3 px-4 text-center">
+                  
                   <RevenueDisplay value={seller.totalRevenue} />
                 </td>
               </tr>
@@ -237,52 +232,7 @@ export const SalesRankingTable: React.FC<SalesRankingTableProps> = ({
         </tbody>
       </table>
 
-      {/* Legenda */}
-      <div className="mt-4 p-3 bg-muted/20 rounded-lg">
-        <div className="text-xs text-muted-foreground mb-2 font-medium">
-          Critérios de Performance:
-        </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-xs">
-          <div>
-            <span className="font-medium">Taxa de Conversão:</span>
-            <div className="flex items-center gap-1 mt-1">
-              <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-              <span>≥ 70% (Excelente)</span>
-            </div>
-            <div className="flex items-center gap-1">
-              <div className="w-2 h-2 bg-yellow-500 rounded-full"></div>
-              <span>50-69% (Bom)</span>
-            </div>
-            <div className="flex items-center gap-1">
-              <div className="w-2 h-2 bg-orange-500 rounded-full"></div>
-              <span>30-49% (Regular)</span>
-            </div>
-            <div className="flex items-center gap-1">
-              <div className="w-2 h-2 bg-red-500 rounded-full"></div>
-              <span>&lt; 30% (Necessita melhoria)</span>
-            </div>
-          </div>
-          <div>
-            <span className="font-medium">Ranking:</span>
-            <div className="flex items-center gap-1 mt-1">
-              <Trophy className="w-3 h-3 text-yellow-600" />
-              <span>1º lugar - Ouro</span>
-            </div>
-            <div className="flex items-center gap-1">
-              <Medal className="w-3 h-3 text-gray-600" />
-              <span>2º lugar - Prata</span>
-            </div>
-            <div className="flex items-center gap-1">
-              <Medal className="w-3 h-3 text-orange-600" />
-              <span>3º lugar - Bronze</span>
-            </div>
-            <div className="flex items-center gap-1">
-              <Target className="w-3 h-3 text-blue-600" />
-              <span>Demais posições</span>
-            </div>
-          </div>
-        </div>
-      </div>
+
     </div>
   );
 };

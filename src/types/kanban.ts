@@ -8,7 +8,7 @@ export interface Lead {
   campaign?: string;
   source_url?: string;
   message?: string;
-  status: 'new' | 'contacted' | 'qualified' | 'proposal' | 'won' | 'lost';
+  status: string; // Now supports custom statuses
   column_id?: string;
   position: number;
   won_reason?: string;
@@ -71,7 +71,7 @@ export interface CreateLeadDto {
   campaign?: string;
   source_url?: string;
   message?: string;
-  status?: Lead['status'];
+  status?: string;
   column_id?: string;
   position?: number;
   value?: number;

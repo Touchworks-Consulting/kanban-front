@@ -10,6 +10,7 @@ import {
   ChevronDown,
   Check
 } from 'lucide-react';
+import { useCustomStatuses } from '../../hooks/useCustomStatuses';
 
 // Interface para filtros
 export interface DashboardFilters {
@@ -44,15 +45,7 @@ const DATE_PRESETS = [
   { label: 'Personalizado', value: 'custom' }
 ];
 
-// Status disponíveis
-const STATUS_OPTIONS = [
-  { label: 'Novos', value: 'new' },
-  { label: 'Contatados', value: 'contacted' },
-  { label: 'Qualificados', value: 'qualified' },
-  { label: 'Proposta', value: 'proposal' },
-  { label: 'Ganhos', value: 'won' },
-  { label: 'Perdidos', value: 'lost' }
-];
+// Status disponíveis - will be replaced with dynamic custom statuses
 
 // Plataformas disponíveis
 const PLATFORM_OPTIONS = [
@@ -151,8 +144,15 @@ export const DashboardControls: React.FC<DashboardControlsProps> = ({
   onExport,
   isRefreshing = false
 }) => {
+  const { statuses } = useCustomStatuses();
   const [showFilters, setShowFilters] = useState(false);
   const [showDatePicker, setShowDatePicker] = useState(false);
+
+  // Convert custom statuses to options format
+  const statusOptions = statuses.map(status => ({
+    label: status.label,
+    value: status.value
+  }));
 
   const handleDatePresetChange = (preset: string) => {
     const newFilters = {
@@ -337,7 +337,7 @@ export const DashboardControls: React.FC<DashboardControlsProps> = ({
                 <label className="text-sm font-medium text-foreground mb-2 block">Status</label>
                 <Dropdown
                   label="Selecionar Status"
-                  options={STATUS_OPTIONS}
+                  options={statusOptions}
                   selected={filters.status}
                   onChange={(status) => onFiltersChange({ ...filters, status })}
                 />

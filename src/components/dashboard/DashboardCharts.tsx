@@ -322,6 +322,18 @@ export const mockFunnelData = [
   { step: 'Fechados', count: 85, percentage: 34 },
 ];
 
+// Utility function to generate mock status data based on custom statuses
+// This replaces the hardcoded mockStatusData with dynamic generation
+export const generateMockStatusData = (customStatuses: Array<{ label: string; value: string; color: string; is_won: boolean; is_lost: boolean }>) => {
+  // Generate mock counts for demonstration
+  return customStatuses.map((status, index) => ({
+    name: status.label,
+    value: Math.floor(Math.random() * 50) + 10, // Random value between 10-60
+    color: status.color,
+  }));
+};
+
+// Legacy mock data for backward compatibility - will be replaced by generateMockStatusData
 export const mockStatusData = [
   { name: 'Novos', value: 45, color: COLORS.info },
   { name: 'Contatados', value: 35, color: COLORS.warning },

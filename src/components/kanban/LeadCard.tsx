@@ -16,6 +16,7 @@ import { Avatar, AvatarFallback } from '../ui/avatar';
 import { Button } from '../ui/button';
 import { cn } from '../../lib/utils';
 import { formatDate } from '../../utils/helpers';
+import { useCustomStatuses } from '../../hooks/useCustomStatuses';
 
 interface LeadCardProps {
   lead: Lead;
@@ -24,6 +25,7 @@ interface LeadCardProps {
 }
 
 export const LeadCard: React.FC<LeadCardProps> = ({ lead, onEdit, onDelete }) => {
+  const { getStatusByValue } = useCustomStatuses();
   const {
     attributes,
     listeners,
@@ -174,6 +176,39 @@ export const LeadCard: React.FC<LeadCardProps> = ({ lead, onEdit, onDelete }) =>
           )}
         </div>
       )}
+
+      {/* Status Badge */}
+      {(() => {
+        const statusInfo = getStatusByValue(lead.status);
+        if (!statusInfo) return null;
+
+        return (
+          <div className="flex items-center justify-between mb-2">
+            <span
+              className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium border"
+              style={{
+                backgroundColor: `${statusInfo.color}15`,
+                color: statusInfo.color,
+                borderColor: `${statusInfo.color}30`,
+              }}
+            >
+              <div
+                className="w-2 h-2 rounded-full mr-1"
+                style={{ backgroundColor: statusInfo.color }}
+              />
+              {statusInfo.label}
+            </span>
+            {(statusInfo.is_won || statusInfo.is_lost) && (
+              <span className={cn(
+                "text-xs font-medium px-1 py-0.5 rounded",
+                statusInfo.is_won ? "bg-green-100 text-green-800" : "bg-red-100 text-red-800"
+              )}>
+                {statusInfo.is_won ? '✓' : '✗'}
+              </span>
+            )}
+          </div>
+        );
+      })()}
 
       {/* Footer */}
       <div className="flex items-center justify-between pt-2 border-t">

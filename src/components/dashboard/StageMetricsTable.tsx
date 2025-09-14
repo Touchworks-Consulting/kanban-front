@@ -178,52 +178,6 @@ export const StageMetricsTable: React.FC<StageMetricsTableProps> = ({
         </tbody>
       </table>
 
-      {/* Legenda */}
-      <div className="mt-4 p-3 bg-muted/20 rounded-lg">
-        <div className="text-xs text-muted-foreground mb-2 font-medium">
-          Legenda de Performance:
-        </div>
-        <div className="grid grid-cols-2 gap-2 text-xs">
-          <div>
-            <span className="font-medium">Tempo Médio:</span>
-            <div className="flex items-center gap-1 mt-1">
-              <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-              <span>≤ 2 dias (Excelente)</span>
-            </div>
-            <div className="flex items-center gap-1">
-              <div className="w-2 h-2 bg-yellow-500 rounded-full"></div>
-              <span>3-7 dias (Bom)</span>
-            </div>
-            <div className="flex items-center gap-1">
-              <div className="w-2 h-2 bg-orange-500 rounded-full"></div>
-              <span>8-14 dias (Atenção)</span>
-            </div>
-            <div className="flex items-center gap-1">
-              <div className="w-2 h-2 bg-red-500 rounded-full"></div>
-              <span>&gt; 14 dias (Crítico)</span>
-            </div>
-          </div>
-          <div>
-            <span className="font-medium">Taxa de Conversão:</span>
-            <div className="flex items-center gap-1 mt-1">
-              <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-              <span>≥ 80% (Excelente)</span>
-            </div>
-            <div className="flex items-center gap-1">
-              <div className="w-2 h-2 bg-yellow-500 rounded-full"></div>
-              <span>60-79% (Bom)</span>
-            </div>
-            <div className="flex items-center gap-1">
-              <div className="w-2 h-2 bg-orange-500 rounded-full"></div>
-              <span>40-59% (Atenção)</span>
-            </div>
-            <div className="flex items-center gap-1">
-              <div className="w-2 h-2 bg-red-500 rounded-full"></div>
-              <span>&lt; 40% (Crítico)</span>
-            </div>
-          </div>
-        </div>
-      </div>
     </div>
   );
 };

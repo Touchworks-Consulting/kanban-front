@@ -4,6 +4,7 @@ import { Button } from '../ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 import { apiService } from '../../services/api';
 import { userService, type UserDto } from '../../services/users';
+import { useCustomStatuses } from '../../hooks/useCustomStatuses';
 import type { Lead, UpdateLeadDto } from '../../types';
 
 interface Campaign {
@@ -32,15 +33,6 @@ const platforms = [
   'Outros'
 ];
 
-const statusOptions = [
-  { value: 'new', label: 'Novo' },
-  { value: 'contacted', label: 'Contactado' },
-  { value: 'qualified', label: 'Qualificado' },
-  { value: 'proposal', label: 'Proposta' },
-  { value: 'won', label: 'Ganho' },
-  { value: 'lost', label: 'Perdido' },
-];
-
 export const EditLeadModal: React.FC<EditLeadModalProps> = ({
   isOpen,
   onClose,
@@ -48,6 +40,7 @@ export const EditLeadModal: React.FC<EditLeadModalProps> = ({
   onDelete,
   lead,
 }) => {
+  const { statuses, lossReasons, loading: statusesLoading } = useCustomStatuses();
   const [formData, setFormData] = useState<UpdateLeadDto>({
     name: '',
     phone: '',
@@ -210,11 +203,32 @@ export const EditLeadModal: React.FC<EditLeadModalProps> = ({
                   <SelectValue placeholder="Selecionar status" />
                 </SelectTrigger>
                 <SelectContent>
-                  {statusOptions.map(status => (
-                    <SelectItem key={status.value} value={status.value}>
-                      {status.label}
+                  {statusesLoading ? (
+                    <SelectItem value="loading" disabled>
+                      Carregando status...
                     </SelectItem>
-                  ))}
+                  ) : (
+                    statuses.map(status => (
+                      <SelectItem key={status.value} value={status.value}>
+                        <div className="flex items-center gap-2">
+                          <div
+                            className="w-3 h-3 rounded-full border"
+                            style={{ backgroundColor: status.color }}
+                          />
+                          <span>{status.label}</span>
+                          {status.is_initial && (
+                            <span className="text-xs bg-blue-100 text-blue-800 px-1 rounded">Inicial</span>
+                          )}
+                          {status.is_won && (
+                            <span className="text-xs bg-green-100 text-green-800 px-1 rounded">Ganho</span>
+                          )}
+                          {status.is_lost && (
+                            <span className="text-xs bg-red-100 text-red-800 px-1 rounded">Perdido</span>
+                          )}
+                        </div>
+                      </SelectItem>
+                    ))
+                  )}
                 </SelectContent>
               </Select>
             </div>

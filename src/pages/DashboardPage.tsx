@@ -16,6 +16,7 @@ import {
   
 } from 'lucide-react';
 import { dashboardService, campaignsService, whatsappService, type ConversionTimeMetric, type StageTimingMetric, type DetailedStageMetric, type StagnantLead } from '../services';
+import { useCustomStatuses } from '../hooks/useCustomStatuses';
 import { DashboardSkeleton } from '../components/dashboard/DashboardSkeletons';
 import { Button } from '../components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select';
@@ -89,6 +90,9 @@ const SimpleFunnelChart = ({ data }: { data: any[] }) => {
 
 
 export function DashboardPage() {
+  // Custom statuses hook
+  const { statuses, getStatusByValue } = useCustomStatuses();
+
   // Estado consolidado para todos os dados do dashboard
   const [dashboardData, setDashboardData] = useState<ConsolidatedDashboardData | null>(null);
   const [conversionMetrics, setConversionMetrics] = useState<ConversionTimeMetric[]>([]);
@@ -631,24 +635,30 @@ export function DashboardPage() {
           </div>
           {dashboardData?.leadsByStatus && dashboardData.leadsByStatus.length > 0 ? (
             <div className="space-y-2 h-64 overflow-y-auto">
-              {dashboardData.leadsByStatus
-                .filter((item: any) => !['won', 'lost', 'ganho', 'perdido'].includes(item.status.toLowerCase()))
-                .map((item: any, index: number) => (
-                <div key={index} className="flex items-center justify-between p-2 bg-muted rounded border">
-                  <div className="flex items-center gap-2 flex-1">
-                    <div className={`w-3 h-3 rounded-full ${getStatusColor(item.status)}`} />
-                    <span className="text-sm font-medium capitalize">
-                      {getStatusLabel(item.status)}
-                    </span>
-                  </div>
-                  <div className="text-right">
-                    <div className="text-lg font-bold text-primary">{item.count}</div>
-                    <div className="text-xs text-muted-foreground">
-                      {((item.count / (dashboardData?.totalLeads || 1)) * 100).toFixed(0)}%
+              {dashboardData.leadsByStatus.map((item: any, index: number) => {
+                const statusInfo = getStatusByValue(item.status);
+                if (!statusInfo || statusInfo.is_won || statusInfo.is_lost) return null;
+
+                return (
+                  <div key={index} className="flex items-center justify-between p-2 bg-muted rounded border">
+                    <div className="flex items-center gap-2 flex-1">
+                      <div
+                        className="w-3 h-3 rounded-full border"
+                        style={{ backgroundColor: statusInfo.color }}
+                      />
+                      <span className="text-sm font-medium">
+                        {statusInfo.label}
+                      </span>
+                    </div>
+                    <div className="text-right">
+                      <div className="text-lg font-bold text-primary">{item.count}</div>
+                      <div className="text-xs text-muted-foreground">
+                        {((item.count / (dashboardData?.totalLeads || 1)) * 100).toFixed(0)}%
+                      </div>
                     </div>
                   </div>
-                </div>
-              ))}
+                );
+              }).filter(Boolean)}
             </div>
           ) : (
             <div className="text-center py-6">
@@ -781,27 +791,3 @@ export function DashboardPage() {
   );
 }
 
-// Helper functions
-function getStatusColor(status: string): string {
-  const colors: Record<string, string> = {
-    'new': 'bg-blue-500',
-    'contacted': 'bg-yellow-500',
-    'qualified': 'bg-purple-500',
-    'proposal': 'bg-orange-500',
-    'won': 'bg-green-500',
-    'lost': 'bg-red-500',
-  };
-  return colors[status] || 'bg-gray-500';
-}
-
-function getStatusLabel(status: string): string {
-  const labels: Record<string, string> = {
-    'new': 'Novos',
-    'contacted': 'Contatados',
-    'qualified': 'Qualificados',
-    'proposal': 'Proposta',
-    'won': 'Ganhos',
-    'lost': 'Perdidos',
-  };
-  return labels[status] || status;
-}
