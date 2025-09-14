@@ -15,7 +15,7 @@ interface SettingsTabProps {
 const SettingsTabs: React.FC<SettingsTabProps> = ({ activeTab, setActiveTab }) => {
   const tabs = [
     { id: 'profile', label: 'Perfil', icon: User },
-    { id: 'status', label: 'Status', icon: Settings },
+    { id: 'status', label: 'Status dos Leads', icon: Settings },
     { id: 'whatsapp', label: 'WhatsApp', icon: Phone },
     { id: 'notifications', label: 'Notificações', icon: Bell },
     { id: 'security', label: 'Segurança', icon: Shield },

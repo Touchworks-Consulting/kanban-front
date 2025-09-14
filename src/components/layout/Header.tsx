@@ -11,6 +11,7 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { ModeToggle } from '../mode-toggle';
+import NotificationHeader from '../header/NotificationHeader';
 
 const getPageTitle = (pathname: string) => {
   switch (pathname) {
@@ -29,7 +30,7 @@ const getPageTitle = (pathname: string) => {
 
 const Header = () => {
   const location = useLocation();
-  const { logout, account } = useAuthStore();
+  const { logout, account, token } = useAuthStore();
   const pageTitle = getPageTitle(location.pathname);
 
   const getInitials = (name: string | undefined) => {
@@ -45,6 +46,12 @@ const Header = () => {
     <header className="bg-background p-4 h-16 flex items-center justify-between">
       <h1 className="text-xl font-semibold">{pageTitle}</h1>
       <div className="flex items-center space-x-4">
+        {token && account?.id && (
+          <NotificationHeader
+            accountId={account.id}
+            token={token}
+          />
+        )}
         <ModeToggle />
         <DropdownMenu>
           <DropdownMenuTrigger>
