@@ -2,11 +2,14 @@ import { useState } from 'react';
 import { Navigate, Link, useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../stores/auth';
 import { LoadingSpinner } from '../components/LoadingSpinner';
+import { Button } from '../components/ui/button';
+import { Input } from '../components/ui/input';
+import { Label } from '../components/ui/label';
 
 export function RegisterPage() {
   const navigate = useNavigate();
   const { register, isAuthenticated, isLoading } = useAuthStore();
-  const [form, setForm] = useState({ name: '', email: '', password: '', accountName: '', domain: '' });
+  const [form, setForm] = useState({ name: '', email: '', password: '', accountName: '' });
   const [error, setError] = useState<string | null>(null);
 
   if (isAuthenticated) return <Navigate to="/dashboard" replace />;
@@ -28,42 +31,104 @@ export function RegisterPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-indigo-50 to-blue-100">
-      <div className="w-full max-w-lg p-8 bg-white rounded-lg shadow-lg">
+    <div className="flex min-h-svh flex-col items-center justify-center bg-muted p-6 md:p-10">
+      <div className="w-full max-w-lg p-8 bg-card text-card-foreground rounded-xl border shadow">
         <div className="text-center mb-6">
-          <h1 className="text-3xl font-bold text-gray-900">Criar Conta</h1>
-          <p className="text-gray-600 mt-2">Preencha os dados para iniciar</p>
+          <div className="flex items-center justify-center gap-2 mb-2">
+            <img src="/src/assets/vite.svg" alt="Touch RUN" className="h-8 w-8" />
+            <h1 className="text-3xl font-bold">Criar Conta</h1>
+          </div>
+          <p className="text-muted-foreground mt-2">Preencha os dados para iniciar no Touch RUN</p>
+
+          {/* Banner Beta */}
+          <div className="mt-3">
+            <div className="inline-flex items-center rounded-full bg-blue-50 dark:bg-blue-950/50 px-3 py-1 text-xs font-medium text-blue-700 dark:text-blue-300 ring-1 ring-inset ring-blue-700/10 dark:ring-blue-300/20">
+              <span className="mr-1.5 h-1.5 w-1.5 rounded-full bg-blue-500 animate-pulse"></span>
+              Versão Beta Gratuita
+            </div>
+          </div>
         </div>
-        {error && <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded text-sm text-red-600">{error}</div>}
+        {error && (
+          <div className="mb-4 rounded-md bg-destructive/15 px-3 py-2 text-sm text-destructive">
+            {error}
+          </div>
+        )}
         <form onSubmit={handleSubmit} className="grid grid-cols-1 gap-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700">Nome</label>
-            <input name="name" value={form.name} onChange={handleChange} required disabled={isLoading} className="mt-1 w-full border rounded px-3 py-2" />
+          <div className="grid gap-2">
+            <Label htmlFor="name">Nome</Label>
+            <Input
+              id="name"
+              name="name"
+              value={form.name}
+              onChange={handleChange}
+              placeholder="Seu nome completo"
+              required
+              disabled={isLoading}
+              autoComplete="name"
+            />
           </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700">Email</label>
-            <input type="email" name="email" value={form.email} onChange={handleChange} required disabled={isLoading} className="mt-1 w-full border rounded px-3 py-2" />
+          <div className="grid gap-2">
+            <Label htmlFor="email">Email</Label>
+            <Input
+              id="email"
+              type="email"
+              name="email"
+              value={form.email}
+              onChange={handleChange}
+              placeholder="seu@email.com"
+              required
+              disabled={isLoading}
+              autoComplete="email"
+            />
           </div>
-            <div>
-            <label className="block text-sm font-medium text-gray-700">Senha</label>
-            <input type="password" name="password" value={form.password} onChange={handleChange} required disabled={isLoading} className="mt-1 w-full border rounded px-3 py-2" />
+          <div className="grid gap-2">
+            <Label htmlFor="password">Senha</Label>
+            <Input
+              id="password"
+              type="password"
+              name="password"
+              value={form.password}
+              onChange={handleChange}
+              placeholder="Sua senha"
+              required
+              disabled={isLoading}
+              autoComplete="new-password"
+            />
           </div>
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700">Nome da Conta</label>
-              <input name="accountName" value={form.accountName} onChange={handleChange} placeholder="Minha Empresa" disabled={isLoading} className="mt-1 w-full border rounded px-3 py-2" />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700">Domínio (opcional)</label>
-              <input name="domain" value={form.domain} onChange={handleChange} placeholder="ex: empresa.com" disabled={isLoading} className="mt-1 w-full border rounded px-3 py-2" />
-            </div>
+          <div className="grid gap-2">
+            <Label htmlFor="accountName">Nome da Conta</Label>
+            <Input
+              id="accountName"
+              name="accountName"
+              value={form.accountName}
+              onChange={handleChange}
+              placeholder="Nome da sua empresa ou organização"
+              disabled={isLoading}
+              autoComplete="off"
+              data-1p-ignore
+              data-lpignore="true"
+            />
           </div>
-          <button type="submit" disabled={isLoading} className="mt-2 w-full flex items-center justify-center bg-primary text-white py-2 rounded disabled:opacity-50">
-            {isLoading ? (<><LoadingSpinner size="sm" className="mr-2" /> Registrando...</>) : 'Registrar'}
-          </button>
+          <Button
+            type="submit"
+            disabled={isLoading}
+            className="w-full mt-2"
+          >
+            {isLoading ? (
+              <>
+                <LoadingSpinner size="sm" className="mr-2" />
+                Registrando...
+              </>
+            ) : (
+              'Registrar'
+            )}
+          </Button>
         </form>
-        <div className="mt-6 text-center text-sm text-gray-600">
-          Já tem conta? <Link to="/login" className="text-indigo-600 hover:underline">Entrar</Link>
+        <div className="mt-6 text-center text-sm text-muted-foreground">
+          Já tem conta?{" "}
+          <Link to="/login" className="underline underline-offset-4 hover:text-primary">
+            Entrar
+          </Link>
         </div>
       </div>
     </div>

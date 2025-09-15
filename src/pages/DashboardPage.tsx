@@ -28,6 +28,8 @@ import {
 import { StageTimingChart, EmptyStageTimingChart } from '../components/dashboard/StageTimingChart';
 import { StageMetricsTable } from '../components/dashboard/StageMetricsTable';
 import { StagnantLeadsCard } from '../components/dashboard/StagnantLeadsCard';
+import { BetaBanner } from '../components/BetaBanner';
+import { PlanLimitsAlert } from '../components/PlanLimitsAlert';
 import { SalesRankingTable } from '../components/dashboard/SalesRankingTable';
 import { SalesPerformanceChart } from '../components/dashboard/SalesPerformanceChart';
 import { ActivityConversionScatter } from '../components/dashboard/ActivityConversionScatter';
@@ -357,6 +359,12 @@ export function DashboardPage() {
 
   return (
     <div className="h-full flex flex-col">
+      {/* Beta Banner */}
+      <BetaBanner />
+
+      {/* Plan Limits Alert */}
+      <PlanLimitsAlert />
+
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <div>

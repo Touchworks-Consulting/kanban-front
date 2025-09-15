@@ -1,6 +1,6 @@
-# CRM Touch Frontend
+# Touch RUN Frontend
 
-Frontend da aplicação CRM Touch - Interface Kanban otimizada para dispositivos móveis e tablets.
+Frontend da aplicação Touch RUN - Interface Kanban otimizada para dispositivos móveis e tablets.
 
 ## 🚀 Tecnologias
 
@@ -76,7 +76,7 @@ yarn preview
 
 ```env
 VITE_API_BASE_URL=http://localhost:3000
-VITE_APP_NAME=CRM Touch
+VITE_APP_NAME=Touch RUN
 VITE_APP_VERSION=1.0.0
 ```
 

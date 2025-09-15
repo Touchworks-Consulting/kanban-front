@@ -22,7 +22,7 @@ const navItems = [
 ];
 
 const Sidebar = () => {
-  const [isExpanded, setIsExpanded] = useState(true);
+  const [isExpanded, setIsExpanded] = useState(false);
   const [showCreateAccount, setShowCreateAccount] = useState(false);
   const location = useLocation();
 
@@ -39,9 +39,15 @@ const Sidebar = () => {
       className="bg-background text-foreground h-screen flex flex-col"
     >
       <div className="flex items-center p-4 h-16">
-         <motion.div animate={{ opacity: isExpanded ? 1 : 0, width: isExpanded ? 'auto' : 0 }} className="overflow-hidden">
-            <span className="font-bold text-lg whitespace-nowrap">Kanban Touch</span>
-        </motion.div>
+        <div className="flex items-center">
+          <img src="/src/assets/vite.svg" alt="Touch Run" className="h-8 w-8 flex-shrink-0" />
+          <motion.div
+            animate={{ opacity: isExpanded ? 1 : 0, width: isExpanded ? 'auto' : 0 }}
+            className="overflow-hidden"
+          >
+            <span className="font-bold text-lg whitespace-nowrap ml-3">Touch Run</span>
+          </motion.div>
+        </div>
       </div>
 
       {/* Account Switcher */}
@@ -57,6 +63,7 @@ const Sidebar = () => {
               <div className="text-xs text-muted-foreground mb-1">Conta Atual</div>
               <AccountSwitcher
                 onCreateAccount={() => setShowCreateAccount(true)}
+                collapsed={false}
                 className="w-full"
               />
             </motion.div>

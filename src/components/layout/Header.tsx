@@ -1,4 +1,4 @@
-import { useLocation } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../../stores/auth';
 import { LogOut } from 'lucide-react';
 import {
@@ -30,6 +30,7 @@ const getPageTitle = (pathname: string) => {
 
 const Header = () => {
   const location = useLocation();
+  const navigate = useNavigate();
   const { logout, account, token } = useAuthStore();
   const pageTitle = getPageTitle(location.pathname);
 
@@ -63,8 +64,12 @@ const Header = () => {
           <DropdownMenuContent align="end">
             <DropdownMenuLabel>Minha Conta</DropdownMenuLabel>
             <DropdownMenuSeparator />
-            <DropdownMenuItem>Perfil</DropdownMenuItem>
-            <DropdownMenuItem>Configurações</DropdownMenuItem>
+            <DropdownMenuItem onClick={() => navigate('/profile')}>
+              Perfil
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => navigate('/plans')}>
+              Planos
+            </DropdownMenuItem>
             <DropdownMenuSeparator />
             <DropdownMenuItem onClick={logout} className="flex items-center space-x-2">
               <LogOut className="h-4 w-4" />

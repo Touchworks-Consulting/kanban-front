@@ -14,11 +14,17 @@ import { KanbanPage } from './pages/KanbanPage';
 import { CampaignsPage } from './pages/CampaignsPage';
 import { SettingsPage } from './pages/SettingsPage';
 import { UsersPage } from './pages/UsersPage';
+import { ProfilePage } from './pages/ProfilePage';
+import { PlansPage } from './pages/PlansPage';
+import TermsPage from './pages/TermsPage';
+import PrivacyPage from './pages/PrivacyPage';
+import { FeedbackAdminPage } from './pages/FeedbackAdminPage';
 import { ProtectedRoute } from './components/ProtectedRoute';
 import { LoadingSpinner } from './components/LoadingSpinner';
 import ErrorBoundary from './components/ErrorBoundary';
 import Sidebar from './components/layout/Sidebar';
 import Header from './components/layout/Header';
+import { FeedbackWidget } from './components/FeedbackWidget';
 
 // Componente para agrupar rotas que usam o layout principal
 const AppLayout = () => (
@@ -30,6 +36,7 @@ const AppLayout = () => (
           <Outlet />
       </main>
     </div>
+    <FeedbackWidget />
   </div>
 );
 
@@ -72,6 +79,9 @@ function App() {
               </ErrorBoundary>
             }
           />
+          <Route path="/terms" element={<TermsPage />} />
+          <Route path="/privacy" element={<PrivacyPage />} />
+          <Route path="/feedback-admin" element={<FeedbackAdminPage />} />
 
           <Route
             path="/"
@@ -121,6 +131,22 @@ function App() {
               element={
                 <ErrorBoundary>
                   <UsersPage />
+                </ErrorBoundary>
+              }
+            />
+            <Route
+              path="profile"
+              element={
+                <ErrorBoundary>
+                  <ProfilePage />
+                </ErrorBoundary>
+              }
+            />
+            <Route
+              path="plans"
+              element={
+                <ErrorBoundary>
+                  <PlansPage />
                 </ErrorBoundary>
               }
             />
