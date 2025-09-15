@@ -52,7 +52,27 @@ export const useAuthStore = create<AuthState>()(
           }
         } catch (err) {
           const error = err as any;
-          const errorMessage = error?.response?.data?.message || error.message || 'Falha no login';
+          console.log('Login error details:', {
+            error,
+            response: error?.response,
+            data: error?.response?.data,
+            message: error?.response?.data?.message
+          });
+
+          // Melhor tratamento de mensagens de erro
+          let errorMessage = 'Falha no login';
+
+          if (error?.response?.data?.message) {
+            errorMessage = error.response.data.message;
+          } else if (error?.response?.data) {
+            // Se data é uma string, usar diretamente
+            errorMessage = typeof error.response.data === 'string'
+              ? error.response.data
+              : 'Credenciais inválidas';
+          } else if (error?.message) {
+            errorMessage = error.message;
+          }
+
           set({
             isLoading: false,
             error: errorMessage,
@@ -81,7 +101,27 @@ export const useAuthStore = create<AuthState>()(
           }
         } catch (err) {
           const error = err as any;
-          const errorMessage = error?.response?.data?.message || error.message || 'Falha no registro';
+          console.log('Register error details:', {
+            error,
+            response: error?.response,
+            data: error?.response?.data,
+            message: error?.response?.data?.message
+          });
+
+          // Melhor tratamento de mensagens de erro
+          let errorMessage = 'Falha no registro';
+
+          if (error?.response?.data?.message) {
+            errorMessage = error.response.data.message;
+          } else if (error?.response?.data) {
+            // Se data é uma string, usar diretamente
+            errorMessage = typeof error.response.data === 'string'
+              ? error.response.data
+              : 'Erro ao criar conta';
+          } else if (error?.message) {
+            errorMessage = error.message;
+          }
+
           set({
             isLoading: false,
             error: errorMessage,
