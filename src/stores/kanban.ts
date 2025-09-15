@@ -312,7 +312,7 @@ export const useKanbanStore = create<KanbanState>()(
           if (!board) return;
 
           const updatedColumns = board.columns.map(column =>
-            column.id === id ? response.column : column
+            column.id === id ? { ...response.column, leads: column.leads } : column
           ).sort((a, b) => a.position - b.position);
 
           set({

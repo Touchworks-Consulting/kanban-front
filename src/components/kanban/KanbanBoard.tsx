@@ -20,6 +20,7 @@ import { useSmartSearch } from '../../hooks/useSmartSearch';
 import { KanbanColumn } from './KanbanColumn';
 import { LeadCard } from './LeadCard';
 import { CreateColumnModal } from './CreateColumnModal';
+import { EditColumnModal } from './EditColumnModal';
 import { CreateLeadModal } from './CreateLeadModal';
 import { EditLeadModal } from './EditLeadModal';
 import { FilterBar, type FilterState } from './FilterBar';
@@ -27,7 +28,7 @@ import { LoadingSpinner } from '../LoadingSpinner';
 import { Button } from '../ui/button';
 import { ScrollArea } from '../ui/scroll-area';
 import { Alert, AlertDescription } from '../ui/alert';
-import type { Lead, CreateColumnDto, CreateLeadDto, UpdateLeadDto } from '../../types/kanban';
+import type { Lead, KanbanColumn as ColumnType, CreateColumnDto, UpdateColumnDto, CreateLeadDto, UpdateLeadDto } from '../../types/kanban';
 
 export const KanbanBoard: React.FC = () => {
   const {
@@ -38,6 +39,7 @@ export const KanbanBoard: React.FC = () => {
     optimisticMoveLead,
     moveLead,
     createColumn,
+    updateColumn,
     createLead,
     updateLead,
     deleteLead,
@@ -48,9 +50,11 @@ export const KanbanBoard: React.FC = () => {
   const [activeId, setActiveId] = useState<string | null>(null);
   const [activeLead, setActiveLead] = useState<Lead | null>(null);
   const [showCreateColumnModal, setShowCreateColumnModal] = useState(false);
+  const [showEditColumnModal, setShowEditColumnModal] = useState(false);
   const [showCreateLeadModal, setShowCreateLeadModal] = useState(false);
   const [showEditLeadModal, setShowEditLeadModal] = useState(false);
   const [selectedColumnForLead, setSelectedColumnForLead] = useState<{ id: string; name: string } | null>(null);
+  const [selectedColumnForEdit, setSelectedColumnForEdit] = useState<ColumnType | null>(null);
   const [selectedLeadForEdit, setSelectedLeadForEdit] = useState<Lead | null>(null);
   
   // Filter state
@@ -254,9 +258,15 @@ export const KanbanBoard: React.FC = () => {
     }
   };
 
-  const handleEditColumn = (column: any) => {
-    // TODO: Open edit column modal
-    console.log('Edit column:', column);
+  const handleEditColumn = (column: ColumnType) => {
+    setSelectedColumnForEdit(column);
+    setShowEditColumnModal(true);
+  };
+
+  const handleUpdateColumn = async (id: string, data: UpdateColumnDto) => {
+    await updateColumn(id, data);
+    setShowEditColumnModal(false);
+    setSelectedColumnForEdit(null);
   };
 
   const handleDeleteColumn = async (columnId: string) => {
@@ -424,6 +434,17 @@ export const KanbanBoard: React.FC = () => {
         isOpen={showCreateColumnModal}
         onClose={() => setShowCreateColumnModal(false)}
         onSubmit={handleCreateColumn}
+      />
+
+      {/* Edit Column Modal */}
+      <EditColumnModal
+        isOpen={showEditColumnModal}
+        onClose={() => {
+          setShowEditColumnModal(false);
+          setSelectedColumnForEdit(null);
+        }}
+        onSubmit={handleUpdateColumn}
+        column={selectedColumnForEdit}
       />
 
       {/* Create Lead Modal */}
