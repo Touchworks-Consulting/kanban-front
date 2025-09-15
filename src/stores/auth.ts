@@ -186,24 +186,36 @@ export const useAuthStore = create<AuthState>()(
 
 // Initialize auth state on app start
 export const initializeAuth = () => {
-  if (authService.isAuthenticated() && !authService.isTokenExpired()) {
-    const account = authService.getCurrentAccount();
-    const token = authService.getToken();
-    
-    if (account && token) {
-      useAuthStore.setState({
-        account,
-        token,
-        isAuthenticated: true,
-      });
-    }
+  console.log('🔧 Initializing auth state...');
+
+  const token = authService.getToken();
+  const account = authService.getCurrentAccount();
+
+  console.log('📊 Auth data from localStorage:', {
+    hasToken: !!token,
+    hasAccount: !!account,
+    tokenExpired: token ? authService.isTokenExpired() : 'no token'
+  });
+
+  if (token && account && !authService.isTokenExpired()) {
+    console.log('✅ Valid auth data found, setting authenticated state');
+    useAuthStore.setState({
+      account,
+      token,
+      isAuthenticated: true,
+      isLoading: false,
+      error: null,
+    });
   } else {
+    console.log('❌ Invalid or expired auth data, clearing state');
     // Clear invalid auth data
     authService.clearAuthData();
     useAuthStore.setState({
       account: null,
       token: null,
       isAuthenticated: false,
+      isLoading: false,
+      error: null,
     });
   }
 };

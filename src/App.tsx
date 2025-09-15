@@ -6,7 +6,7 @@ import {
   Navigate,
   Outlet,
 } from 'react-router-dom';
-import { useAuthStore } from './stores/auth';
+import { useAuthStore, initializeAuth } from './stores/auth';
 import { LoginPage } from './pages/LoginPage';
 import { RegisterPage } from './pages/RegisterPage';
 import { DashboardPage } from './pages/DashboardPage';
@@ -43,8 +43,9 @@ const AppLayout = () => (
 function App() {
   const { isAuthenticated, isLoading, refreshAuth, token } = useAuthStore();
 
-  // Desabilita refresh automático agressivo; só tenta uma vez se já há token armazenado
+  // Inicializar auth state e tentar refresh se necessário
   useEffect(() => {
+    initializeAuth(); // Inicializa o auth state do localStorage
     if (token) {
       refreshAuth();
     }

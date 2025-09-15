@@ -32,8 +32,18 @@ class ApiService {
           const token = localStorage.getItem(STORAGE_KEYS.AUTH_TOKEN);
           const accountJson = localStorage.getItem(STORAGE_KEYS.ACCOUNT_DATA);
 
+          console.log('🔧 Request interceptor:', {
+            url: config.url,
+            method: config.method,
+            hasToken: !!token,
+            hasAccountData: !!accountJson
+          });
+
           if (token) {
             config.headers.Authorization = `Bearer ${token}`;
+            console.log('✅ Token added to request');
+          } else {
+            console.log('❌ No token found in localStorage');
           }
 
           if (accountJson) {
@@ -41,7 +51,12 @@ class ApiService {
             // Garante que o ID existe antes de adicioná-lo
             if (accountData && accountData.id) {
               config.headers['X-Tenant-ID'] = accountData.id;
+              console.log('✅ Tenant ID added:', accountData.id);
+            } else {
+              console.log('❌ No account ID found in accountData');
             }
+          } else {
+            console.log('❌ No account data found in localStorage');
           }
         } catch (error) {
           console.error('Erro ao processar dados do localStorage:', error);
@@ -50,7 +65,7 @@ class ApiService {
           // Opcional: redirecionar para o login se a falha for crítica
           // window.location.href = '/login';
         }
-        
+
         return config;
       },
       (error) => Promise.reject(error)
