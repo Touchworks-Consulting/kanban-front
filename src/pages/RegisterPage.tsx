@@ -35,7 +35,7 @@ export function RegisterPage() {
       <div className="w-full max-w-lg p-8 bg-card text-card-foreground rounded-xl border shadow">
         <div className="text-center mb-6">
           <div className="flex items-center justify-center gap-2 mb-2">
-            <img src="/src/assets/vite.svg" alt="Touch RUN" className="h-8 w-8" />
+            <img src="/logo.svg" alt="Touch RUN" className="h-8 w-8" />
             <h1 className="text-3xl font-bold">Criar Conta</h1>
           </div>
           <p className="text-muted-foreground mt-2">Preencha os dados para iniciar no Touch RUN</p>

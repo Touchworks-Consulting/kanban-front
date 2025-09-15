@@ -39,7 +39,7 @@ export function LoginForm({
             <div className="flex flex-col gap-6">
               <div className="flex flex-col items-center text-center">
                 <div className="flex items-center gap-2 mb-2">
-                  <img src="/src/assets/vite.svg" alt="Touch RUN" className="h-8 w-8" />
+                  <img src="/logo.svg" alt="Touch RUN" className="h-8 w-8" />
                   <h1 className="text-2xl font-bold">Touch RUN</h1>
                 </div>
                 <p className="text-balance text-muted-foreground">
@@ -114,7 +114,7 @@ export function LoginForm({
               <div
                 className="absolute inset-0 opacity-10"
                 style={{
-                  backgroundImage: "url('/src/assets/vite.svg')",
+                  backgroundImage: "url('/logo.svg')",
                   backgroundSize: "800px 800px",
                   backgroundPosition: "center",
                   backgroundRepeat: "no-repeat"

@@ -40,7 +40,7 @@ const Sidebar = () => {
     >
       <div className="flex items-center p-4 h-16">
         <div className="flex items-center">
-          <img src="/src/assets/vite.svg" alt="Touch Run" className="h-8 w-8 flex-shrink-0" />
+          <img src="/logo.svg" alt="Touch Run" className="h-8 w-8 flex-shrink-0" />
           <motion.div
             animate={{ opacity: isExpanded ? 1 : 0, width: isExpanded ? 'auto' : 0 }}
             className="overflow-hidden"
