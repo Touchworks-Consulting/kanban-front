@@ -170,7 +170,7 @@ export function FeedbackWidget() {
                         <Checkbox
                           id={option.value}
                           checked={isChecked}
-                          onCheckedChange={(checked) => {
+                          onCheckedChange={(checked: boolean) => {
                             if (checked) {
                               // Se marcar este, desmarcar todos os outros
                               setFeedbackType(option.value);
