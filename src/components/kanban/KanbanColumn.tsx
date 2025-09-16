@@ -78,7 +78,7 @@ export const KanbanColumn: React.FC<KanbanColumnProps> = ({
       style={style}
       {...attributes}
       className={cn(
-        "flex flex-col w-80 sm:w-72 lg:w-80 h-[calc(100vh-20rem)] bg-background rounded-lg border shadow-sm transition-all duration-200 flex-shrink-0",
+        "flex flex-col w-80 sm:w-72 lg:w-80 h-[calc(100vh-20rem)] bg-background rounded-lg border shadow-sm transition-all duration-200 flex-shrink-0 min-w-0 max-w-80 sm:max-w-72 lg:max-w-80 overflow-hidden",
         isOver && "ring-2 ring-primary/50 shadow-lg scale-[1.02]",
         isHovered && !isOver && "shadow-md",
         isDragging && "z-50 shadow-2xl"
@@ -87,11 +87,11 @@ export const KanbanColumn: React.FC<KanbanColumnProps> = ({
       onMouseLeave={() => setIsHovered(false)}
     >
       {/* Column Header */}
-      <div className="flex items-center justify-between p-4 border-b">
-        <div className="flex items-center gap-2">
+      <div className="flex items-center justify-between p-4 border-b min-w-0 overflow-hidden">
+        <div className="flex items-center gap-2 min-w-0 overflow-hidden flex-1">
           <div
             {...listeners}
-            className="cursor-grab active:cursor-grabbing touch-none p-1 hover:bg-muted rounded-sm transition-colors"
+            className="cursor-grab active:cursor-grabbing touch-none p-1 hover:bg-muted rounded-sm transition-colors flex-shrink-0"
             aria-label="Drag column"
           >
             <GripVertical className="w-4 h-4 text-muted-foreground" />
@@ -100,10 +100,10 @@ export const KanbanColumn: React.FC<KanbanColumnProps> = ({
             className="w-3 h-3 rounded-full flex-shrink-0"
             style={{ backgroundColor: column.color }}
           />
-          <h3 className="font-semibold text-sm text-foreground">
+          <h3 className="font-semibold text-sm text-foreground truncate min-w-0">
             {column.name}
           </h3>
-          <span className="text-xs text-muted-foreground bg-muted px-2 py-1 rounded-full">
+          <span className="text-xs text-muted-foreground bg-muted px-2 py-1 rounded-full flex-shrink-0">
             {leads.length}
           </span>
         </div>

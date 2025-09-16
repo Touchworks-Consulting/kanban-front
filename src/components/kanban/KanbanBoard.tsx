@@ -390,7 +390,7 @@ export const KanbanBoard: React.FC = () => {
         {/* Área das colunas com scroll independente */}
         <div className="flex-1 overflow-hidden">
           <ScrollArea className="w-full h-full">
-            <div className="flex gap-4 px-6 pt-2 pb-6 w-max min-w-full">
+            <div className="flex gap-4 px-6 pt-2 pb-6 w-max min-w-full overflow-hidden">
               <SortableContext items={columnIds} strategy={horizontalListSortingStrategy}>
                 {(filteredBoard ?? board).columns.map((column) => (
                   <KanbanColumn
