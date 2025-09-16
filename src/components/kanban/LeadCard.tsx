@@ -38,11 +38,6 @@ export const LeadCard: React.FC<LeadCardProps> = ({ lead, onEdit, onDelete }) =>
   const style = {
     transform: CSS.Transform.toString(transform),
     transition,
-    maxWidth: '100%',
-    width: '100%',
-    boxSizing: 'border-box' as const,
-    wordBreak: 'break-all' as const,
-    overflowWrap: 'break-word' as const,
   };
 
   const getPlatformColor = (platform?: string) => {
@@ -65,11 +60,6 @@ export const LeadCard: React.FC<LeadCardProps> = ({ lead, onEdit, onDelete }) =>
 
     // Check if the number is valid
     if (isNaN(numValue)) return 'R$ 0,00';
-
-    // If the value seems to be in cents (very large number), convert to reais
-    if (numValue > 1000000) {
-      numValue = numValue / 100;
-    }
 
     return new Intl.NumberFormat('pt-BR', {
       style: 'currency',
@@ -95,24 +85,23 @@ export const LeadCard: React.FC<LeadCardProps> = ({ lead, onEdit, onDelete }) =>
       className={cn(
         "bg-card rounded-lg border shadow-sm p-4 cursor-grab active:cursor-grabbing",
         "hover:shadow-md transition-shadow duration-200",
-        "group relative kanban-card",
-        "w-full max-w-full overflow-hidden box-border",
-        "break-words overflow-wrap-anywhere word-break-break-all",
+        "group relative",
+        "w-full overflow-hidden",
         isDragging && "opacity-50 shadow-lg"
       )}
     >
       {/* Header */}
       <div className="flex items-start justify-between mb-3">
-        <div className="flex items-center gap-2 min-w-0 overflow-hidden">
+        <div className="flex items-center gap-2 min-w-0 flex-1">
           <Avatar className="h-8 w-8 text-xs flex-shrink-0">
             <AvatarFallback>{getInitials(lead.name)}</AvatarFallback>
           </Avatar>
-          <div className="flex-1 min-w-0 overflow-hidden">
-            <h3 className="font-medium text-sm text-card-foreground truncate break-all">
+          <div className="min-w-0 flex-1">
+            <h3 className="font-medium text-sm text-card-foreground truncate">
               {lead.name}
             </h3>
             {lead.campaign && (
-              <p className="text-xs text-muted-foreground truncate break-all">
+              <p className="text-xs text-muted-foreground truncate">
                 {lead.campaign}
               </p>
             )}
@@ -129,35 +118,35 @@ export const LeadCard: React.FC<LeadCardProps> = ({ lead, onEdit, onDelete }) =>
       </div>
 
       {/* Contact info */}
-      <div className="space-y-1 mb-3 overflow-hidden">
+      <div className="space-y-1 mb-3">
         {lead.phone && (
-          <div className="flex items-center gap-2 text-xs text-muted-foreground min-w-0 overflow-hidden">
+          <div className="flex items-center gap-2 text-xs text-muted-foreground">
             <Phone className="w-3 h-3 flex-shrink-0" />
-            <span className="truncate break-all min-w-0">{lead.phone}</span>
+            <span className="truncate">{lead.phone}</span>
           </div>
         )}
         {lead.email && (
-          <div className="flex items-center gap-2 text-xs text-muted-foreground min-w-0 overflow-hidden">
+          <div className="flex items-center gap-2 text-xs text-muted-foreground">
             <Mail className="w-3 h-3 flex-shrink-0" />
-            <span className="truncate break-all min-w-0">{lead.email}</span>
+            <span className="truncate">{lead.email}</span>
           </div>
         )}
         {lead.assignedUser && (
-          <div className="flex items-center gap-2 text-xs text-blue-600 min-w-0 overflow-hidden">
+          <div className="flex items-center gap-2 text-xs text-blue-600">
             <User className="w-3 h-3 flex-shrink-0" />
-            <span className="truncate break-all font-medium min-w-0">{lead.assignedUser.name}</span>
+            <span className="truncate font-medium">{lead.assignedUser.name}</span>
           </div>
         )}
       </div>
 
       {/* Message preview */}
       {lead.message && (
-        <div className="mb-3 overflow-hidden">
+        <div className="mb-3">
           <div className="flex items-center gap-2 mb-1">
             <MessageSquare className="w-3 h-3 text-muted-foreground" />
             <span className="text-xs text-muted-foreground">Mensagem</span>
           </div>
-          <p className="text-xs text-card-foreground line-clamp-2 bg-muted/50 rounded p-2 break-words overflow-hidden">
+          <p className="text-xs text-card-foreground line-clamp-2 bg-muted/50 rounded p-2 break-words">
             {lead.message}
           </p>
         </div>
@@ -175,17 +164,17 @@ export const LeadCard: React.FC<LeadCardProps> = ({ lead, onEdit, onDelete }) =>
 
       {/* Tags */}
       {lead.tags && lead.tags.length > 0 && (
-        <div className="flex flex-wrap gap-1 mb-3 overflow-hidden">
+        <div className="flex flex-wrap gap-1 mb-3">
           {lead.tags.slice(0, 3).map((tag) => (
             <span
               key={tag.id}
-              className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium truncate max-w-full"
+              className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium truncate max-w-[120px]"
               style={{
                 backgroundColor: `${tag.color}20`,
                 color: tag.color,
               }}
             >
-              <span className="truncate">{tag.name}</span>
+              {tag.name}
             </span>
           ))}
           {lead.tags.length > 3 && (
@@ -230,15 +219,15 @@ export const LeadCard: React.FC<LeadCardProps> = ({ lead, onEdit, onDelete }) =>
       })()}
 
       {/* Footer */}
-      <div className="flex items-center justify-between pt-2 border-t min-w-0 overflow-hidden">
-        <div className="flex items-center gap-1 text-xs text-muted-foreground min-w-0 overflow-hidden flex-shrink">
+      <div className="flex items-center justify-between pt-2 border-t">
+        <div className="flex items-center gap-1 text-xs text-muted-foreground">
           <Calendar className="w-3 h-3 flex-shrink-0" />
           <time className="truncate">
             {formatDate(lead.createdAt, 'short')}
           </time>
         </div>
 
-        <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 sm:opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity flex-shrink-0">
+        <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 sm:opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity">
           {lead.source_url && (
             <Button
               size="sm"

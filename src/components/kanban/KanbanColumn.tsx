@@ -174,12 +174,12 @@ export const KanbanColumn: React.FC<KanbanColumnProps> = ({
       {/* Column Content */}
       <div
         className={cn(
-          "flex-1 min-h-[200px] relative",
+          "flex-1 min-h-[200px] relative overflow-hidden",
           isOver && "bg-primary/5"
         )}
       >
         <ScrollArea className="h-full">
-          <div className="p-4 space-y-3 min-w-0 overflow-hidden">
+          <div className="p-4 space-y-3">
             <SortableContext items={leadIds} strategy={verticalListSortingStrategy}>
               {leads.map((lead) => (
                 <LeadCard
