@@ -1,5 +1,4 @@
 import { io, Socket } from 'socket.io-client';
-import pushNotificationService from './pushNotificationService';
 
 export interface Notification {
   id: string;
@@ -15,17 +14,11 @@ class NotificationService {
   private socket: Socket | null = null;
   private listeners: Array<(notification: Notification) => void> = [];
   private connectionListeners: Array<(connected: boolean) => void> = [];
-  private pushInitialized = false;
-
-  async connect(token: string, accountId: string) {
+  connect(token: string, accountId: string) {
     if (this.socket) {
       this.disconnect();
     }
 
-    // Inicializar push notifications se em produção
-    await this.initializePushNotifications(accountId);
-
-    // Detectar URL baseado no ambiente
     const socketUrl = import.meta.env.MODE === 'production'
       ? import.meta.env.VITE_API_URL || 'https://kanban-crm-api.vercel.app'
       : 'http://localhost:3000';
@@ -65,30 +58,6 @@ class NotificationService {
     });
   }
 
-  private async initializePushNotifications(accountId: string) {
-    if (this.pushInitialized) return;
-
-    try {
-      // Tentar inicializar push notifications
-      const initialized = await pushNotificationService.initialize();
-
-      if (initialized) {
-        // Pedir permissão
-        const hasPermission = await pushNotificationService.requestPermission();
-
-        if (hasPermission) {
-          // Se inscrever na conta
-          await pushNotificationService.subscribeToAccount(accountId);
-          this.pushInitialized = true;
-          console.log('Push notifications configuradas para conta:', accountId);
-        } else {
-          console.log('Permissão para push notifications negada');
-        }
-      }
-    } catch (error) {
-      console.warn('Erro ao configurar push notifications:', error);
-    }
-  }
 
   disconnect() {
     if (this.socket) {
@@ -191,19 +160,6 @@ class NotificationService {
       console.error('Erro ao enviar notificação broadcast:', error);
       return false;
     }
-  }
-
-  // Métodos para info sobre push notifications
-  isPushNotificationSupported(): boolean {
-    return pushNotificationService.isSupported();
-  }
-
-  isPushNotificationReady(): boolean {
-    return pushNotificationService.isReady();
-  }
-
-  getPushNotificationPermission(): NotificationPermission {
-    return pushNotificationService.getPermissionStatus();
   }
 
   isConnected(): boolean {
