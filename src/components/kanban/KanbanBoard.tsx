@@ -270,8 +270,36 @@ export const KanbanBoard: React.FC = () => {
   };
 
   const handleDeleteColumn = async (columnId: string) => {
-    // TODO: Show confirmation modal and delete
-    console.log('Delete column:', columnId);
+    const column = board?.columns.find(c => c.id === columnId);
+    if (!column) return;
+
+    const confirmDelete = window.confirm(
+      `Tem certeza que deseja excluir a coluna "${column.name}"?\n\nEsta ação não pode ser desfeita. Se houver leads nesta coluna, eles precisam ser movidos para outra coluna antes da exclusão.`
+    );
+
+    if (!confirmDelete) return;
+
+    try {
+      await apiService.delete(`/api/kanban/columns/${columnId}`);
+
+      // Update local state by removing the deleted column
+      setBoard(prevBoard => {
+        if (!prevBoard) return prevBoard;
+        return {
+          ...prevBoard,
+          columns: prevBoard.columns.filter(c => c.id !== columnId)
+        };
+      });
+
+      // Show success message
+      console.log('Coluna deletada com sucesso');
+    } catch (error: any) {
+      console.error('Erro ao deletar coluna:', error);
+
+      // Show user-friendly error message
+      const errorMessage = error.response?.data?.error || 'Erro ao deletar coluna. Tente novamente.';
+      alert(errorMessage);
+    }
   };
 
   const handleEditLead = (lead: Lead) => {

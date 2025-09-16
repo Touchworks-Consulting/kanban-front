@@ -69,7 +69,7 @@ export const KanbanColumn: React.FC<KanbanColumnProps> = ({
     return new Intl.NumberFormat('pt-BR', {
       style: 'currency',
       currency: 'BRL',
-    }).format(value);
+    }).format(value).replace(/\u00A0/g, ' '); // Replace NBSP with regular space for better text wrapping
   };
 
   return (
@@ -78,7 +78,7 @@ export const KanbanColumn: React.FC<KanbanColumnProps> = ({
       style={style}
       {...attributes}
       className={cn(
-        "flex flex-col w-80 sm:w-72 lg:w-80 h-[calc(100vh-20rem)] bg-background rounded-lg border shadow-sm transition-all duration-200 flex-shrink-0 min-w-0 max-w-80 sm:max-w-72 lg:max-w-80 overflow-hidden",
+        "kanban-column flex flex-col w-80 sm:w-72 lg:w-80 h-[calc(100vh-20rem)] bg-background rounded-lg border shadow-sm transition-all duration-200 flex-shrink-0 min-w-0 max-w-80 sm:max-w-72 lg:max-w-80 overflow-hidden",
         isOver && "ring-2 ring-primary/50 shadow-lg scale-[1.02]",
         isHovered && !isOver && "shadow-md",
         isDragging && "z-50 shadow-2xl"
@@ -162,9 +162,9 @@ export const KanbanColumn: React.FC<KanbanColumnProps> = ({
       {/* Total value */}
       {getTotalValue() > 0 && (
         <div className="px-4 py-2 border-b bg-muted/30">
-          <div className="flex items-center gap-2 text-sm">
-            <DollarSign className="w-4 h-4 text-green-600" />
-            <span className="font-medium text-green-600">
+          <div className="flex items-center gap-2 text-sm min-w-0">
+            <DollarSign className="w-4 h-4 text-green-600 flex-shrink-0" />
+            <span className="font-medium text-green-600 truncate min-w-0 flex-1" title={formatCurrency(getTotalValue())}>
               {formatCurrency(getTotalValue())}
             </span>
           </div>

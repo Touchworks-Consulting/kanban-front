@@ -64,7 +64,7 @@ export const LeadCard: React.FC<LeadCardProps> = ({ lead, onEdit, onDelete }) =>
     return new Intl.NumberFormat('pt-BR', {
       style: 'currency',
       currency: 'BRL',
-    }).format(numValue);
+    }).format(numValue).replace(/\u00A0/g, ' '); // Replace NBSP with regular space for better text wrapping
   };
 
   const getInitials = (name: string) => {

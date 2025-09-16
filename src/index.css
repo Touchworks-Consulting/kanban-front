@@ -134,3 +134,20 @@
   max-width: 100%;
   box-sizing: border-box;
 }
+
+/* Specific fix for first column (system column) to prevent card overflow */
+.kanban-column:first-child .kanban-card {
+  max-width: 100% !important;
+  width: 100% !important;
+  min-width: 0 !important;
+  overflow: hidden !important;
+  flex-shrink: 1 !important;
+}
+
+.kanban-column:first-child .kanban-card * {
+  max-width: 100% !important;
+  word-break: break-all !important;
+  overflow-wrap: break-word !important;
+  min-width: 0 !important;
+  white-space: normal !important;
+}
