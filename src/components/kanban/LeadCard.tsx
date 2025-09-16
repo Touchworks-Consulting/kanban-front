@@ -79,7 +79,7 @@ export const LeadCard: React.FC<LeadCardProps> = ({ lead, onEdit, onDelete }) =>
         "bg-card rounded-lg border shadow-sm p-4 cursor-grab active:cursor-grabbing",
         "hover:shadow-md transition-shadow duration-200",
         "group relative",
-        "max-w-full w-full overflow-hidden",
+  "max-w-full w-full",
         isDragging && "opacity-50 shadow-lg"
       )}
     >
@@ -90,11 +90,11 @@ export const LeadCard: React.FC<LeadCardProps> = ({ lead, onEdit, onDelete }) =>
             <AvatarFallback>{getInitials(lead.name)}</AvatarFallback>
           </Avatar>
           <div className="flex-1 min-w-0">
-            <h3 className="font-medium text-sm text-card-foreground truncate break-words">
+            <h3 className="font-medium text-sm text-card-foreground truncate break-words max-w-full">
               {lead.name}
             </h3>
             {lead.campaign && (
-              <p className="text-xs text-muted-foreground truncate break-words">
+              <p className="text-xs text-muted-foreground truncate break-words max-w-full">
                 {lead.campaign}
               </p>
             )}
@@ -115,13 +115,13 @@ export const LeadCard: React.FC<LeadCardProps> = ({ lead, onEdit, onDelete }) =>
         {lead.phone && (
           <div className="flex items-center gap-2 text-xs text-muted-foreground min-w-0">
             <Phone className="w-3 h-3 flex-shrink-0" />
-            <span className="truncate break-all">{lead.phone}</span>
+            <span className="truncate break-words max-w-full">{lead.phone}</span>
           </div>
         )}
         {lead.email && (
           <div className="flex items-center gap-2 text-xs text-muted-foreground min-w-0">
             <Mail className="w-3 h-3 flex-shrink-0" />
-            <span className="truncate break-all">{lead.email}</span>
+            <span className="truncate break-words max-w-full">{lead.email}</span>
           </div>
         )}
         {lead.assignedUser && (
@@ -139,7 +139,7 @@ export const LeadCard: React.FC<LeadCardProps> = ({ lead, onEdit, onDelete }) =>
             <MessageSquare className="w-3 h-3 text-muted-foreground" />
             <span className="text-xs text-muted-foreground">Mensagem</span>
           </div>
-          <p className="text-xs text-card-foreground line-clamp-2 bg-muted/50 rounded p-2 break-words overflow-hidden">
+          <p className="text-xs text-card-foreground line-clamp-2 bg-muted/50 rounded p-2 break-words max-w-full">
             {lead.message}
           </p>
         </div>
