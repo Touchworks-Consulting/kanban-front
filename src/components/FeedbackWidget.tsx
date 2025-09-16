@@ -5,7 +5,7 @@ import { Button } from './ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
 import { Textarea } from './ui/textarea';
 import { Label } from './ui/label';
-import { RadioGroup, RadioGroupItem } from './ui/radio-group';
+import { Checkbox } from './ui/checkbox';
 import { cn } from '../lib/utils';
 
 type FeedbackType = 'bug' | 'suggestion' | 'praise' | '';
@@ -157,32 +157,45 @@ export function FeedbackWidget() {
                 <Label className="text-sm font-medium mb-3 block">
                   Tipo de feedback
                 </Label>
-                <RadioGroup
-                  value={feedbackType}
-                  onValueChange={(value) => setFeedbackType(value as FeedbackType)}
-                  className="flex flex-col space-y-1"
-                >
+                <div className="flex flex-col space-y-1">
                   {feedbackOptions.map((option) => {
                     const Icon = option.icon;
+                    const isChecked = feedbackType === option.value;
+
                     return (
                       <div key={option.value} className={cn(
-                        "flex items-center space-x-3 space-y-0 p-2 rounded-md hover:bg-muted/50",
-                        feedbackType === option.value && "bg-muted/30 border border-primary/20"
+                        "flex items-top space-x-2 p-2 rounded-md hover:bg-muted/50",
+                        isChecked && "bg-muted/30 border border-primary/20"
                       )}>
-                        <RadioGroupItem value={option.value} />
-                        <div className="flex items-center gap-2 flex-1">
-                          <Icon className={cn("h-4 w-4", option.color)} />
-                          <div>
-                            <div className="font-medium text-sm">{option.label}</div>
-                            <div className="text-xs text-muted-foreground">
-                              {option.description}
-                            </div>
-                          </div>
+                        <Checkbox
+                          id={option.value}
+                          checked={isChecked}
+                          onCheckedChange={(checked) => {
+                            if (checked) {
+                              // Se marcar este, desmarcar todos os outros
+                              setFeedbackType(option.value);
+                            } else {
+                              // Se desmarcar este, limpar seleção
+                              setFeedbackType('');
+                            }
+                          }}
+                        />
+                        <div className="grid gap-1.5 leading-none flex-1">
+                          <label
+                            htmlFor={option.value}
+                            className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 flex items-center gap-2 cursor-pointer"
+                          >
+                            <Icon className={cn("h-4 w-4", option.color)} />
+                            {option.label}
+                          </label>
+                          <p className="text-xs text-muted-foreground">
+                            {option.description}
+                          </p>
                         </div>
                       </div>
                     );
                   })}
-                </RadioGroup>
+                </div>
               </div>
 
               <div>

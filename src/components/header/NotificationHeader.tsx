@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Bell, X, Check, AlertCircle, Info, CheckCircle, Wifi, WifiOff } from 'lucide-react';
+import { Bell, X, Check, AlertCircle, Info, CheckCircle } from 'lucide-react';
 import { Button } from '../ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
 import { cn } from '../../lib/utils';
@@ -135,15 +135,7 @@ const NotificationHeader: React.FC<NotificationHeaderProps> = ({
           )}
         </Button>
 
-        <div className={cn("flex items-center", isConnected ? "text-green-500" : "text-gray-400")}>
-          <span>
-            {isConnected ? (
-              <Wifi className="h-4 w-4" />
-            ) : (
-              <WifiOff className="h-4 w-4" />
-            )}
-          </span>
-        </div>
+        
       </div>
 
       {isOpen && (
