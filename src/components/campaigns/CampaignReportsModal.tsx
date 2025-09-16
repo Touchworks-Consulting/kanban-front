@@ -107,9 +107,6 @@ export const CampaignReportsModal: React.FC<CampaignReportsModalProps> = ({
 
           // 📊 Buscar dados dos gráficos
           const chartsData = await campaignsService.getCampaignChartData(campaign.id, dateRangeNumber);
-          console.log('📊 CHART DATA RECEIVED:', chartsData);
-          console.log('📊 DAILY DATA:', chartsData?.daily_data);
-          console.log('📊 HOURLY DATA:', chartsData?.hourly_data);
           setChartData(chartsData);
           
           // Usar dados reais para as métricas principais

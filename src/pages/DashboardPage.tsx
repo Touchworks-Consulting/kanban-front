@@ -214,17 +214,14 @@ export function DashboardPage() {
         // Calcular estatísticas de campanhas
         const activeCampaigns = (campaignsResponse as any).campaigns.filter((c: any) => c.is_active);
 
-        // DEBUG: Ver estrutura das campanhas
-        console.log('📊 Dashboard - Exemplo de campanha:', (campaignsResponse as any).campaigns[0]);
-
-        // Calcular total de frases de todas as campanhas
+         // Calcular total de frases de todas as campanhas
         const totalPhrases = (campaignsResponse as any).campaigns.reduce((total: number, campaign: any) => {
           const phrasesCount = campaign.triggerPhrases?.length || campaign.trigger_phrases?.length || 0;
-          console.log(`📊 Campanha ${campaign.name}: ${phrasesCount} frases`);
+         
           return total + phrasesCount;
         }, 0);
 
-        console.log('📊 Total de frases calculado:', totalPhrases);
+        
 
         setCampaignStats({
           active: activeCampaigns.length,
@@ -234,13 +231,10 @@ export function DashboardPage() {
 
         // Calcular estatísticas do WhatsApp
         const accounts = (whatsappResponse as any).accounts || [];
-        console.log('📊 Dashboard - Contas WhatsApp:', accounts);
-        console.log('📊 Exemplo de conta WhatsApp:', accounts[0]);
+
 
         const connectedWhatsApp = accounts.filter((w: any) => w.is_active === true);
-        console.log('📊 WhatsApp conectadas:', connectedWhatsApp.length, 'de', accounts.length);
-
-        setWhatsappStats({
+         setWhatsappStats({
           connected: connectedWhatsApp.length,
           total: accounts.length
         });

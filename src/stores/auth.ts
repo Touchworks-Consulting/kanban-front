@@ -222,11 +222,7 @@ export const initializeAuth = () => {
   const token = authService.getToken();
   const account = authService.getCurrentAccount();
 
-  console.log('📊 Auth data from localStorage:', {
-    hasToken: !!token,
-    hasAccount: !!account,
-    tokenExpired: token ? authService.isTokenExpired() : 'no token'
-  });
+  
 
   if (token && account && !authService.isTokenExpired()) {
     console.log('✅ Valid auth data found in localStorage, setting authenticated state');
