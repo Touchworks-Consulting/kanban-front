@@ -38,6 +38,11 @@ export const LeadCard: React.FC<LeadCardProps> = ({ lead, onEdit, onDelete }) =>
   const style = {
     transform: CSS.Transform.toString(transform),
     transition,
+    maxWidth: '100%',
+    width: '100%',
+    boxSizing: 'border-box' as const,
+    wordBreak: 'break-all' as const,
+    overflowWrap: 'break-word' as const,
   };
 
   const getPlatformColor = (platform?: string) => {
@@ -52,12 +57,24 @@ export const LeadCard: React.FC<LeadCardProps> = ({ lead, onEdit, onDelete }) =>
     return colors[platform as keyof typeof colors] || 'bg-gray-400';
   };
 
-  const formatCurrency = (value?: number) => {
-    if (!value) return 'R$ 0,00';
+  const formatCurrency = (value?: number | string) => {
+    if (!value || value === 0) return 'R$ 0,00';
+
+    // Convert to number if it's a string
+    let numValue = typeof value === 'string' ? parseFloat(value) : value;
+
+    // Check if the number is valid
+    if (isNaN(numValue)) return 'R$ 0,00';
+
+    // If the value seems to be in cents (very large number), convert to reais
+    if (numValue > 1000000) {
+      numValue = numValue / 100;
+    }
+
     return new Intl.NumberFormat('pt-BR', {
       style: 'currency',
       currency: 'BRL',
-    }).format(value);
+    }).format(numValue);
   };
 
   const getInitials = (name: string) => {
@@ -78,8 +95,9 @@ export const LeadCard: React.FC<LeadCardProps> = ({ lead, onEdit, onDelete }) =>
       className={cn(
         "bg-card rounded-lg border shadow-sm p-4 cursor-grab active:cursor-grabbing",
         "hover:shadow-md transition-shadow duration-200",
-        "group relative",
-        "max-w-full w-full overflow-hidden",
+        "group relative kanban-card",
+        "w-full max-w-full overflow-hidden box-border",
+        "break-words overflow-wrap-anywhere word-break-break-all",
         isDragging && "opacity-50 shadow-lg"
       )}
     >
@@ -90,11 +108,11 @@ export const LeadCard: React.FC<LeadCardProps> = ({ lead, onEdit, onDelete }) =>
             <AvatarFallback>{getInitials(lead.name)}</AvatarFallback>
           </Avatar>
           <div className="flex-1 min-w-0 overflow-hidden">
-            <h3 className="font-medium text-sm text-card-foreground truncate">
+            <h3 className="font-medium text-sm text-card-foreground truncate break-all">
               {lead.name}
             </h3>
             {lead.campaign && (
-              <p className="text-xs text-muted-foreground truncate">
+              <p className="text-xs text-muted-foreground truncate break-all">
                 {lead.campaign}
               </p>
             )}
@@ -115,19 +133,19 @@ export const LeadCard: React.FC<LeadCardProps> = ({ lead, onEdit, onDelete }) =>
         {lead.phone && (
           <div className="flex items-center gap-2 text-xs text-muted-foreground min-w-0 overflow-hidden">
             <Phone className="w-3 h-3 flex-shrink-0" />
-            <span className="truncate">{lead.phone}</span>
+            <span className="truncate break-all min-w-0">{lead.phone}</span>
           </div>
         )}
         {lead.email && (
           <div className="flex items-center gap-2 text-xs text-muted-foreground min-w-0 overflow-hidden">
             <Mail className="w-3 h-3 flex-shrink-0" />
-            <span className="truncate">{lead.email}</span>
+            <span className="truncate break-all min-w-0">{lead.email}</span>
           </div>
         )}
         {lead.assignedUser && (
           <div className="flex items-center gap-2 text-xs text-blue-600 min-w-0 overflow-hidden">
             <User className="w-3 h-3 flex-shrink-0" />
-            <span className="truncate font-medium">{lead.assignedUser.name}</span>
+            <span className="truncate break-all font-medium min-w-0">{lead.assignedUser.name}</span>
           </div>
         )}
       </div>

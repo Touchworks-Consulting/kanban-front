@@ -108,6 +108,8 @@
   display: -webkit-box;
   -webkit-box-orient: vertical;
   -webkit-line-clamp: 2;
+  word-break: break-all;
+  overflow-wrap: break-word;
 }
 
 .line-clamp-3 {
@@ -115,4 +117,20 @@
   display: -webkit-box;
   -webkit-box-orient: vertical;
   -webkit-line-clamp: 3;
+}
+
+/* Force break long words in cards */
+.kanban-card {
+  word-break: break-all;
+  overflow-wrap: break-word;
+  hyphens: auto;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+.kanban-card * {
+  word-break: break-all;
+  overflow-wrap: break-word;
+  max-width: 100%;
+  box-sizing: border-box;
 }
