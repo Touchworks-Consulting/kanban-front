@@ -46,6 +46,10 @@ export const useAuthStore = create<AuthState>()(
               isLoading: false,
               error: null,
             });
+
+            // Sincronizar com localStorage legado para compatibilidade com axios interceptor
+            localStorage.setItem('crm_auth_token', token);
+            localStorage.setItem('crm_account_data', JSON.stringify(user));
           } else {
             // Isso pode acontecer se a resposta não vier como esperado
             throw new Error('Resposta de login inválida');
@@ -104,6 +108,11 @@ export const useAuthStore = create<AuthState>()(
               isLoading: false,
               error: null,
             });
+
+            // Sincronizar com localStorage legado para compatibilidade com axios interceptor
+            localStorage.setItem('crm_auth_token', token);
+            localStorage.setItem('crm_account_data', JSON.stringify(user));
+
             console.log('✅ AuthStore: Estado atualizado com sucesso - usuário logado automaticamente');
           } else {
             console.log('❌ AuthStore: Token ou user ausente na resposta');
@@ -198,6 +207,18 @@ export const useAuthStore = create<AuthState>()(
 export const initializeAuth = () => {
   console.log('🔧 Initializing auth state...');
 
+  // Verifica se já existe dados no Zustand persist primeiro
+  const currentState = useAuthStore.getState();
+
+  if (currentState.isAuthenticated && currentState.token && currentState.account) {
+    console.log('✅ Zustand persist has valid auth state, using it');
+    // Sincronizar com localStorage legado para compatibilidade com axios interceptor
+    localStorage.setItem('crm_auth_token', currentState.token);
+    localStorage.setItem('crm_account_data', JSON.stringify(currentState.account));
+    return;
+  }
+
+  // Fallback para dados do localStorage legado
   const token = authService.getToken();
   const account = authService.getCurrentAccount();
 
@@ -208,7 +229,7 @@ export const initializeAuth = () => {
   });
 
   if (token && account && !authService.isTokenExpired()) {
-    console.log('✅ Valid auth data found, setting authenticated state');
+    console.log('✅ Valid auth data found in localStorage, setting authenticated state');
     useAuthStore.setState({
       account,
       token,

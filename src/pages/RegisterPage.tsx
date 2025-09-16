@@ -25,17 +25,7 @@ export function RegisterPage() {
     try {
       console.log('📝 RegisterPage: Chamando função de registro');
       await register(form);
-      console.log('✅ RegisterPage: Registro concluído');
-
-      // Aguardar um pouco para garantir que localStorage e estado sejam sincronizados
-      await new Promise(resolve => setTimeout(resolve, 100));
-
-      console.log('🔄 RegisterPage: Verificando estado de autenticação após registro');
-      console.log('Token no localStorage:', !!localStorage.getItem('crm_auth_token'));
-      console.log('Account data no localStorage:', !!localStorage.getItem('crm_account_data'));
-
-      console.log('🚀 RegisterPage: Navigando para kanban');
-      navigate('/kanban');
+      console.log('✅ RegisterPage: Registro concluído - usuário deve estar automaticamente autenticado');
     } catch (err: any) {
       console.log('❌ RegisterPage: Erro no registro:', err);
       setError(err.message || 'Falha no registro');

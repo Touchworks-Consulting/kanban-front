@@ -96,6 +96,8 @@ class AuthService {
   clearAuthData(): void {
     localStorage.removeItem(STORAGE_KEYS.AUTH_TOKEN);
     localStorage.removeItem(STORAGE_KEYS.ACCOUNT_DATA);
+    // Também limpa o Zustand persist
+    localStorage.removeItem('auth-storage');
   }
 
   // Check if token is expired (basic check)
