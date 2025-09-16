@@ -79,6 +79,7 @@ export const LeadCard: React.FC<LeadCardProps> = ({ lead, onEdit, onDelete }) =>
         "bg-card rounded-lg border shadow-sm p-4 cursor-grab active:cursor-grabbing",
         "hover:shadow-md transition-shadow duration-200",
         "group relative",
+        "max-w-full w-full overflow-hidden",
         isDragging && "opacity-50 shadow-lg"
       )}
     >
@@ -89,11 +90,11 @@ export const LeadCard: React.FC<LeadCardProps> = ({ lead, onEdit, onDelete }) =>
             <AvatarFallback>{getInitials(lead.name)}</AvatarFallback>
           </Avatar>
           <div className="flex-1 min-w-0">
-            <h3 className="font-medium text-sm text-card-foreground truncate">
+            <h3 className="font-medium text-sm text-card-foreground truncate break-words">
               {lead.name}
             </h3>
             {lead.campaign && (
-              <p className="text-xs text-muted-foreground truncate">
+              <p className="text-xs text-muted-foreground truncate break-words">
                 {lead.campaign}
               </p>
             )}
@@ -112,21 +113,21 @@ export const LeadCard: React.FC<LeadCardProps> = ({ lead, onEdit, onDelete }) =>
       {/* Contact info */}
       <div className="space-y-1 mb-3">
         {lead.phone && (
-          <div className="flex items-center gap-2 text-xs text-muted-foreground">
-            <Phone className="w-3 h-3" />
-            <span className="truncate">{lead.phone}</span>
+          <div className="flex items-center gap-2 text-xs text-muted-foreground min-w-0">
+            <Phone className="w-3 h-3 flex-shrink-0" />
+            <span className="truncate break-all">{lead.phone}</span>
           </div>
         )}
         {lead.email && (
-          <div className="flex items-center gap-2 text-xs text-muted-foreground">
-            <Mail className="w-3 h-3" />
-            <span className="truncate">{lead.email}</span>
+          <div className="flex items-center gap-2 text-xs text-muted-foreground min-w-0">
+            <Mail className="w-3 h-3 flex-shrink-0" />
+            <span className="truncate break-all">{lead.email}</span>
           </div>
         )}
         {lead.assignedUser && (
-          <div className="flex items-center gap-2 text-xs text-blue-600">
-            <User className="w-3 h-3" />
-            <span className="truncate font-medium">{lead.assignedUser.name}</span>
+          <div className="flex items-center gap-2 text-xs text-blue-600 min-w-0">
+            <User className="w-3 h-3 flex-shrink-0" />
+            <span className="truncate break-words font-medium">{lead.assignedUser.name}</span>
           </div>
         )}
       </div>
@@ -138,7 +139,7 @@ export const LeadCard: React.FC<LeadCardProps> = ({ lead, onEdit, onDelete }) =>
             <MessageSquare className="w-3 h-3 text-muted-foreground" />
             <span className="text-xs text-muted-foreground">Mensagem</span>
           </div>
-          <p className="text-xs text-card-foreground line-clamp-2 bg-muted/50 rounded p-2">
+          <p className="text-xs text-card-foreground line-clamp-2 bg-muted/50 rounded p-2 break-words overflow-hidden">
             {lead.message}
           </p>
         </div>
@@ -156,7 +157,7 @@ export const LeadCard: React.FC<LeadCardProps> = ({ lead, onEdit, onDelete }) =>
 
       {/* Tags */}
       {lead.tags && lead.tags.length > 0 && (
-        <div className="flex flex-wrap gap-1 mb-3">
+        <div className="flex flex-wrap gap-1 mb-3 overflow-hidden">
           {lead.tags.slice(0, 3).map((tag) => (
             <span
               key={tag.id}
