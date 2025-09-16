@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Bell, X, Check, AlertCircle, Info, CheckCircle, Wifi, WifiOff } from 'lucide-react';
+import { Bell, X, Check, AlertCircle, Info, CheckCircle, Wifi, WifiOff, Smartphone, SmartphoneNfc } from 'lucide-react';
 import { Button } from '../ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
 import { cn } from '../../lib/utils';
@@ -20,6 +20,15 @@ const NotificationHeader: React.FC<NotificationHeaderProps> = ({
   const [isOpen, setIsOpen] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
   const [isConnected, setIsConnected] = useState(false);
+  const [pushStatus, setPushStatus] = useState<{
+    supported: boolean;
+    ready: boolean;
+    permission: NotificationPermission;
+  }>({
+    supported: false,
+    ready: false,
+    permission: 'default'
+  });
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -36,6 +45,7 @@ const NotificationHeader: React.FC<NotificationHeaderProps> = ({
   }, []);
 
   useEffect(() => {
+    // Inicializar conexão
     notificationService.connect(token, accountId);
 
     const unsubscribeNotification = notificationService.onNotification((notification) => {
@@ -46,10 +56,24 @@ const NotificationHeader: React.FC<NotificationHeaderProps> = ({
       setIsConnected(connected);
     });
 
+    // Atualizar status das push notifications
+    const updatePushStatus = () => {
+      setPushStatus({
+        supported: notificationService.isPushNotificationSupported(),
+        ready: notificationService.isPushNotificationReady(),
+        permission: notificationService.getPushNotificationPermission()
+      });
+    };
+
+    // Atualizar inicialmente e a cada segundo
+    updatePushStatus();
+    const pushStatusInterval = setInterval(updatePushStatus, 1000);
+
     return () => {
       unsubscribeNotification();
       unsubscribeConnection();
       notificationService.disconnect();
+      clearInterval(pushStatusInterval);
     };
   }, [token, accountId]);
 
@@ -134,12 +158,27 @@ const NotificationHeader: React.FC<NotificationHeaderProps> = ({
           )}
         </Button>
 
-        <div className={cn("flex items-center", isConnected ? "text-green-500" : "text-gray-400")}>
+        <div className={cn("flex items-center gap-1", isConnected ? "text-green-500" : "text-gray-400")}>
           <span>
             {isConnected ? (
               <Wifi className="h-4 w-4" />
             ) : (
               <WifiOff className="h-4 w-4" />
+            )}
+          </span>
+        </div>
+
+        <div className={cn("flex items-center",
+          pushStatus.ready && pushStatus.permission === 'granted' ? "text-green-500" :
+          pushStatus.supported ? "text-yellow-500" : "text-gray-400"
+        )}>
+          <span>
+            {pushStatus.ready && pushStatus.permission === 'granted' ? (
+              <SmartphoneNfc className="h-4 w-4" />
+            ) : pushStatus.supported ? (
+              <Smartphone className="h-4 w-4" />
+            ) : (
+              <Smartphone className="h-4 w-4 opacity-50" />
             )}
           </span>
         </div>
