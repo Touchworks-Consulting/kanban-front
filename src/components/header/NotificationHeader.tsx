@@ -36,7 +36,7 @@ const NotificationHeader: React.FC<NotificationHeaderProps> = ({
   }, []);
 
   useEffect(() => {
-    notificationService.connect(token, accountId);
+    // notificationService.connect(token, accountId); // Desabilitado - Socket.IO não funciona no Vercel
 
     const unsubscribeNotification = notificationService.onNotification((notification) => {
       setNotifications(prev => [notification, ...prev]);

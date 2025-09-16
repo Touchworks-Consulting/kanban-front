@@ -165,7 +165,10 @@ export function FeedbackWidget() {
                   {feedbackOptions.map((option) => {
                     const Icon = option.icon;
                     return (
-                      <div key={option.value} className="flex items-center space-x-3 space-y-0 p-2 rounded-md hover:bg-muted/50">
+                      <div key={option.value} className={cn(
+                        "flex items-center space-x-3 space-y-0 p-2 rounded-md hover:bg-muted/50",
+                        feedbackType === option.value && "bg-muted/30 border border-primary/20"
+                      )}>
                         <RadioGroupItem value={option.value} />
                         <div className="flex items-center gap-2 flex-1">
                           <Icon className={cn("h-4 w-4", option.color)} />
