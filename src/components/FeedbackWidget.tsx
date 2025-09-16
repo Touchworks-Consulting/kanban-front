@@ -167,7 +167,7 @@ export function FeedbackWidget() {
                     return (
                       <div key={option.value} className="flex items-center space-x-3 space-y-0 p-2 rounded-md hover:bg-muted/50">
                         <RadioGroupItem value={option.value} />
-                        <Label className="flex items-center gap-2 cursor-pointer flex-1 font-normal">
+                        <div className="flex items-center gap-2 flex-1">
                           <Icon className={cn("h-4 w-4", option.color)} />
                           <div>
                             <div className="font-medium text-sm">{option.label}</div>
@@ -175,7 +175,7 @@ export function FeedbackWidget() {
                               {option.description}
                             </div>
                           </div>
-                        </Label>
+                        </div>
                       </div>
                     );
                   })}

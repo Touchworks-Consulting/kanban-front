@@ -15,6 +15,13 @@ class NotificationService {
   private listeners: Array<(notification: Notification) => void> = [];
   private connectionListeners: Array<(connected: boolean) => void> = [];
   connect(token: string, accountId: string) {
+    // Socket.IO desabilitado em produção - Vercel não suporta WebSockets
+    if (import.meta.env.MODE === 'production') {
+      console.log('Socket.IO desabilitado em produção (Vercel serverless)');
+      this.notifyConnectionListeners(false);
+      return;
+    }
+
     if (this.socket) {
       this.disconnect();
     }
