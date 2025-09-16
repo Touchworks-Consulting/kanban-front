@@ -79,22 +79,22 @@ export const LeadCard: React.FC<LeadCardProps> = ({ lead, onEdit, onDelete }) =>
         "bg-card rounded-lg border shadow-sm p-4 cursor-grab active:cursor-grabbing",
         "hover:shadow-md transition-shadow duration-200",
         "group relative",
-  "max-w-full w-full",
+        "max-w-full w-full overflow-hidden",
         isDragging && "opacity-50 shadow-lg"
       )}
     >
       {/* Header */}
       <div className="flex items-start justify-between mb-3">
-        <div className="flex items-center gap-2">
-          <Avatar className="h-8 w-8 text-xs">
+        <div className="flex items-center gap-2 min-w-0 overflow-hidden">
+          <Avatar className="h-8 w-8 text-xs flex-shrink-0">
             <AvatarFallback>{getInitials(lead.name)}</AvatarFallback>
           </Avatar>
-          <div className="flex-1 min-w-0">
-            <h3 className="font-medium text-sm text-card-foreground truncate break-words max-w-full">
+          <div className="flex-1 min-w-0 overflow-hidden">
+            <h3 className="font-medium text-sm text-card-foreground truncate">
               {lead.name}
             </h3>
             {lead.campaign && (
-              <p className="text-xs text-muted-foreground truncate break-words max-w-full">
+              <p className="text-xs text-muted-foreground truncate">
                 {lead.campaign}
               </p>
             )}
@@ -111,35 +111,35 @@ export const LeadCard: React.FC<LeadCardProps> = ({ lead, onEdit, onDelete }) =>
       </div>
 
       {/* Contact info */}
-      <div className="space-y-1 mb-3">
+      <div className="space-y-1 mb-3 overflow-hidden">
         {lead.phone && (
-          <div className="flex items-center gap-2 text-xs text-muted-foreground min-w-0">
+          <div className="flex items-center gap-2 text-xs text-muted-foreground min-w-0 overflow-hidden">
             <Phone className="w-3 h-3 flex-shrink-0" />
-            <span className="truncate break-words max-w-full">{lead.phone}</span>
+            <span className="truncate">{lead.phone}</span>
           </div>
         )}
         {lead.email && (
-          <div className="flex items-center gap-2 text-xs text-muted-foreground min-w-0">
+          <div className="flex items-center gap-2 text-xs text-muted-foreground min-w-0 overflow-hidden">
             <Mail className="w-3 h-3 flex-shrink-0" />
-            <span className="truncate break-words max-w-full">{lead.email}</span>
+            <span className="truncate">{lead.email}</span>
           </div>
         )}
         {lead.assignedUser && (
-          <div className="flex items-center gap-2 text-xs text-blue-600 min-w-0">
+          <div className="flex items-center gap-2 text-xs text-blue-600 min-w-0 overflow-hidden">
             <User className="w-3 h-3 flex-shrink-0" />
-            <span className="truncate break-words font-medium">{lead.assignedUser.name}</span>
+            <span className="truncate font-medium">{lead.assignedUser.name}</span>
           </div>
         )}
       </div>
 
       {/* Message preview */}
       {lead.message && (
-        <div className="mb-3">
+        <div className="mb-3 overflow-hidden">
           <div className="flex items-center gap-2 mb-1">
             <MessageSquare className="w-3 h-3 text-muted-foreground" />
             <span className="text-xs text-muted-foreground">Mensagem</span>
           </div>
-          <p className="text-xs text-card-foreground line-clamp-2 bg-muted/50 rounded p-2 break-words max-w-full">
+          <p className="text-xs text-card-foreground line-clamp-2 bg-muted/50 rounded p-2 break-words overflow-hidden">
             {lead.message}
           </p>
         </div>
@@ -161,17 +161,17 @@ export const LeadCard: React.FC<LeadCardProps> = ({ lead, onEdit, onDelete }) =>
           {lead.tags.slice(0, 3).map((tag) => (
             <span
               key={tag.id}
-              className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium"
+              className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium truncate max-w-full"
               style={{
                 backgroundColor: `${tag.color}20`,
                 color: tag.color,
               }}
             >
-              {tag.name}
+              <span className="truncate">{tag.name}</span>
             </span>
           ))}
           {lead.tags.length > 3 && (
-            <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-muted text-muted-foreground">
+            <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-muted text-muted-foreground flex-shrink-0">
               +{lead.tags.length - 3}
             </span>
           )}
@@ -212,15 +212,15 @@ export const LeadCard: React.FC<LeadCardProps> = ({ lead, onEdit, onDelete }) =>
       })()}
 
       {/* Footer */}
-      <div className="flex items-center justify-between pt-2 border-t">
-        <div className="flex items-center gap-1 text-xs text-muted-foreground">
-          <Calendar className="w-3 h-3" />
-          <time>
+      <div className="flex items-center justify-between pt-2 border-t min-w-0 overflow-hidden">
+        <div className="flex items-center gap-1 text-xs text-muted-foreground min-w-0 overflow-hidden flex-shrink">
+          <Calendar className="w-3 h-3 flex-shrink-0" />
+          <time className="truncate">
             {formatDate(lead.createdAt, 'short')}
           </time>
         </div>
-        
-        <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 sm:opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity">
+
+        <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 sm:opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity flex-shrink-0">
           {lead.source_url && (
             <Button
               size="sm"
@@ -234,7 +234,7 @@ export const LeadCard: React.FC<LeadCardProps> = ({ lead, onEdit, onDelete }) =>
               <ExternalLink className="w-3 h-3" />
             </Button>
           )}
-          
+
           {onEdit && (
             <Button
               size="sm"
