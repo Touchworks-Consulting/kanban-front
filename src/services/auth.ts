@@ -21,17 +21,27 @@ class AuthService {
   }
 
   async register(data: RegisterData): Promise<AuthResponse> {
+    console.log('📝 AuthService: Iniciando registro para:', data.email);
     const response = await apiService.post<AuthResponse>(
       API_ENDPOINTS.REGISTER,
       data
     );
-    
+
     const authData = response.data;
+    console.log('📝 AuthService: Resposta do registro recebida:', {
+      hasToken: !!authData.token,
+      hasUser: !!authData.user,
+      user: authData.user
+    });
 
     // Store auth data if registration was successful
     if (authData.token && authData.user) {
+      console.log('💾 AuthService: Salvando dados de autenticação no localStorage');
       localStorage.setItem(STORAGE_KEYS.AUTH_TOKEN, authData.token);
       localStorage.setItem(STORAGE_KEYS.ACCOUNT_DATA, JSON.stringify(authData.user));
+      console.log('✅ AuthService: Dados salvos com sucesso no localStorage');
+    } else {
+      console.log('❌ AuthService: Token ou user ausente na resposta do registro');
     }
 
     return authData;

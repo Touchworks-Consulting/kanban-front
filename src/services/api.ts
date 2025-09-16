@@ -29,15 +29,45 @@ class ApiService {
     this.api.interceptors.request.use(
       (config) => {
         try {
-          const token = localStorage.getItem(STORAGE_KEYS.AUTH_TOKEN);
-          const accountJson = localStorage.getItem(STORAGE_KEYS.ACCOUNT_DATA);
+          // Primeiro tenta ler do Zustand persist (auth-storage)
+          let token = null;
+          let accountData = null;
 
-          console.log('🔧 Request interceptor:', {
-            url: config.url,
-            method: config.method,
-            hasToken: !!token,
-            hasAccountData: !!accountJson
-          });
+          const authStorage = localStorage.getItem('auth-storage');
+          if (authStorage) {
+            try {
+              const authState = JSON.parse(authStorage);
+              token = authState.state?.token;
+              accountData = authState.state?.account;
+              console.log('🔧 Request interceptor (Zustand):', {
+                url: config.url,
+                method: config.method,
+                hasToken: !!token,
+                hasAccountData: !!accountData
+              });
+            } catch (e) {
+              console.log('❌ Erro ao fazer parse do auth-storage:', e);
+            }
+          }
+
+          // Fallback para o formato antigo
+          if (!token) {
+            token = localStorage.getItem(STORAGE_KEYS.AUTH_TOKEN);
+            const accountJson = localStorage.getItem(STORAGE_KEYS.ACCOUNT_DATA);
+            if (accountJson) {
+              try {
+                accountData = JSON.parse(accountJson);
+              } catch (e) {
+                console.log('❌ Erro ao fazer parse do account data:', e);
+              }
+            }
+            console.log('🔧 Request interceptor (fallback):', {
+              url: config.url,
+              method: config.method,
+              hasToken: !!token,
+              hasAccountData: !!accountData
+            });
+          }
 
           if (token) {
             config.headers.Authorization = `Bearer ${token}`;
@@ -46,17 +76,11 @@ class ApiService {
             console.log('❌ No token found in localStorage');
           }
 
-          if (accountJson) {
-            const accountData = JSON.parse(accountJson);
-            // Garante que o ID existe antes de adicioná-lo
-            if (accountData && accountData.id) {
-              config.headers['X-Tenant-ID'] = accountData.id;
-              console.log('✅ Tenant ID added:', accountData.id);
-            } else {
-              console.log('❌ No account ID found in accountData');
-            }
+          if (accountData && accountData.id) {
+            config.headers['X-Tenant-ID'] = accountData.id;
+            console.log('✅ Tenant ID added:', accountData.id);
           } else {
-            console.log('❌ No account data found in localStorage');
+            console.log('❌ No account ID found in accountData');
           }
         } catch (error) {
           console.error('Erro ao processar dados do localStorage:', error);
@@ -140,9 +164,11 @@ class ApiService {
 
   private clearAuthData() {
     localStorage.removeItem(STORAGE_KEYS.AUTH_TOKEN);
-  // Nenhum refresh token usado agora
     localStorage.removeItem(STORAGE_KEYS.USER_DATA);
     localStorage.removeItem(STORAGE_KEYS.ACCOUNT_DATA);
+    // Também limpa o Zustand persist
+    localStorage.removeItem('auth-storage');
+    console.log('🧹 Cleared all auth data from localStorage');
   }
 
   async get<T>(url: string, params?: Record<string, unknown>): Promise<AxiosResponse<T>> {

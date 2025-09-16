@@ -85,10 +85,18 @@ export const useAuthStore = create<AuthState>()(
       },
 
       register: async (data: RegisterData) => {
+        console.log('🏪 AuthStore: Iniciando processo de registro');
         set({ isLoading: true, error: null });
         try {
           const { token, user } = await authService.register(data);
+          console.log('🏪 AuthStore: Resposta do authService recebida:', {
+            hasToken: !!token,
+            hasUser: !!user,
+            user
+          });
+
           if (token && user) {
+            console.log('🏪 AuthStore: Atualizando estado do store com dados de autenticação');
             set({
               account: user,
               token,
@@ -96,7 +104,9 @@ export const useAuthStore = create<AuthState>()(
               isLoading: false,
               error: null,
             });
+            console.log('✅ AuthStore: Estado atualizado com sucesso - usuário logado automaticamente');
           } else {
+            console.log('❌ AuthStore: Token ou user ausente na resposta');
             throw new Error('Resposta de registro inválida');
           }
         } catch (err) {

@@ -12,7 +12,7 @@ export function RegisterPage() {
   const [form, setForm] = useState({ name: '', email: '', password: '', accountName: '' });
   const [error, setError] = useState<string | null>(null);
 
-  if (isAuthenticated) return <Navigate to="/dashboard" replace />;
+  if (isAuthenticated) return <Navigate to="/kanban" replace />;
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setForm(f => ({ ...f, [e.target.name]: e.target.value }));
@@ -23,9 +23,21 @@ export function RegisterPage() {
     setError(null);
     if (!form.email || !form.password || !form.name) return;
     try {
+      console.log('📝 RegisterPage: Chamando função de registro');
       await register(form);
-      navigate('/dashboard');
+      console.log('✅ RegisterPage: Registro concluído');
+
+      // Aguardar um pouco para garantir que localStorage e estado sejam sincronizados
+      await new Promise(resolve => setTimeout(resolve, 100));
+
+      console.log('🔄 RegisterPage: Verificando estado de autenticação após registro');
+      console.log('Token no localStorage:', !!localStorage.getItem('crm_auth_token'));
+      console.log('Account data no localStorage:', !!localStorage.getItem('crm_account_data'));
+
+      console.log('🚀 RegisterPage: Navigando para kanban');
+      navigate('/kanban');
     } catch (err: any) {
+      console.log('❌ RegisterPage: Erro no registro:', err);
       setError(err.message || 'Falha no registro');
     }
   };
