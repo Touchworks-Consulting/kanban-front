@@ -309,7 +309,20 @@ export const EditLeadModal: React.FC<EditLeadModalProps> = ({
               <input
                 type="number"
                 value={formData.value}
-                onChange={(e) => setFormData(prev => ({ ...prev, value: parseFloat(e.target.value) || 0 }))}
+                onChange={(e) => {
+                  const rawValue = e.target.value;
+                  let numValue = 0;
+
+                  if (rawValue && rawValue !== '') {
+                    numValue = Number(rawValue);
+                    // Validar se é um número válido
+                    if (isNaN(numValue) || numValue < 0) {
+                      numValue = 0;
+                    }
+                  }
+
+                  setFormData(prev => ({ ...prev, value: numValue }));
+                }}
                 className="w-full px-3 py-2 border border-input bg-background rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
                 placeholder="0"
                 min="0"
