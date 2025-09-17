@@ -96,12 +96,15 @@ export const LeadCard: React.FC<LeadCardProps> = ({ lead, onEdit, onDelete }) =>
           <Avatar className="h-8 w-8 text-xs flex-shrink-0">
             <AvatarFallback>{getInitials(lead.name)}</AvatarFallback>
           </Avatar>
-          <div className="min-w-0 flex-1">
-            <h3 className="font-medium text-sm text-card-foreground truncate">
+          <div className="min-w-0 flex-1 overflow-hidden">
+            <h3
+              className="font-medium text-sm text-card-foreground block truncate max-w-full"
+              title={lead.name}
+            >
               {lead.name}
             </h3>
             {lead.campaign && (
-              <p className="text-xs text-muted-foreground truncate">
+              <p className="text-xs text-muted-foreground truncate max-w-full" title={lead.campaign}>
                 {lead.campaign}
               </p>
             )}

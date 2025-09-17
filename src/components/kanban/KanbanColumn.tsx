@@ -8,6 +8,7 @@ import { LeadCard } from './LeadCard';
 import { Button } from '../ui/button';
 import { ScrollArea } from '../ui/scroll-area';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '../ui/dropdown-menu';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '../ui/alert-dialog';
 import { cn } from '../../lib/utils';
 
 interface KanbanColumnProps {
@@ -146,13 +147,36 @@ export const KanbanColumn: React.FC<KanbanColumnProps> = ({
                 </DropdownMenuItem>
               )}
               {onDeleteColumn && !column.is_system && (
-                <DropdownMenuItem 
-                  onClick={() => onDeleteColumn(column.id)}
-                  className="text-destructive"
-                >
-                  <Trash2 className="w-4 h-4 mr-2" />
-                  Excluir Coluna
-                </DropdownMenuItem>
+                <AlertDialog>
+                  <AlertDialogTrigger asChild>
+                    <DropdownMenuItem 
+                      onSelect={(e) => e.preventDefault()}
+                      className="text-destructive"
+                    >
+                      <Trash2 className="w-4 h-4 mr-2" />
+                      Excluir Coluna
+                    </DropdownMenuItem>
+                  </AlertDialogTrigger>
+                  <AlertDialogContent>
+                    <AlertDialogHeader>
+                      <AlertDialogTitle>Excluir Coluna</AlertDialogTitle>
+                      <AlertDialogDescription>
+                        Tem certeza que deseja excluir a coluna <strong>"{column.name}"</strong>?<br />
+                        <br />
+                        Esta ação não pode ser desfeita. Se houver leads nesta coluna, eles precisam ser movidos para outra coluna antes da exclusão.
+                      </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                      <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                      <AlertDialogAction 
+                        onClick={() => onDeleteColumn(column.id)}
+                        className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                      >
+                        Excluir Coluna
+                      </AlertDialogAction>
+                    </AlertDialogFooter>
+                  </AlertDialogContent>
+                </AlertDialog>
               )}
             </DropdownMenuContent>
           </DropdownMenu>

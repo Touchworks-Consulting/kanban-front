@@ -2,6 +2,7 @@ import axios from 'axios';
 import type { AxiosInstance, AxiosResponse, AxiosError, InternalAxiosRequestConfig } from 'axios';
 import { API_BASE_URL, STORAGE_KEYS } from '../constants';
 import type { ApiError } from '../types';
+import { useAuthStore } from '../stores/auth';
 
 interface RetryableAxiosConfig extends InternalAxiosRequestConfig {
   _retry?: boolean;
@@ -29,28 +30,19 @@ class ApiService {
     this.api.interceptors.request.use(
       (config) => {
         try {
-          // Primeiro tenta ler do Zustand persist (auth-storage)
-          let token = null;
-          let accountData = null;
+          // Ler diretamente do Zustand store (mais confiável)
+          const authState = useAuthStore.getState();
+          let token = authState.token;
+          let accountData = authState.account;
 
-          const authStorage = localStorage.getItem('auth-storage');
-          if (authStorage) {
-            try {
-              const authState = JSON.parse(authStorage);
-              token = authState.state?.token;
-              accountData = authState.state?.account;
-              console.log('🔧 Request interceptor (Zustand):', {
-                url: config.url,
-                method: config.method,
-                hasToken: !!token,
-                hasAccountData: !!accountData
-              });
-            } catch (e) {
-              console.log('❌ Erro ao fazer parse do auth-storage:', e);
-            }
-          }
+          console.log('🔧 Request interceptor (Zustand direct):', {
+            url: config.url,
+            method: config.method,
+            hasToken: !!token,
+            hasAccountData: !!accountData
+          });
 
-          // Fallback para o formato antigo
+          // Fallback para localStorage legado se Zustand não tiver dados
           if (!token) {
             token = localStorage.getItem(STORAGE_KEYS.AUTH_TOKEN);
             const accountJson = localStorage.getItem(STORAGE_KEYS.ACCOUNT_DATA);
