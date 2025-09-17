@@ -151,3 +151,22 @@
   min-width: 0 !important;
   white-space: normal !important;
 }
+
+/* Force truncation for lead title and campaign to prevent card overflow */
+.kanban-lead-title,
+.kanban-lead-campaign {
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  white-space: nowrap !important;
+  display: block !important;
+  min-width: 0 !important;
+  max-width: 100% !important;
+}
+
+/* More specific rules to override kanban-card * break-all rules */
+.kanban-card .kanban-lead-title,
+.kanban-card .kanban-lead-campaign {
+  word-break: normal !important;
+  overflow-wrap: normal !important;
+  hyphens: none !important;
+}

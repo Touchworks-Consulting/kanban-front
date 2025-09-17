@@ -187,9 +187,8 @@ export const KanbanColumn: React.FC<KanbanColumnProps> = ({
       {getTotalValue() > 0 && (
         <div className="px-4 py-2 border-b bg-muted/30">
           <div className="flex items-center gap-2 text-sm min-w-0">
-            <DollarSign className="w-4 h-4 text-green-600 flex-shrink-0" />
             <span className="font-medium text-green-600 truncate min-w-0 flex-1" title={formatCurrency(getTotalValue())}>
-              {formatCurrency(getTotalValue())}
+             
             </span>
           </div>
         </div>
