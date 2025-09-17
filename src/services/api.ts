@@ -35,13 +35,6 @@ class ApiService {
           let token = authState.token;
           let accountData = authState.account;
 
-          console.log('🔧 Request interceptor (Zustand direct):', {
-            url: config.url,
-            method: config.method,
-            hasToken: !!token,
-            hasAccountData: !!accountData
-          });
-
           // Fallback para localStorage legado se Zustand não tiver dados
           if (!token) {
             token = localStorage.getItem(STORAGE_KEYS.AUTH_TOKEN);
@@ -53,24 +46,16 @@ class ApiService {
                 console.log('❌ Erro ao fazer parse do account data:', e);
               }
             }
-            console.log('🔧 Request interceptor (fallback):', {
-              url: config.url,
-              method: config.method,
-              hasToken: !!token,
-              hasAccountData: !!accountData
-            });
           }
 
           if (token) {
             config.headers.Authorization = `Bearer ${token}`;
-            console.log('✅ Token added to request');
           } else {
             console.log('❌ No token found in localStorage');
           }
 
           if (accountData && accountData.id) {
             config.headers['X-Tenant-ID'] = accountData.id;
-            console.log('✅ Tenant ID added:', accountData.id);
           } else {
             console.log('❌ No account ID found in accountData');
           }

@@ -112,7 +112,7 @@ export const useSmartSearch = (
 
         // Date range filter (custom period)
         if (searchFilters.period === 'custom' && searchFilters.dateRange) {
-          const leadDateValue = (lead as any).createdAt || (lead as any).updatedAt || lead.created_at || lead.updated_at;
+          const leadDateValue = (lead as any).createdAt || (lead as any).updatedAt || lead.createdAt || lead.updatedAt;
           
           if (!leadDateValue) {
             return false; // Se não tem data, não passa no filtro
@@ -228,7 +228,6 @@ export const useSmartSearch = (
   const handleSearch = useCallback((searchFilters: FilterState) => {
     const searchTerm = searchFilters.search || '';
 
-    console.log('🔍 useSmartSearch handleSearch called with:', searchFilters);
 
     setSearchResult(prev => ({
       ...prev,
