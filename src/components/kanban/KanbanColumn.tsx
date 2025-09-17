@@ -62,9 +62,10 @@ export const KanbanColumn: React.FC<KanbanColumnProps> = ({
   const leads = column.leads || [];
   const leadIds = leads.map(lead => lead.id);
 
-  const getTotalValue = () => {
-    return leads.reduce((total, lead) => total + (lead.value || 0), 0);
-  };
+const uniqueLeads = Array.from(new Set(leads.map(l => l.id))).map(id => leads.find(l => l.id === id));
+const getTotalValue = () => {
+  return uniqueLeads.reduce((total, lead) => total + ((lead?.value) || 0), 0);
+};
 
   const formatCurrency = (value: number) => {
     return new Intl.NumberFormat('pt-BR', {
