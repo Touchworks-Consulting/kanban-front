@@ -302,7 +302,7 @@ export const CampaignsPage: React.FC = () => {
       </div>
 
         {/* Campaigns Table */}
-        <div className="flex-1 bg-card rounded-lg border overflow-hidden">
+  <div className="flex-1 bg-card rounded-lg border overflow-y-auto">
           {filteredCampaigns.length === 0 ? (
             <div className="flex flex-col items-center justify-center h-64 text-center">
               <Target className="w-12 h-12 text-muted-foreground mb-4" />
