@@ -35,19 +35,22 @@ export function UsersPage() {
   useEffect(() => { load(); }, []);
 
   const handleCreate = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setCreating(true);
-    setError(null);
+  e.preventDefault();
+  console.log('submit: handleCreate chamado');
+  setCreating(true);
+  setError(null);
 
     try {
       // Verificar limite antes de criar usuário
       const limitCheck = await checkUserLimit(1);
+      console.log('checkUserLimit result:', limitCheck);
 
       if (!limitCheck.allowed) {
         setError(limitCheck.message || 'Limite de usuários atingido. Considere fazer upgrade do seu plano.');
         return;
       }
 
+      console.log('chamando userService.create', form);
       await userService.create({
         ...form,
         role: form.role as "member" | "admin"
@@ -55,6 +58,7 @@ export function UsersPage() {
       setForm({ name: '', email: '', password: '', role: 'member' });
       await load();
     } catch (e: any) {
+      console.log('Erro ao criar usuário:', e);
       setError(e.message || 'Erro ao criar usuário');
     } finally {
       setCreating(false);

@@ -202,7 +202,7 @@ export function PlanLimitsAlert() {
 export function usePlanLimits() {
   const checkUserLimit = async (quantityToAdd = 1): Promise<{allowed: boolean; message?: string}> => {
     try {
-      const token = localStorage.getItem('token');
+      const token = localStorage.getItem('crm_auth_token');
       if (!token) return { allowed: false, message: 'Token não encontrado' };
 
       const response = await fetch('/api/billing/limits/check-users', {
@@ -232,7 +232,7 @@ export function usePlanLimits() {
 
   const checkLeadLimit = async (quantityToAdd = 1): Promise<{allowed: boolean; message?: string}> => {
     try {
-      const token = localStorage.getItem('token');
+      const token = localStorage.getItem('crm_auth_token');
       if (!token) return { allowed: false, message: 'Token não encontrado' };
 
       const response = await fetch('/api/billing/limits/check-leads', {
