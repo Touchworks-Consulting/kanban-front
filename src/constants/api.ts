@@ -23,6 +23,10 @@ export const API_ENDPOINTS = {
   // Dashboard endpoints
   DASHBOARD_STATS: '/api/dashboard/stats',
   DASHBOARD_CHARTS: '/api/dashboard/charts',
+
+  // User endpoints
+  USERS: '/api/users',
+  USER_BY_ID: (id: number | string) => `/api/users/${id}`,
 } as const;
 
 export const STORAGE_KEYS = {

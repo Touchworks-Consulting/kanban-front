@@ -2,12 +2,13 @@ import { useEffect, useState } from 'react';
 import { userService } from '../services';
 import { usePlanLimits } from '../components/PlanLimitsAlert';
 import { LoadingSpinner } from '../components/LoadingSpinner';
-import { 
-  Select, 
-  SelectContent, 
-  SelectItem, 
-  SelectTrigger, 
-  SelectValue 
+import { Eye, EyeOff, Copy, RefreshCw, Check } from 'lucide-react';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue
 } from '../components/ui/select';
 
 interface UserRow { id: string; name: string; email: string; role?: string; is_active?: boolean; account_id?: string; user_id?: string; }
@@ -18,6 +19,10 @@ export function UsersPage() {
   const [error, setError] = useState<string | null>(null);
   const [form, setForm] = useState({ name: '', email: '', password: '', role: 'member' });
   const [creating, setCreating] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const [showCredentials, setShowCredentials] = useState(false);
+  const [createdCredentials, setCreatedCredentials] = useState<{ name: string; email: string; password: string } | null>(null);
+  const [copyFeedback, setCopyFeedback] = useState<{ type: 'password' | 'credentials' | null }>({ type: null });
   const { checkUserLimit } = usePlanLimits();
 
   const load = async () => {
@@ -33,6 +38,31 @@ export function UsersPage() {
   };
 
   useEffect(() => { load(); }, []);
+
+  const generateSecurePassword = () => {
+    const length = 12;
+    const charset = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*()_+-=[]{}|;:,.<>?';
+    let password = '';
+    for (let i = 0; i < length; i++) {
+      password += charset.charAt(Math.floor(Math.random() * charset.length));
+    }
+    return password;
+  };
+
+  const handleGeneratePassword = () => {
+    const newPassword = generateSecurePassword();
+    setForm(f => ({ ...f, password: newPassword }));
+  };
+
+  const copyToClipboard = async (text: string, type: 'password' | 'credentials') => {
+    try {
+      await navigator.clipboard.writeText(text);
+      setCopyFeedback({ type });
+      setTimeout(() => setCopyFeedback({ type: null }), 2000);
+    } catch (err) {
+      console.error('Erro ao copiar para área de transferência:', err);
+    }
+  };
 
   const handleCreate = async (e: React.FormEvent) => {
   e.preventDefault();
@@ -51,10 +81,23 @@ export function UsersPage() {
       }
 
       console.log('chamando userService.create', form);
+
+      // Salvar as credenciais antes de enviar para o servidor
+      const credentialsToSave = {
+        name: form.name,
+        email: form.email,
+        password: form.password
+      };
+
       await userService.create({
         ...form,
         role: form.role as "member" | "admin"
       });
+
+      // Salvar credenciais e mostrar modal
+      setCreatedCredentials(credentialsToSave);
+      setShowCredentials(true);
+
       setForm({ name: '', email: '', password: '', role: 'member' });
       await load();
     } catch (e: any) {
@@ -133,7 +176,42 @@ export function UsersPage() {
                 </div>
                 <div>
                   <label className="block text-xs font-medium text-foreground">Senha</label>
-                  <input type="password" className="mt-1 w-full border border-border bg-background text-foreground rounded px-2 py-1 text-sm focus:ring-2 focus:ring-primary focus:border-transparent" value={form.password} onChange={e => setForm(f => ({ ...f, password: e.target.value }))} required />
+                  <div className="relative">
+                    <input
+                      type={showPassword ? "text" : "password"}
+                      className="mt-1 w-full border border-border bg-background text-foreground rounded px-2 py-1 pr-20 text-sm focus:ring-2 focus:ring-primary focus:border-transparent"
+                      value={form.password}
+                      onChange={e => setForm(f => ({ ...f, password: e.target.value }))}
+                      required
+                    />
+                    <div className="absolute right-1 top-1/2 transform -translate-y-1/2 flex gap-1">
+                      <button
+                        type="button"
+                        onClick={() => setShowPassword(!showPassword)}
+                        className="p-1 text-muted-foreground hover:text-foreground transition-colors"
+                        title={showPassword ? "Ocultar senha" : "Mostrar senha"}
+                      >
+                        {showPassword ? <EyeOff className="w-3 h-3" /> : <Eye className="w-3 h-3" />}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => copyToClipboard(form.password, 'password')}
+                        className="p-1 text-muted-foreground hover:text-foreground transition-colors"
+                        title="Copiar senha"
+                        disabled={!form.password}
+                      >
+                        {copyFeedback.type === 'password' ? <Check className="w-3 h-3 text-green-600" /> : <Copy className="w-3 h-3" />}
+                      </button>
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={handleGeneratePassword}
+                    className="mt-2 flex items-center gap-1 text-xs text-primary hover:text-primary/80 transition-colors"
+                  >
+                    <RefreshCw className="w-3 h-3" />
+                    Gerar senha segura
+                  </button>
                 </div>
                 <div>
                   <label className="block text-xs font-medium text-foreground">Perfil</label>
@@ -154,6 +232,59 @@ export function UsersPage() {
             </div>
         </div>
       </div>
+
+      {/* Modal de Credenciais */}
+      {showCredentials && createdCredentials && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-card text-card-foreground rounded-lg shadow-lg max-w-md w-full p-6">
+            <h3 className="text-lg font-semibold mb-4">Usuário Criado com Sucesso!</h3>
+            <div className="space-y-3">
+              <div>
+                <label className="block text-xs font-medium text-muted-foreground">Nome</label>
+                <div className="flex items-center justify-between p-2 bg-muted rounded text-sm">
+                  <span>{createdCredentials.name}</span>
+                </div>
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-muted-foreground">Email</label>
+                <div className="flex items-center justify-between p-2 bg-muted rounded text-sm">
+                  <span>{createdCredentials.email}</span>
+                </div>
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-muted-foreground">Senha</label>
+                <div className="flex items-center justify-between p-2 bg-muted rounded text-sm">
+                  <span className="font-mono">{createdCredentials.password}</span>
+                </div>
+              </div>
+            </div>
+            <div className="flex gap-2 mt-6">
+              <button
+                onClick={() => {
+                  const credentialsText = `Nome: ${createdCredentials.name}\nEmail: ${createdCredentials.email}\nSenha: ${createdCredentials.password}`;
+                  copyToClipboard(credentialsText, 'credentials');
+                }}
+                className="flex-1 bg-primary text-primary-foreground rounded py-2 px-3 text-sm hover:bg-primary/90 transition-colors flex items-center justify-center gap-2"
+              >
+                {copyFeedback.type === 'credentials' ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
+                {copyFeedback.type === 'credentials' ? 'Copiado!' : 'Copiar Credenciais'}
+              </button>
+              <button
+                onClick={() => {
+                  setShowCredentials(false);
+                  setCreatedCredentials(null);
+                }}
+                className="px-4 py-2 text-sm border border-border rounded hover:bg-muted transition-colors"
+              >
+                Fechar
+              </button>
+            </div>
+            <p className="text-xs text-muted-foreground mt-3 text-center">
+              ⚠️ Salve essas credenciais em um local seguro. Esta é a única vez que você verá a senha.
+            </p>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
