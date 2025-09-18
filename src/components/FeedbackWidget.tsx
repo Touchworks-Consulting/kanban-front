@@ -7,6 +7,8 @@ import { Textarea } from './ui/textarea';
 import { Label } from './ui/label';
 import { Checkbox } from './ui/checkbox';
 import { cn } from '../lib/utils';
+import { apiService } from '../services/api';
+import { API_ENDPOINTS } from '../constants';
 
 type FeedbackType = 'bug' | 'suggestion' | 'praise' | '';
 
@@ -63,26 +65,15 @@ export function FeedbackWidget() {
       const currentPage = window.location.pathname + window.location.search;
 
       // Enviar para API
-      const response = await fetch('/api/feedback/submit', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          ...(token ? { 'Authorization': `Bearer ${token}` } : {})
-        },
-        body: JSON.stringify({
-          type: feedbackType,
-          message: message.trim(),
-          browser_info: browserInfo,
-          screen_resolution: screenResolution,
-          current_page: currentPage
-        })
+      const response = await apiService.post(API_ENDPOINTS.FEEDBACK_SUBMIT, {
+        type: feedbackType,
+        message: message.trim(),
+        browser_info: browserInfo,
+        screen_resolution: screenResolution,
+        current_page: currentPage
       });
 
-      if (!response.ok) {
-        throw new Error('Erro ao enviar feedback');
-      }
-
-      const result = await response.json();
+      const result = response.data;
       console.log('✅ Feedback enviado com sucesso:', result.feedback_id);
 
       setIsSubmitted(true);

@@ -1,4 +1,5 @@
 import { api } from './api';
+import { API_ENDPOINTS } from '../constants';
 
 export interface PlanFeature {
   name: string;
@@ -38,19 +39,19 @@ export interface Subscription {
 export const billingService = {
   // Buscar todos os planos disponíveis
   async getPlans(): Promise<{ success: boolean; plans: Plan[] }> {
-    const response = await api.get('/api/billing/plans');
+    const response = await api.get(API_ENDPOINTS.BILLING_PLANS);
     return response.data;
   },
 
   // Buscar assinatura atual
   async getCurrentSubscription(): Promise<{ success: boolean; subscription: Subscription | null }> {
-    const response = await api.get('/api/billing/subscription');
+    const response = await api.get(API_ENDPOINTS.BILLING_SUBSCRIPTION);
     return response.data;
   },
 
   // Criar nova assinatura
   async createSubscription(planId: string, quantity: number = 1): Promise<{ success: boolean; subscription_id?: string; message?: string }> {
-    const response = await api.post('/api/billing/subscription', {
+    const response = await api.post(API_ENDPOINTS.BILLING_SUBSCRIPTION, {
       plan_id: planId,
       quantity: quantity
     });
@@ -59,7 +60,7 @@ export const billingService = {
 
   // Atualizar quantidade de usuários
   async updateSubscriptionQuantity(quantity: number): Promise<{ success: boolean; message?: string }> {
-    const response = await api.put('/api/billing/subscription/quantity', {
+    const response = await api.put(API_ENDPOINTS.BILLING_SUBSCRIPTION_QUANTITY, {
       quantity: quantity
     });
     return response.data;
@@ -67,7 +68,7 @@ export const billingService = {
 
   // Cancelar assinatura
   async cancelSubscription(cancelAtPeriodEnd: boolean = true): Promise<{ success: boolean; message?: string }> {
-    const response = await api.post('/api/billing/subscription/cancel', {
+    const response = await api.post(API_ENDPOINTS.BILLING_SUBSCRIPTION_CANCEL, {
       cancel_at_period_end: cancelAtPeriodEnd
     });
     return response.data;
@@ -85,7 +86,7 @@ export const billingService = {
       leads_limit_reached: boolean;
     }
   }> {
-    const response = await api.get('/api/billing/limits');
+    const response = await api.get(API_ENDPOINTS.BILLING_LIMITS);
     return response.data;
   }
 };

@@ -2,6 +2,8 @@ import { useState, useEffect } from 'react';
 import { AlertTriangle, Users, Zap, Crown, X } from 'lucide-react';
 import { Button } from './ui/button';
 import { useNavigate } from 'react-router-dom';
+import { apiService } from '../services/api';
+import { API_ENDPOINTS } from '../constants';
 
 interface PlanLimits {
   users: {
@@ -50,21 +52,9 @@ export function PlanLimitsAlert() {
 
   const fetchLimitsData = async () => {
     try {
-      const token = localStorage.getItem('token');
-      if (!token) return;
-
-      const response = await fetch('/api/billing/limits/status', {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        }
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        if (data.success) {
-          setLimitsData(data);
-        }
+      const response = await apiService.get(API_ENDPOINTS.BILLING_LIMITS_STATUS);
+      if (response.data && response.data.success) {
+        setLimitsData(response.data);
       }
     } catch (error) {
       console.error('Erro ao buscar dados de limites:', error);
@@ -202,61 +192,33 @@ export function PlanLimitsAlert() {
 export function usePlanLimits() {
   const checkUserLimit = async (quantityToAdd = 1): Promise<{allowed: boolean; message?: string}> => {
     try {
-      const token = localStorage.getItem('crm_auth_token');
-      if (!token) return { allowed: false, message: 'Token não encontrado' };
-
-      const response = await fetch('/api/billing/limits/check-users', {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({ quantity: quantityToAdd })
+      const response = await apiService.post(API_ENDPOINTS.BILLING_LIMITS_CHECK_USERS, {
+        quantity: quantityToAdd
       });
 
-      const data = await response.json();
-
-      if (!response.ok) {
-        return {
-          allowed: false,
-          message: data.error || 'Limite atingido'
-        };
-      }
-
       return { allowed: true };
-    } catch (error) {
+    } catch (error: any) {
       console.error('Erro ao verificar limite de usuários:', error);
-      return { allowed: false, message: 'Erro ao verificar limite' };
+      return {
+        allowed: false,
+        message: error.response?.data?.error || error.message || 'Erro ao verificar limite'
+      };
     }
   };
 
   const checkLeadLimit = async (quantityToAdd = 1): Promise<{allowed: boolean; message?: string}> => {
     try {
-      const token = localStorage.getItem('crm_auth_token');
-      if (!token) return { allowed: false, message: 'Token não encontrado' };
-
-      const response = await fetch('/api/billing/limits/check-leads', {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({ quantity: quantityToAdd })
+      const response = await apiService.post(API_ENDPOINTS.BILLING_LIMITS_CHECK_LEADS, {
+        quantity: quantityToAdd
       });
 
-      const data = await response.json();
-
-      if (!response.ok) {
-        return {
-          allowed: false,
-          message: data.error || 'Limite atingido'
-        };
-      }
-
       return { allowed: true };
-    } catch (error) {
+    } catch (error: any) {
       console.error('Erro ao verificar limite de leads:', error);
-      return { allowed: false, message: 'Erro ao verificar limite' };
+      return {
+        allowed: false,
+        message: error.response?.data?.error || error.message || 'Erro ao verificar limite'
+      };
     }
   };
 

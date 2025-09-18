@@ -4,6 +4,8 @@ import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
 import { Label } from '../components/ui/label';
 import { Textarea } from '../components/ui/textarea';
+import { apiService } from '../services/api';
+import { API_ENDPOINTS } from '../constants';
 // Simple Badge component
 const Badge = ({ children, variant = 'default', className = '' }: {
   children: React.ReactNode;
@@ -94,20 +96,14 @@ export function FeedbackAdminPage() {
   const verifyAccessCode = async () => {
     setIsVerifying(true);
     try {
-      const response = await fetch('/api/feedback/admin/verify-code', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ access_code: accessCode })
+      const response = await apiService.post(API_ENDPOINTS.FEEDBACK_ADMIN_VERIFY_CODE, {
+        access_code: accessCode
       });
 
-      if (response.ok) {
-        const { token } = await response.json();
-        localStorage.setItem('feedback_admin_token', token);
-        setIsAuthenticated(true);
-        await loadData();
-      } else {
-        alert('Código de acesso inválido');
-      }
+      const { token } = response.data;
+      localStorage.setItem('feedback_admin_token', token);
+      setIsAuthenticated(true);
+      await loadData();
     } catch (error) {
       alert('Erro ao verificar código');
     } finally {
@@ -120,24 +116,21 @@ export function FeedbackAdminPage() {
     const token = localStorage.getItem('feedback_admin_token');
 
     try {
+      // Temporariamente configurar o token no apiService se ele não foi incluído automaticamente
+      const headers: Record<string, string> = {};
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+      }
+
       const [feedbackResponse, statsResponse] = await Promise.all([
-        fetch(`/api/feedback/admin/list?status=${filter.status}&type=${filter.type}`, {
-          headers: { 'Authorization': `Bearer ${token}` }
+        apiService.getAxiosInstance().get(`/api/feedback/admin/list?status=${filter.status}&type=${filter.type}`, {
+          headers
         }),
-        fetch('/api/feedback/admin/stats', {
-          headers: { 'Authorization': `Bearer ${token}` }
-        })
+        apiService.get(API_ENDPOINTS.FEEDBACK_ADMIN_STATS)
       ]);
 
-      if (feedbackResponse.ok) {
-        const feedbackData = await feedbackResponse.json();
-        setFeedbacks(feedbackData.feedbacks);
-      }
-
-      if (statsResponse.ok) {
-        const statsData = await statsResponse.json();
-        setStats(statsData);
-      }
+      setFeedbacks(feedbackResponse.data.feedbacks);
+      setStats(statsResponse.data);
     } catch (error) {
       console.error('Erro ao carregar dados:', error);
     } finally {
@@ -150,21 +143,18 @@ export function FeedbackAdminPage() {
     const token = localStorage.getItem('feedback_admin_token');
 
     try {
-      const response = await fetch(`/api/feedback/admin/${id}`, {
-        method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify(updates)
+      // Usar apiService com token customizado para admin
+      const headers: Record<string, string> = {};
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+      }
+
+      await apiService.getAxiosInstance().patch(`/api/feedback/admin/${id}`, updates, {
+        headers
       });
 
-      if (response.ok) {
-        await loadData();
-        setSelectedFeedback(null);
-      } else {
-        alert('Erro ao atualizar feedback');
-      }
+      await loadData();
+      setSelectedFeedback(null);
     } catch (error) {
       alert('Erro ao atualizar feedback');
     } finally {

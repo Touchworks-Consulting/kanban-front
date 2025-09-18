@@ -27,6 +27,21 @@ export const API_ENDPOINTS = {
   // User endpoints
   USERS: '/api/users',
   USER_BY_ID: (id: number | string) => `/api/users/${id}`,
+
+  // Billing endpoints
+  BILLING_PLANS: '/api/billing/plans',
+  BILLING_SUBSCRIPTION: '/api/billing/subscription',
+  BILLING_SUBSCRIPTION_QUANTITY: '/api/billing/subscription/quantity',
+  BILLING_SUBSCRIPTION_CANCEL: '/api/billing/subscription/cancel',
+  BILLING_LIMITS: '/api/billing/limits',
+  BILLING_LIMITS_STATUS: '/api/billing/limits/status',
+  BILLING_LIMITS_CHECK_USERS: '/api/billing/limits/check-users',
+  BILLING_LIMITS_CHECK_LEADS: '/api/billing/limits/check-leads',
+
+  // Feedback endpoints
+  FEEDBACK_SUBMIT: '/api/feedback/submit',
+  FEEDBACK_ADMIN_VERIFY_CODE: '/api/feedback/admin/verify-code',
+  FEEDBACK_ADMIN_STATS: '/api/feedback/admin/stats',
 } as const;
 
 export const STORAGE_KEYS = {
