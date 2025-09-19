@@ -2,7 +2,7 @@ import { apiService } from './api';
 import { API_ENDPOINTS } from '../constants';
 
 export interface UserDto { id: string; name: string; email: string; role?: string; is_active?: boolean; account_id?: string; }
-export interface CreateUserInput { name: string; email: string; password: string; role?: 'admin' | 'member'; }
+export interface CreateUserInput { name: string; email: string; password: string; role?: 'admin' | 'member'; account_id?: string; }
 export interface UpdateUserInput { name?: string; password?: string; role?: 'admin' | 'member'; is_active?: boolean; }
 
 interface ListResponse { users: UserDto[] }

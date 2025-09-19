@@ -3,6 +3,7 @@ import { userService } from '../services';
 import { usePlanLimits } from '../components/PlanLimitsAlert';
 import { LoadingSpinner } from '../components/LoadingSpinner';
 import { Eye, EyeOff, Copy, RefreshCw, Check } from 'lucide-react';
+import { useAuthStore } from '../stores/auth';
 import {
   Select,
   SelectContent,
@@ -24,6 +25,7 @@ export function UsersPage() {
   const [createdCredentials, setCreatedCredentials] = useState<{ name: string; email: string; password: string } | null>(null);
   const [copyFeedback, setCopyFeedback] = useState<{ type: 'password' | 'credentials' | null }>({ type: null });
   const { checkUserLimit } = usePlanLimits();
+  const { account } = useAuthStore();
 
   const load = async () => {
     setLoading(true);
@@ -67,6 +69,9 @@ export function UsersPage() {
   const handleCreate = async (e: React.FormEvent) => {
   e.preventDefault();
   console.log('submit: handleCreate chamado');
+  console.log('🔍 DEBUG - Account data:', account);
+  console.log('🔍 DEBUG - Account ID:', account?.id);
+  console.log('🔍 DEBUG - Form data:', form);
   setCreating(true);
   setError(null);
 
@@ -89,10 +94,16 @@ export function UsersPage() {
         password: form.password
       };
 
-      await userService.create({
+      const payload = {
         ...form,
-        role: form.role as "member" | "admin"
-      });
+        role: form.role as "member" | "admin",
+        account_id: account?.id
+      };
+
+      console.log('🔍 DEBUG - Payload completo:', payload);
+      console.log('🔍 DEBUG - Account ID no payload:', payload.account_id);
+
+      await userService.create(payload);
 
       // Salvar credenciais e mostrar modal
       setCreatedCredentials(credentialsToSave);
