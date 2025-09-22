@@ -5,6 +5,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '.
 import { apiService } from '../../services/api';
 import { userService, type UserDto } from '../../services/users';
 import { useCustomStatuses } from '../../hooks/useCustomStatuses';
+import { LossReasonDialog } from './LossReasonDialog';
 import type { Lead, UpdateLeadDto } from '../../types';
 
 interface Campaign {
@@ -58,6 +59,13 @@ export const EditLeadModal: React.FC<EditLeadModalProps> = ({
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [campaigns, setCampaigns] = useState<Campaign[]>([]);
   const [users, setUsers] = useState<UserDto[]>([]);
+
+  // Loss reason dialog state
+  const [showLossReasonDialog, setShowLossReasonDialog] = useState(false);
+  const [pendingStatusChange, setPendingStatusChange] = useState<{
+    newStatus: string;
+    previousStatus: string;
+  } | null>(null);
 
   // Buscar campanhas e usuários quando o modal abrir
   useEffect(() => {
@@ -130,7 +138,52 @@ export const EditLeadModal: React.FC<EditLeadModalProps> = ({
 
   const handleClose = () => {
     setShowDeleteConfirm(false);
+    setShowLossReasonDialog(false);
+    setPendingStatusChange(null);
     onClose();
+  };
+
+  // Handle status change - intercept when changing to lost status
+  const handleStatusChange = (newStatus: string) => {
+    const currentStatus = formData.status;
+
+    // Check if the new status is a lost status
+    const lostStatus = statuses.find(s => s.value === newStatus && s.is_lost);
+
+    if (lostStatus && currentStatus !== newStatus) {
+      // Store the pending change and show dialog
+      setPendingStatusChange({
+        newStatus,
+        previousStatus: currentStatus
+      });
+      setShowLossReasonDialog(true);
+    } else {
+      // Direct status change for non-lost statuses
+      setFormData(prev => ({ ...prev, status: newStatus }));
+    }
+  };
+
+  // Handle loss reason confirmation
+  const handleLossReasonConfirm = async (reason: string, customReason?: string) => {
+    if (!pendingStatusChange) return;
+
+    // Apply the status change with loss reason
+    setFormData(prev => ({
+      ...prev,
+      status: pendingStatusChange.newStatus,
+      lost_reason: reason
+    }));
+
+    // Clear pending state and close dialog
+    setPendingStatusChange(null);
+    setShowLossReasonDialog(false);
+  };
+
+  // Handle loss reason cancel
+  const handleLossReasonCancel = () => {
+    // Revert to previous status
+    setPendingStatusChange(null);
+    setShowLossReasonDialog(false);
   };
 
   if (!isOpen || !lead) return null;
@@ -196,7 +249,7 @@ export const EditLeadModal: React.FC<EditLeadModalProps> = ({
               </label>
               <Select
                 value={formData.status}
-                onValueChange={(value) => setFormData(prev => ({ ...prev, status: value as any }))}
+                onValueChange={handleStatusChange}
                 disabled={loading}
               >
                 <SelectTrigger className="w-full">
@@ -465,6 +518,14 @@ export const EditLeadModal: React.FC<EditLeadModalProps> = ({
           </div>
         )}
       </div>
+
+      {/* Loss Reason Dialog */}
+      <LossReasonDialog
+        isOpen={showLossReasonDialog}
+        onClose={handleLossReasonCancel}
+        onConfirm={handleLossReasonConfirm}
+        leadName={lead.name}
+      />
     </div>
   );
 };

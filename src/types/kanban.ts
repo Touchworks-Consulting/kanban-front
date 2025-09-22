@@ -77,6 +77,7 @@ export interface CreateLeadDto {
   value?: number;
   notes?: string;
   assigned_to_user_id?: string;
+  lost_reason?: string;
   tags?: string[];
 }
 
@@ -94,6 +95,7 @@ export interface UpdateColumnDto extends Partial<CreateColumnDto> {
 export interface MoveLeadDto {
   column_id: string;
   position: number;
+  lost_reason?: string;
 }
 
 export interface ReorderColumnsDto {

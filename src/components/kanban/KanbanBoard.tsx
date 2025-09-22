@@ -23,6 +23,7 @@ import { CreateColumnModal } from './CreateColumnModal';
 import { EditColumnModal } from './EditColumnModal';
 import { CreateLeadModal } from './CreateLeadModal';
 import { EditLeadModal } from './EditLeadModal';
+import { LossReasonDialog } from './LossReasonDialog';
 import { FilterBar, type FilterState } from './FilterBar';
 import { LoadingSpinner } from '../LoadingSpinner';
 import { Button } from '../ui/button';
@@ -57,7 +58,16 @@ export const KanbanBoard: React.FC = () => {
   const [selectedColumnForLead, setSelectedColumnForLead] = useState<{ id: string; name: string } | null>(null);
   const [selectedColumnForEdit, setSelectedColumnForEdit] = useState<ColumnType | null>(null);
   const [selectedLeadForEdit, setSelectedLeadForEdit] = useState<Lead | null>(null);
-  
+
+  // Loss reason dialog state
+  const [showLossReasonDialog, setShowLossReasonDialog] = useState(false);
+  const [pendingLossMove, setPendingLossMove] = useState<{
+    leadId: string;
+    leadName: string;
+    targetColumnId: string;
+    targetPosition: number;
+  } | null>(null);
+
   // Filter state
   const [filters, setFilters] = useState<FilterState>({
     search: '',
@@ -238,6 +248,30 @@ export const KanbanBoard: React.FC = () => {
       return;
     }
 
+    // Check if moving to a "lost" column - show dialog for loss reason
+    const isMovingToLostColumn = targetColumn.name.toLowerCase().includes('perdido') ||
+                                  targetColumn.name.toLowerCase().includes('perdidos');
+
+    if (isMovingToLostColumn) {
+      // Find the lead being moved
+      const movingLead = sourceColumn.leads?.find(l => l.id === activeId);
+      if (movingLead) {
+        // Store pending move and show dialog
+        setPendingLossMove({
+          leadId: activeId,
+          leadName: movingLead.name,
+          targetColumnId: targetColumn.id,
+          targetPosition
+        });
+        setShowLossReasonDialog(true);
+
+        // Revert optimistic move since we're waiting for user input
+        const { revertOptimisticMove } = useKanbanStore.getState();
+        revertOptimisticMove();
+        return;
+      }
+    }
+
     // Apply optimistic update before API call
     optimisticMoveLead(activeId, sourceColumn.id, targetColumn.id, targetPosition);
 
@@ -313,6 +347,50 @@ export const KanbanBoard: React.FC = () => {
     await createLead(data);
     setShowCreateLeadModal(false);
     setSelectedColumnForLead(null);
+  };
+
+  // Loss reason dialog handlers
+  const handleLossReasonConfirm = async (reason: string, customReason?: string) => {
+    if (!pendingLossMove || !board) return;
+
+    try {
+      // Find source column
+      let sourceColumn = null;
+      for (const column of board.columns) {
+        if (column.leads?.some(l => l.id === pendingLossMove.leadId)) {
+          sourceColumn = column;
+          break;
+        }
+      }
+
+      if (!sourceColumn) return;
+
+      // Apply optimistic update
+      optimisticMoveLead(
+        pendingLossMove.leadId,
+        sourceColumn.id,
+        pendingLossMove.targetColumnId,
+        pendingLossMove.targetPosition
+      );
+
+      // Move the lead with loss reason
+      await moveLead(pendingLossMove.leadId, {
+        column_id: pendingLossMove.targetColumnId,
+        position: pendingLossMove.targetPosition,
+        lost_reason: reason
+      });
+
+      // Clear pending move
+      setPendingLossMove(null);
+      setShowLossReasonDialog(false);
+    } catch (error) {
+      console.error('Failed to move lead with loss reason:', error);
+    }
+  };
+
+  const handleLossReasonCancel = () => {
+    setPendingLossMove(null);
+    setShowLossReasonDialog(false);
   };
 
   if (loading && !board) {
@@ -478,6 +556,13 @@ export const KanbanBoard: React.FC = () => {
         onSubmit={handleUpdateLead}
         onDelete={handleDeleteLead}
         lead={selectedLeadForEdit}
+      />
+
+      <LossReasonDialog
+        isOpen={showLossReasonDialog}
+        onClose={handleLossReasonCancel}
+        onConfirm={handleLossReasonConfirm}
+        leadName={pendingLossMove?.leadName || ''}
       />
     </div>
   );
