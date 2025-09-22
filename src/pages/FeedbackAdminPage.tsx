@@ -126,7 +126,9 @@ export function FeedbackAdminPage() {
         apiService.getAxiosInstance().get(`/api/feedback/admin/list?status=${filter.status}&type=${filter.type}`, {
           headers
         }),
-        apiService.get(API_ENDPOINTS.FEEDBACK_ADMIN_STATS)
+        apiService.getAxiosInstance().get(API_ENDPOINTS.FEEDBACK_ADMIN_STATS, {
+          headers
+        })
       ]);
 
       setFeedbacks(feedbackResponse.data.feedbacks);
