@@ -4,6 +4,7 @@ import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
 import { Label } from '../components/ui/label';
 import { Textarea } from '../components/ui/textarea';
+import { FeedbackVoteButton } from '../components/FeedbackVoteButton';
 import { apiService } from '../services/api';
 import { API_ENDPOINTS } from '../constants';
 // Simple Badge component
@@ -27,7 +28,11 @@ import {
   Globe,
   Eye,
   EyeOff,
-  Filter
+  Filter,
+  Settings,
+  Lock,
+  ThumbsUp,
+  TrendingUp
 } from 'lucide-react';
 import { cn } from '../lib/utils';
 
@@ -44,6 +49,7 @@ interface Feedback {
   screen_resolution: string;
   browser_info: any;
   admin_notes: string;
+  votes: number;
   created_at: string;
   updated_at: string;
 }
@@ -62,36 +68,42 @@ const typeIcons = {
 };
 
 const typeColors = {
-  bug: 'text-red-500 bg-red-50 border-red-200',
-  suggestion: 'text-yellow-600 bg-yellow-50 border-yellow-200',
-  praise: 'text-green-500 bg-green-50 border-green-200'
+  bug: 'text-red-500 bg-red-50 border-red-200 dark:bg-red-950 dark:border-red-800 dark:text-red-400',
+  suggestion: 'text-yellow-600 bg-yellow-50 border-yellow-200 dark:bg-yellow-950 dark:border-yellow-800 dark:text-yellow-400',
+  praise: 'text-green-500 bg-green-50 border-green-200 dark:bg-green-950 dark:border-green-800 dark:text-green-400'
 };
 
 const statusColors = {
   new: 'bg-accent text-accent-foreground',
-  in_progress: 'bg-yellow-100 text-yellow-800',
+  in_progress: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200',
   resolved: 'bg-accent text-accent-foreground',
-  closed: 'bg-gray-100 text-gray-800'
+  closed: 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-200'
 };
 
 const priorityColors = {
-  low: 'bg-gray-100 text-gray-700',
+  low: 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300',
   medium: 'bg-accent text-accent-foreground',
-  high: 'bg-orange-100 text-orange-700',
-  critical: 'bg-red-100 text-red-700'
+  high: 'bg-orange-100 text-orange-700 dark:bg-orange-900 dark:text-orange-200',
+  critical: 'bg-red-100 text-red-700 dark:bg-red-900 dark:text-red-200'
 };
 
 export function FeedbackAdminPage() {
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  // Estados para área administrativa
+  const [isAdminAuthenticated, setIsAdminAuthenticated] = useState(false);
   const [accessCode, setAccessCode] = useState('');
   const [isVerifying, setIsVerifying] = useState(false);
-  const [feedbacks, setFeedbacks] = useState<Feedback[]>([]);
+  const [adminFeedbacks, setAdminFeedbacks] = useState<Feedback[]>([]);
   const [stats, setStats] = useState<Stats | null>(null);
-  const [isLoading, setIsLoading] = useState(false);
   const [selectedFeedback, setSelectedFeedback] = useState<Feedback | null>(null);
   const [isUpdating, setIsUpdating] = useState(false);
-  const [filter, setFilter] = useState({ status: '', type: '' });
+
+  // Estados para área pública
+  const [publicFeedbacks, setPublicFeedbacks] = useState<Feedback[]>([]);
+  const [isLoadingPublic, setIsLoadingPublic] = useState(false);
+  const [isLoadingAdmin, setIsLoadingAdmin] = useState(false);
+  const [filter, setFilter] = useState({ status: '', type: '', sort: 'recent' });
   const [showTechnicalInfo, setShowTechnicalInfo] = useState<string | null>(null);
+  const [currentView, setCurrentView] = useState<'public' | 'admin'>('public');
 
   const verifyAccessCode = async () => {
     setIsVerifying(true);
@@ -102,8 +114,9 @@ export function FeedbackAdminPage() {
 
       const { token } = response.data;
       localStorage.setItem('feedback_admin_token', token);
-      setIsAuthenticated(true);
-      await loadData();
+      setIsAdminAuthenticated(true);
+      setCurrentView('admin');
+      await loadAdminData();
     } catch (error) {
       alert('Erro ao verificar código');
     } finally {
@@ -111,12 +124,25 @@ export function FeedbackAdminPage() {
     }
   };
 
-  const loadData = async () => {
-    setIsLoading(true);
+  const loadPublicData = async () => {
+    setIsLoadingPublic(true);
+    try {
+      const response = await apiService.get(
+        `${API_ENDPOINTS.FEEDBACK_PUBLIC_LIST}?status=${filter.status}&type=${filter.type}&sort=${filter.sort}`
+      );
+      setPublicFeedbacks(response.data.feedbacks);
+    } catch (error) {
+      console.error('Erro ao carregar dados públicos:', error);
+    } finally {
+      setIsLoadingPublic(false);
+    }
+  };
+
+  const loadAdminData = async () => {
+    setIsLoadingAdmin(true);
     const token = localStorage.getItem('feedback_admin_token');
 
     try {
-      // Temporariamente configurar o token no apiService se ele não foi incluído automaticamente
       const headers: Record<string, string> = {};
       if (token) {
         headers['Authorization'] = `Bearer ${token}`;
@@ -131,12 +157,12 @@ export function FeedbackAdminPage() {
         })
       ]);
 
-      setFeedbacks(feedbackResponse.data.feedbacks);
+      setAdminFeedbacks(feedbackResponse.data.feedbacks);
       setStats(statsResponse.data);
     } catch (error) {
-      console.error('Erro ao carregar dados:', error);
+      console.error('Erro ao carregar dados administrativos:', error);
     } finally {
-      setIsLoading(false);
+      setIsLoadingAdmin(false);
     }
   };
 
@@ -155,7 +181,7 @@ export function FeedbackAdminPage() {
         headers
       });
 
-      await loadData();
+      await loadAdminData();
       setSelectedFeedback(null);
     } catch (error) {
       alert('Erro ao atualizar feedback');
@@ -167,46 +193,70 @@ export function FeedbackAdminPage() {
   useEffect(() => {
     const token = localStorage.getItem('feedback_admin_token');
     if (token) {
-      setIsAuthenticated(true);
-      loadData();
+      setIsAdminAuthenticated(true);
     }
-  }, [filter]);
+  }, []);
 
-  if (!isAuthenticated) {
-    return (
-      <div className="min-h-screen bg-background flex items-center justify-center p-4">
-        <Card className="w-full max-w-md">
-          <CardHeader>
-            <CardTitle className="text-center">Administração de Feedback</CardTitle>
-            <p className="text-center text-sm text-muted-foreground">
-              Digite o código de acesso para continuar
-            </p>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div>
-              <Label htmlFor="access-code">Código de Acesso</Label>
-              <Input
-                id="access-code"
-                type="password"
-                value={accessCode}
-                onChange={(e) => setAccessCode(e.target.value)}
-                placeholder="Digite o código..."
-                onKeyPress={(e) => e.key === 'Enter' && verifyAccessCode()}
-              />
-            </div>
+  useEffect(() => {
+    if (currentView === 'public') {
+      loadPublicData();
+    } else if (currentView === 'admin' && isAdminAuthenticated) {
+      loadAdminData();
+    }
+  }, [filter, currentView, isAdminAuthenticated]);
+
+  const handleVoteChange = (feedbackId: string, newVoteCount: number) => {
+    setPublicFeedbacks(prevFeedbacks =>
+      prevFeedbacks.map(feedback =>
+        feedback.id === feedbackId
+          ? { ...feedback, votes: newVoteCount }
+          : feedback
+      )
+    );
+  };
+
+  const AdminLoginModal = () => (
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+      <Card className="w-full max-w-md">
+        <CardHeader>
+          <CardTitle className="text-center">Acesso Administrativo</CardTitle>
+          <p className="text-center text-sm text-muted-foreground">
+            Digite o código de acesso para gerenciar feedbacks
+          </p>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div>
+            <Label htmlFor="access-code">Código de Acesso</Label>
+            <Input
+              id="access-code"
+              type="password"
+              value={accessCode}
+              onChange={(e) => setAccessCode(e.target.value)}
+              placeholder="Digite o código..."
+              onKeyPress={(e) => e.key === 'Enter' && verifyAccessCode()}
+            />
+          </div>
+          <div className="flex gap-2">
+            <Button
+              variant="outline"
+              onClick={() => setCurrentView('public')}
+              className="flex-1"
+            >
+              Cancelar
+            </Button>
             <Button
               onClick={verifyAccessCode}
               disabled={!accessCode || isVerifying}
-              className="w-full"
+              className="flex-1"
             >
               {isVerifying ? <LoadingSpinner size="sm" className="mr-2" /> : null}
               {isVerifying ? 'Verificando...' : 'Acessar'}
             </Button>
-          </CardContent>
-        </Card>
-      </div>
-    );
-  }
+          </div>
+        </CardContent>
+      </Card>
+    </div>
+  );
 
   return (
     <div className="min-h-screen bg-background p-4">
@@ -215,21 +265,60 @@ export function FeedbackAdminPage() {
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-3xl font-bold">Feedback Beta - Touch RUN</h1>
-            <p className="text-muted-foreground">Administração de feedback dos usuários</p>
+            <p className="text-muted-foreground">
+              {currentView === 'public'
+                ? 'Vote e acompanhe feedbacks da comunidade'
+                : 'Administração de feedback dos usuários'
+              }
+            </p>
           </div>
-          <Button
-            variant="outline"
-            onClick={() => {
-              localStorage.removeItem('feedback_admin_token');
-              setIsAuthenticated(false);
-            }}
-          >
-            Sair
-          </Button>
+          <div className="flex items-center gap-2">
+            {/* Toggle entre visualizações */}
+            <div className="flex bg-muted rounded-lg p-1">
+              <Button
+                variant={currentView === 'public' ? 'default' : 'ghost'}
+                size="sm"
+                onClick={() => setCurrentView('public')}
+                className="rounded-md"
+              >
+                <ThumbsUp className="h-4 w-4 mr-2" />
+                Público
+              </Button>
+              <Button
+                variant={currentView === 'admin' ? 'default' : 'ghost'}
+                size="sm"
+                onClick={() => {
+                  if (!isAdminAuthenticated) {
+                    setCurrentView('admin');
+                  } else {
+                    setCurrentView('admin');
+                  }
+                }}
+                className="rounded-md"
+              >
+                <Settings className="h-4 w-4 mr-2" />
+                Admin
+              </Button>
+            </div>
+
+            {isAdminAuthenticated && currentView === 'admin' && (
+              <Button
+                variant="outline"
+                onClick={() => {
+                  localStorage.removeItem('feedback_admin_token');
+                  setIsAdminAuthenticated(false);
+                  setCurrentView('public');
+                }}
+              >
+                <Lock className="h-4 w-4 mr-2" />
+                Sair Admin
+              </Button>
+            )}
+          </div>
         </div>
 
-        {/* Estatísticas */}
-        {stats && (
+        {/* Estatísticas - Apenas no modo admin */}
+        {currentView === 'admin' && stats && (
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
             <Card>
               <CardContent className="p-6">
@@ -293,8 +382,22 @@ export function FeedbackAdminPage() {
         <Card>
           <CardContent className="p-4">
             <div className="flex items-center gap-4">
-              <Filter className="h-5 w-5 text-gray-500" />
-              <div className="flex gap-4">
+              <Filter className="h-5 w-5 text-muted-foreground" />
+              <div className="flex gap-4 flex-wrap">
+                {currentView === 'public' && (
+                  <div>
+                    <Label className="text-sm">Ordenar por</Label>
+                    <select
+                      value={filter.sort}
+                      onChange={(e) => setFilter({ ...filter, sort: e.target.value })}
+                      className="ml-2 px-3 py-1 border border-input rounded-md text-sm bg-background text-foreground"
+                    >
+                      <option value="recent">Mais Recente</option>
+                      <option value="votes">Mais Votados</option>
+                      <option value="oldest">Mais Antigo</option>
+                    </select>
+                  </div>
+                )}
                 <div>
                   <Label className="text-sm">Status</Label>
                   <select
@@ -328,13 +431,13 @@ export function FeedbackAdminPage() {
         </Card>
 
         {/* Lista de Feedbacks */}
-        {isLoading ? (
+        {(currentView === 'public' ? isLoadingPublic : isLoadingAdmin) ? (
           <div className="flex justify-center p-8">
             <LoadingSpinner />
           </div>
         ) : (
           <div className="grid gap-4">
-            {feedbacks.map((feedback) => {
+            {(currentView === 'public' ? publicFeedbacks : adminFeedbacks).map((feedback) => {
               const TypeIcon = typeIcons[feedback.type];
 
               return (
@@ -354,14 +457,14 @@ export function FeedbackAdminPage() {
                             <Badge variant="outline" className={priorityColors[feedback.priority]}>
                               {feedback.priority}
                             </Badge>
-                            <span className="text-sm text-gray-500">
+                            <span className="text-sm text-muted-foreground">
                               {new Date(feedback.created_at).toLocaleDateString('pt-BR')}
                             </span>
                           </div>
 
-                          <p className="text-gray-900 mb-2">{feedback.message}</p>
+                          <p className="text-foreground mb-2">{feedback.message}</p>
 
-                          <div className="flex items-center text-sm text-gray-500 space-x-4">
+                          <div className="flex items-center text-sm text-muted-foreground space-x-4">
                             <span>👤 {feedback.user_name}</span>
                             <span>🏢 {feedback.account_name}</span>
                             <span>📱 {feedback.screen_resolution}</span>
@@ -380,22 +483,49 @@ export function FeedbackAdminPage() {
                       </div>
 
                       <div className="flex items-center space-x-2 ml-4">
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => setShowTechnicalInfo(
-                            showTechnicalInfo === feedback.id ? null : feedback.id
-                          )}
-                        >
-                          {showTechnicalInfo === feedback.id ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                        </Button>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => setSelectedFeedback(feedback)}
-                        >
-                          Gerenciar
-                        </Button>
+                        {currentView === 'public' ? (
+                          // Área pública - mostrar botão de votação
+                          <>
+                            <FeedbackVoteButton
+                              feedbackId={feedback.id}
+                              initialVotes={feedback.votes}
+                              onVoteChange={(newVotes) => handleVoteChange(feedback.id, newVotes)}
+                            />
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => setShowTechnicalInfo(
+                                showTechnicalInfo === feedback.id ? null : feedback.id
+                              )}
+                            >
+                              {showTechnicalInfo === feedback.id ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                            </Button>
+                          </>
+                        ) : (
+                          // Área administrativa - mostrar botões de gerenciamento
+                          <>
+                            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                              <ThumbsUp className="h-4 w-4" />
+                              <span>{feedback.votes}</span>
+                            </div>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => setShowTechnicalInfo(
+                                showTechnicalInfo === feedback.id ? null : feedback.id
+                              )}
+                            >
+                              {showTechnicalInfo === feedback.id ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                            </Button>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => setSelectedFeedback(feedback)}
+                            >
+                              Gerenciar
+                            </Button>
+                          </>
+                        )}
                       </div>
                     </div>
                   </CardContent>
@@ -405,8 +535,11 @@ export function FeedbackAdminPage() {
           </div>
         )}
 
-        {/* Modal de Edição */}
-        {selectedFeedback && (
+        {/* Modal de login admin */}
+        {currentView === 'admin' && !isAdminAuthenticated && <AdminLoginModal />}
+
+        {/* Modal de Edição - Apenas no modo admin */}
+        {selectedFeedback && currentView === 'admin' && (
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
             <Card className="w-full max-w-md">
               <CardHeader>

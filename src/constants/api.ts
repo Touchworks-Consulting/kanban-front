@@ -40,6 +40,9 @@ export const API_ENDPOINTS = {
 
   // Feedback endpoints
   FEEDBACK_SUBMIT: '/api/feedback/submit',
+  FEEDBACK_PUBLIC_LIST: '/api/feedback/public/list',
+  FEEDBACK_VOTE: (id: string) => `/api/feedback/${id}/vote`,
+  FEEDBACK_CHECK_VOTE: (id: string) => `/api/feedback/${id}/vote/check`,
   FEEDBACK_ADMIN_VERIFY_CODE: '/api/feedback/admin/verify-code',
   FEEDBACK_ADMIN_STATS: '/api/feedback/admin/stats',
 } as const;
