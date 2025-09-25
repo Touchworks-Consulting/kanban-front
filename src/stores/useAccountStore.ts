@@ -2,6 +2,7 @@ import { create } from 'zustand';
 import { devtools } from 'zustand/middleware';
 import type { Account, CreateAccountDto, UpdateAccountDto } from '../services/account';
 import { accountService } from '../services/account';
+import { useAuthStore } from './auth';
 
 interface AccountState {
   // State
@@ -59,23 +60,49 @@ export const useAccountStore = create<AccountState>()(
       // Switch account context
       switchAccount: async (accountId: string) => {
         try {
+          console.log('🔄 AccountStore: Iniciando switch para conta', accountId);
           set({ loading: true, error: null });
           const response = await accountService.switchAccount(accountId);
-          
+
           if (response.success) {
-            set({ 
+            console.log('✅ AccountStore: Switch bem-sucedido, sincronizando com AuthStore', response.account);
+
+            set({
               currentAccount: response.account,
-              loading: false 
+              loading: false
             });
-            
-            // Force refresh of other stores that depend on account context
-            // This could be handled by other stores listening to account changes
-            window.location.reload(); // Simple approach for now
+
+            // Sincronizar com o AuthStore para manter consistência
+            const authStore = useAuthStore.getState();
+            if (authStore.account && authStore.isAuthenticated) {
+              console.log('🔄 AccountStore: Atualizando account no AuthStore');
+
+              // Criar um objeto UserAccount compatível com AuthStore
+              const syncedAccount = {
+                ...authStore.account,
+                id: response.account.id,
+                account_id: response.account.id,
+                name: response.account.display_name || response.account.name,
+                email: authStore.account.email, // Manter email do usuário
+                user_id: authStore.account.user_id, // Manter user_id original
+                role: response.account.role,
+                permissions: response.account.permissions
+              };
+
+              // Atualizar o estado do AuthStore
+              authStore.account = syncedAccount;
+
+              // Atualizar localStorage para persistência
+              localStorage.setItem('crm_account_data', JSON.stringify(syncedAccount));
+
+              console.log('✅ AccountStore: AuthStore sincronizado com sucesso');
+            }
           }
         } catch (error: any) {
-          set({ 
+          console.error('❌ AccountStore: Erro no switch de conta:', error);
+          set({
             error: error.response?.data?.error || 'Erro ao trocar conta',
-            loading: false 
+            loading: false
           });
         }
       },
