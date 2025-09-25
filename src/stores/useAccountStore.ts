@@ -89,14 +89,19 @@ export const useAccountStore = create<AccountState>()(
                 permissions: response.account.permissions
               };
 
-              // Atualizar o estado do AuthStore
-              authStore.account = syncedAccount;
+              // Usar o setState do Zustand para trigger re-render
+              useAuthStore.setState({ account: syncedAccount });
 
               // Atualizar localStorage para persistência
               localStorage.setItem('crm_account_data', JSON.stringify(syncedAccount));
 
-              console.log('✅ AccountStore: AuthStore sincronizado com sucesso');
+              console.log('✅ AccountStore: AuthStore sincronizado com sucesso', syncedAccount);
             }
+
+            // Notificar outros sistemas sobre a mudança de conta
+            window.dispatchEvent(new CustomEvent('accountChanged', {
+              detail: { newAccountId: response.account.id }
+            }));
           }
         } catch (error: any) {
           console.error('❌ AccountStore: Erro no switch de conta:', error);
