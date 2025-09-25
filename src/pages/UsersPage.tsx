@@ -71,7 +71,9 @@ export function UsersPage() {
   console.log('submit: handleCreate chamado');
   console.log('🔍 DEBUG - Account data:', account);
   console.log('🔍 DEBUG - Account ID:', account?.id);
+  console.log('🔍 DEBUG - Account ID (account_id):', account?.account_id);
   console.log('🔍 DEBUG - Form data:', form);
+  console.log('🔍 DEBUG - AuthStore account:', account);
   setCreating(true);
   setError(null);
 
@@ -94,12 +96,16 @@ export function UsersPage() {
         password: form.password
       };
 
+      // Usar account_id se disponível (novo formato), senão usar id (formato legado)
+      const accountId = account?.account_id || account?.id;
+
       const payload = {
         ...form,
         role: form.role as "member" | "admin",
-        account_id: account?.id
+        account_id: accountId
       };
 
+      console.log('🔍 DEBUG - Account ID calculado:', accountId);
       console.log('🔍 DEBUG - Payload completo:', payload);
       console.log('🔍 DEBUG - Account ID no payload:', payload.account_id);
 
