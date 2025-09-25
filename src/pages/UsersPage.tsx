@@ -41,6 +41,20 @@ export function UsersPage() {
 
   useEffect(() => { load(); }, []);
 
+  // Reagir à mudança de conta
+  useEffect(() => {
+    const handleAccountChange = (event: CustomEvent) => {
+      console.log('👂 UsersPage: Detectada mudança de conta, recarregando dados...', event.detail);
+      load();
+    };
+
+    window.addEventListener('accountChanged', handleAccountChange as EventListener);
+
+    return () => {
+      window.removeEventListener('accountChanged', handleAccountChange as EventListener);
+    };
+  }, []);
+
   const generateSecurePassword = () => {
     const length = 12;
     const charset = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*()_+-=[]{}|;:,.<>?';

@@ -295,6 +295,20 @@ export function DashboardPage() {
     fetchDashboardData();
   }, []);
 
+  // Reagir à mudança de conta
+  useEffect(() => {
+    const handleAccountChange = (event: CustomEvent) => {
+      console.log('👂 DashboardPage: Detectada mudança de conta, recarregando dados...', event.detail);
+      fetchDashboardData();
+    };
+
+    window.addEventListener('accountChanged', handleAccountChange as EventListener);
+
+    return () => {
+      window.removeEventListener('accountChanged', handleAccountChange as EventListener);
+    };
+  }, []);
+
   // Recarregar dados quando filtros mudarem
   useEffect(() => {
     console.log('Filtros mudaram:', filters);

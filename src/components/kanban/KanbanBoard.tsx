@@ -109,6 +109,20 @@ export const KanbanBoard: React.FC = () => {
     fetchBoard();
   }, [fetchBoard]);
 
+  // Reagir à mudança de conta
+  useEffect(() => {
+    const handleAccountChange = (event: CustomEvent) => {
+      console.log('👂 KanbanBoard: Detectada mudança de conta, recarregando dados...', event.detail);
+      fetchBoard();
+    };
+
+    window.addEventListener('accountChanged', handleAccountChange as EventListener);
+
+    return () => {
+      window.removeEventListener('accountChanged', handleAccountChange as EventListener);
+    };
+  }, [fetchBoard]);
+
   // Custom collision detection
   const collisionDetectionStrategy = (args: any) => {
     const pointerIntersections = pointerWithin(args);
