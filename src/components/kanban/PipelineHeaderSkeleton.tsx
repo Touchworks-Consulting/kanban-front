@@ -2,11 +2,11 @@ import React from 'react';
 import { Skeleton } from '../ui/skeleton';
 import { cn } from '../../lib/utils';
 
-interface PipedriveLikeHeaderSkeletonProps {
+interface PipelineHeaderSkeletonProps {
   className?: string;
 }
 
-export const PipedriveLikeHeaderSkeleton: React.FC<PipedriveLikeHeaderSkeletonProps> = ({
+export const PipelineHeaderSkeleton: React.FC<PipelineHeaderSkeletonProps> = ({
   className
 }) => {
   return (
