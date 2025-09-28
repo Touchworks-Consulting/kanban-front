@@ -3,19 +3,21 @@ import type { Lead, KanbanColumn } from '../../types/kanban';
 import type { LeadModalData } from '../../types/leadModal';
 import { Dialog, DialogContent, DialogTitle, DialogDescription } from '../ui/dialog';
 import { Button } from '../ui/button';
-import { PipedriveLikeHeader } from './PipedriveLikeHeader';
-import { PipedriveLikeHeaderSkeleton } from './PipedriveLikeHeaderSkeleton';
+import { PipelineHeader } from './PipelineHeader';
+import { PipelineHeaderSkeleton } from './PipelineHeaderSkeleton';
 import { LeadDataSidebar } from './LeadDataSidebar';
 import { LeadDataSidebarSkeleton } from './LeadDataSidebarSkeleton';
 import { ActivitiesArea } from './ActivitiesArea';
 import { ActivitiesAreaSkeleton } from './ActivitiesAreaSkeleton';
 import { leadModalService } from '../../services/leadModalService';
+import { userService, type UserDto } from '../../services/users';
 
 interface LeadModalProps {
   leadId: string;
   isOpen: boolean;
   onClose: () => void;
   onUpdate?: () => void;
+  onDelete?: (leadId: string) => Promise<void>;
 }
 
 export const LeadModal: React.FC<LeadModalProps> = ({
@@ -23,10 +25,12 @@ export const LeadModal: React.FC<LeadModalProps> = ({
   isOpen,
   onClose,
   onUpdate,
+  onDelete,
 }) => {
   const [lead, setLead] = useState<Lead | null>(null);
   const [modalData, setModalData] = useState<LeadModalData | null>(null);
   const [columns, setColumns] = useState<KanbanColumn[]>([]);
+  const [users, setUsers] = useState<UserDto[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -37,9 +41,14 @@ export const LeadModal: React.FC<LeadModalProps> = ({
     setError(null);
 
     try {
-      const data = await leadModalService.getLeadModalData(leadId);
-      setLead(data.lead);
+      const [data, usersList] = await Promise.all([
+        leadModalService.getLeadModalData(leadId),
+        userService.list()
+      ]);
+
+      setLead((data as any).lead);
       setColumns(data.columns || []);
+      setUsers(usersList || []);
       setModalData({
         timeline: data.timeline || [],
         contacts: data.contacts || [],
@@ -106,7 +115,15 @@ export const LeadModal: React.FC<LeadModalProps> = ({
     if (!lead) return;
 
     try {
-      await leadModalService.updateLead(lead.id, updates);
+      // Convert tags to string array if present
+      const updatePayload: any = { ...updates };
+      if (updatePayload.tags) {
+        updatePayload.tags = updatePayload.tags.map((tag: any) =>
+          typeof tag === 'string' ? tag : tag.name || tag.id || String(tag)
+        );
+      }
+
+      await leadModalService.updateLead(lead.id, updatePayload);
       await loadModalData();
       onUpdate?.();
     } catch (error) {
@@ -115,11 +132,40 @@ export const LeadModal: React.FC<LeadModalProps> = ({
     }
   };
 
+  // Handler unificado para mudança de responsável (usado por header e sidebar)
+  const handleAssigneeChange = async (userId: string) => {
+    if (!lead) return;
+
+    try {
+      // Payload completo para evitar problemas no backend
+      const updatePayload = {
+        name: lead.name,
+        phone: lead.phone || '',
+        email: lead.email || '',
+        message: lead.message || '',
+        platform: lead.platform || 'WhatsApp',
+        channel: lead.channel || lead.platform || 'WhatsApp',
+        campaign: lead.campaign || 'Orgânico',
+        value: lead.value || 0,
+        notes: lead.notes || '',
+        status: lead.status,
+        assigned_to_user_id: userId || ''
+      };
+
+      await leadModalService.updateLead(lead.id, updatePayload);
+      await loadModalData();
+      onUpdate?.();
+    } catch (error) {
+      console.error('Erro ao alterar responsável:', error);
+      throw error;
+    }
+  };
+
   if (!isOpen) return null;
 
   return (
     <Dialog open={isOpen} onOpenChange={handleClose}>
-      <DialogContent className="max-w-7xl max-h-[95vh] overflow-hidden p-0 focus:outline-none border-0">
+      <DialogContent className="max-w-7xl max-h-[95vh] overflow-hidden focus:outline-none border-0 p-0 [&>button]:!visible [&>button]:!opacity-100 [&>button]:!bg-white [&>button]:!border [&>button]:!shadow-sm [&>button]:!z-50 [&>button]:!top-2 [&>button]:!right-2">
         <div className="sr-only">
           <DialogTitle>{lead ? `Lead: ${lead.name}` : 'Detalhes do Lead'}</DialogTitle>
           <DialogDescription>
@@ -129,7 +175,7 @@ export const LeadModal: React.FC<LeadModalProps> = ({
         {isLoading ? (
           <div className="flex flex-col max-h-[95vh]">
             {/* Header Skeleton */}
-            <PipedriveLikeHeaderSkeleton className="flex-shrink-0" />
+            <PipelineHeaderSkeleton className="flex-shrink-0" />
 
             {/* Duas Colunas com Skeletons */}
             <div className="flex flex-1 min-h-0">
@@ -151,13 +197,16 @@ export const LeadModal: React.FC<LeadModalProps> = ({
           </div>
         ) : lead ? (
           <div className="flex flex-col max-h-[95vh]">
-            {/* Header Fixo Estilo Pipedrive */}
-            <PipedriveLikeHeader
+            {/* Header Fixo com Pipeline Visual */}
+            <PipelineHeader
               lead={lead}
               columns={columns}
               onStatusChange={handleStatusChange}
               onMoveToNext={handleMoveToNext}
               onUpdate={handleUpdate}
+              onDelete={onDelete}
+              onAssigneeChange={handleAssigneeChange}
+              users={users}
               className="flex-shrink-0"
             />
 

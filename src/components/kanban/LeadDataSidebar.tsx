@@ -3,7 +3,10 @@ import { Badge } from '../ui/badge';
 import { Button } from '../ui/button';
 import { ScrollArea } from '../ui/scroll-area';
 import { Input } from '../ui/input';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '../ui/collapsible';
+import { ValidatedInput } from '../forms/ValidatedInput';
+import type { ValidationResult } from '../forms/validators/index';
 import {
   Phone,
   Mail,
@@ -22,25 +25,32 @@ import {
   Check,
   X,
   ChevronDown,
-  ChevronRight
+  ChevronRight,
+  MessageSquare
 } from 'lucide-react';
 import { cn } from '../../lib/utils';
 import type { Lead, KanbanColumn } from '../../types/kanban';
 import { formatDate, formatCurrency, formatDistanceToNow } from '../../utils/helpers';
+import { useCustomStatuses } from '../../hooks/useCustomStatuses';
 
 interface LeadDataSidebarProps {
   lead: Lead;
   columns: KanbanColumn[];
   className?: string;
   onUpdateLead?: (updates: Partial<Lead>) => Promise<void>;
+  users?: Array<{ id: string; name: string; email: string; role?: string; is_active: boolean }>;
+  onAssigneeChange?: (userId: string) => Promise<void>;
 }
 
 export const LeadDataSidebar: React.FC<LeadDataSidebarProps> = ({
   lead,
   columns,
   className,
-  onUpdateLead
+  onUpdateLead,
+  users = [],
+  onAssigneeChange
 }) => {
+  const { statuses, loading: statusesLoading } = useCustomStatuses();
   const [editingField, setEditingField] = useState<string | null>(null);
   const [editValue, setEditValue] = useState<string>('');
   const [collapsedSections, setCollapsedSections] = useState<Record<string, boolean>>({
@@ -49,7 +59,8 @@ export const LeadDataSidebar: React.FC<LeadDataSidebarProps> = ({
     assignee: true,
     tags: true,
     campaign: true,
-    notes: true
+    notes: true,
+    messages: true
   });
   const getPlatformColor = (platform?: string) => {
     const colors = {
@@ -112,20 +123,72 @@ export const LeadDataSidebar: React.FC<LeadDataSidebarProps> = ({
     }
   };
 
+  const handleStatusChange = async (newStatus: string) => {
+    if (!onUpdateLead) return;
+
+    try {
+      await onUpdateLead({ status: newStatus });
+    } catch (error) {
+      console.error('Erro ao alterar status:', error);
+    }
+  };
+
   const EditableField = ({
     field,
     value,
     children,
-    className: fieldClassName = ""
+    className: fieldClassName = "",
+    type = 'text',
+    validationOptions = {}
   }: {
     field: string;
     value: string;
     children: React.ReactNode;
     className?: string;
+    type?: 'text' | 'email' | 'phone' | 'number';
+    validationOptions?: Record<string, any>;
   }) => {
     const isEditing = editingField === field;
 
     if (isEditing) {
+      // Para campos que precisam de validação especial, usar ValidatedInput
+      if (type === 'phone' || type === 'email') {
+        return (
+          <div className={cn("space-y-1", fieldClassName)}>
+            <div className="flex items-center gap-1">
+              <ValidatedInput
+                field={field}
+                value={editValue}
+                type={type}
+                className="h-5 text-xs"
+                onValidatedChange={(newValue, isValid, validation) => {
+                  setEditValue(newValue);
+                }}
+                validationOptions={validationOptions}
+                showFeedback={false}
+              />
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-4 w-4 p-0"
+                onClick={() => handleEditSave(field)}
+              >
+                <Check className="h-2 w-2 text-green-600" />
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-4 w-4 p-0"
+                onClick={handleEditCancel}
+              >
+                <X className="h-2 w-2 text-muted-foreground" />
+              </Button>
+            </div>
+          </div>
+        );
+      }
+
+      // Para campos simples, usar Input normal
       return (
         <div className={cn("flex items-center gap-1", fieldClassName)}>
           <Input
@@ -238,6 +301,50 @@ export const LeadDataSidebar: React.FC<LeadDataSidebarProps> = ({
                   </div>
                 </div>
               </div>
+
+              {/* Status - SEMPRE MOSTRAR */}
+              <div className="flex items-center gap-3 pl-6">
+                <Star className="w-3 h-3 text-muted-foreground" />
+                <div className="flex-1">
+                  <Select
+                    value={lead.status}
+                    onValueChange={handleStatusChange}
+                    disabled={statusesLoading}
+                  >
+                    <SelectTrigger className="h-6 text-xs border-none shadow-none p-1 hover:bg-muted/50">
+                      <SelectValue placeholder="Selecionar status" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {statusesLoading ? (
+                        <SelectItem value="loading" disabled>
+                          Carregando status...
+                        </SelectItem>
+                      ) : (
+                        statuses.map(status => (
+                          <SelectItem key={status.value} value={status.value}>
+                            <div className="flex items-center gap-2">
+                              <div
+                                className="w-2 h-2 rounded-full border"
+                                style={{ backgroundColor: status.color }}
+                              />
+                              <span className="text-xs">{status.label}</span>
+                              {status.is_initial && (
+                                <span className="text-xs bg-blue-100 text-blue-800 px-1 rounded">Inicial</span>
+                              )}
+                              {status.is_won && (
+                                <span className="text-xs bg-green-100 text-green-800 px-1 rounded">Ganho</span>
+                              )}
+                              {status.is_lost && (
+                                <span className="text-xs bg-red-100 text-red-800 px-1 rounded">Perdido</span>
+                              )}
+                            </div>
+                          </SelectItem>
+                        ))
+                      )}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
             </CollapsibleContent>
           </Collapsible>
 
@@ -258,120 +365,160 @@ export const LeadDataSidebar: React.FC<LeadDataSidebarProps> = ({
             </CollapsibleTrigger>
 
             <CollapsibleContent className="space-y-2 mt-2">
-              {/* Telefone */}
-              {lead.phone && (
-                <div className="flex items-center gap-3 pl-6 hover:bg-muted/30 rounded p-1 transition-colors group">
-                  <Phone className="w-3 h-3 text-muted-foreground" />
-                  <div className="flex-1 min-w-0">
-                    <EditableField
-                      field="phone"
-                      value={lead.phone || ''}
-                      className="min-w-0"
-                    >
-                      <div className="text-xs font-medium text-foreground truncate">
-                        {lead.phone}
-                      </div>
-                    </EditableField>
-                  </div>
+              {/* Telefone - SEMPRE MOSTRAR */}
+              <div className="flex items-center gap-3 pl-6 hover:bg-muted/30 rounded p-1 transition-colors group">
+                <Phone className="w-3 h-3 text-muted-foreground" />
+                <div className="flex-1 min-w-0">
+                  <EditableField
+                    field="phone"
+                    value={lead.phone || ''}
+                    type="phone"
+                    className="min-w-0"
+                    validationOptions={{ required: false }}
+                  >
+                    <div className="text-xs font-medium text-foreground truncate">
+                      {lead.phone || 'Clique para adicionar telefone...'}
+                    </div>
+                  </EditableField>
+                </div>
+                {lead.phone && (
                   <Button
                     variant="ghost"
                     size="sm"
                     className="h-5 w-5 p-0 opacity-0 group-hover:opacity-100"
-                    onClick={() => window.open(`tel:${lead.phone}`, '_self')}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      window.open(`tel:${lead.phone}`, '_self');
+                    }}
                   >
                     <Phone className="h-2 w-2" />
                   </Button>
-                </div>
-              )}
+                )}
+              </div>
 
-              {/* Email */}
-              {lead.email && (
-                <div className="flex items-center gap-3 pl-6 hover:bg-muted/30 rounded p-1 transition-colors group">
-                  <Mail className="w-3 h-3 text-muted-foreground" />
-                  <div className="flex-1 min-w-0">
-                    <EditableField
-                      field="email"
-                      value={lead.email || ''}
-                      className="min-w-0"
-                    >
-                      <div className="text-xs font-medium text-foreground truncate">
-                        {lead.email}
-                      </div>
-                    </EditableField>
-                  </div>
+              {/* Email - SEMPRE MOSTRAR */}
+              <div className="flex items-center gap-3 pl-6 hover:bg-muted/30 rounded p-1 transition-colors group">
+                <Mail className="w-3 h-3 text-muted-foreground" />
+                <div className="flex-1 min-w-0">
+                  <EditableField
+                    field="email"
+                    value={lead.email || ''}
+                    type="email"
+                    className="min-w-0"
+                    validationOptions={{ required: false }}
+                  >
+                    <div className="text-xs font-medium text-foreground truncate">
+                      {lead.email || 'Clique para adicionar email...'}
+                    </div>
+                  </EditableField>
+                </div>
+                {lead.email && (
                   <Button
                     variant="ghost"
                     size="sm"
                     className="h-5 w-5 p-0 opacity-0 group-hover:opacity-100"
-                    onClick={() => window.open(`mailto:${lead.email}`, '_self')}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      window.open(`mailto:${lead.email}`, '_self');
+                    }}
                   >
                     <Mail className="h-2 w-2" />
                   </Button>
-                </div>
-              )}
+                )}
+              </div>
 
-              {/* Origem */}
-              {lead.platform && (
-                <div className="flex items-center gap-3 pl-6">
-                  <Globe className="w-3 h-3 text-muted-foreground" />
-                  <div className="flex-1">
+              {/* Plataforma - SEMPRE MOSTRAR E EDITÁVEL */}
+              <div className="flex items-center gap-3 pl-6">
+                <Globe className="w-3 h-3 text-muted-foreground" />
+                <div className="flex-1">
+                  <EditableField
+                    field="platform"
+                    value={lead.platform || ''}
+                  >
                     <div className="text-xs font-medium text-foreground">
-                      {getPlatformLabel(lead.platform)}
+                      {lead.platform ? getPlatformLabel(lead.platform) : 'Clique para definir plataforma...'}
                     </div>
-                  </div>
+                  </EditableField>
                 </div>
-              )}
+              </div>
             </CollapsibleContent>
           </Collapsible>
 
-          {/* Seção de Responsável */}
-          {lead.assignedUser && (
-            <Collapsible
-              open={!collapsedSections.assignee}
-              onOpenChange={() => toggleSection('assignee')}
-            >
-              <CollapsibleTrigger className="flex items-center justify-between w-full p-1 hover:bg-muted/50 rounded">
-                <div className="flex items-center gap-2">
-                  <User className="w-4 h-4 text-muted-foreground" />
-                  <span className="text-xs font-medium text-foreground">Responsável</span>
-                </div>
-                {collapsedSections.assignee ?
-                  <ChevronRight className="w-3 h-3 text-muted-foreground" /> :
-                  <ChevronDown className="w-3 h-3 text-muted-foreground" />
-                }
-              </CollapsibleTrigger>
+          {/* Seção de Responsável - SEMPRE MOSTRAR */}
+          <Collapsible
+            open={!collapsedSections.assignee}
+            onOpenChange={() => toggleSection('assignee')}
+          >
+            <CollapsibleTrigger className="flex items-center justify-between w-full p-1 hover:bg-muted/50 rounded">
+              <div className="flex items-center gap-2">
+                <User className="w-4 h-4 text-muted-foreground" />
+                <span className="text-xs font-medium text-foreground">Responsável</span>
+              </div>
+              {collapsedSections.assignee ?
+                <ChevronRight className="w-3 h-3 text-muted-foreground" /> :
+                <ChevronDown className="w-3 h-3 text-muted-foreground" />
+              }
+            </CollapsibleTrigger>
 
-              <CollapsibleContent className="mt-2">
-                <div className="flex items-center gap-3 pl-6">
-                  <User className="w-3 h-3 text-muted-foreground" />
-                  <div className="flex-1">
-                    <div className="text-xs font-medium text-foreground">{lead.assignedUser.name}</div>
-                  </div>
+            <CollapsibleContent className="mt-2">
+              <div className="flex items-center gap-3 pl-6">
+                <User className="w-3 h-3 text-muted-foreground" />
+                <div className="flex-1">
+                  <Select
+                    value={lead.assigned_to_user_id || 'none'}
+                    onValueChange={(value) => {
+                      const userId = value === 'none' ? '' : value;
+                      onAssigneeChange?.(userId);
+                    }}
+                  >
+                    <SelectTrigger className="h-6 text-xs border-none shadow-none p-1 hover:bg-muted/50">
+                      <SelectValue placeholder="Selecionar responsável" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="none">Não atribuído</SelectItem>
+                      {users
+                        .filter(user => user.is_active)
+                        .map(user => (
+                          <SelectItem key={user.id} value={user.id}>
+                            <div className="flex items-center gap-2">
+                              <span className="text-xs">{user.name}</span>
+                              <span className="text-xs text-muted-foreground">({user.email})</span>
+                              {user.role && (
+                                <span className="text-xs bg-muted px-1 rounded">
+                                  {user.role}
+                                </span>
+                              )}
+                            </div>
+                          </SelectItem>
+                        ))
+                      }
+                    </SelectContent>
+                  </Select>
                 </div>
-              </CollapsibleContent>
-            </Collapsible>
-          )}
+              </div>
+            </CollapsibleContent>
+          </Collapsible>
 
-          {/* Seção de Tags */}
-          {lead.tags && lead.tags.length > 0 && (
-            <Collapsible
-              open={!collapsedSections.tags}
-              onOpenChange={() => toggleSection('tags')}
-            >
-              <CollapsibleTrigger className="flex items-center justify-between w-full p-1 hover:bg-muted/50 rounded">
-                <div className="flex items-center gap-2">
-                  <Tag className="w-4 h-4 text-muted-foreground" />
-                  <span className="text-xs font-medium text-foreground">Tags</span>
-                </div>
-                {collapsedSections.tags ?
-                  <ChevronRight className="w-3 h-3 text-muted-foreground" /> :
-                  <ChevronDown className="w-3 h-3 text-muted-foreground" />
-                }
-              </CollapsibleTrigger>
+          {/* Seção de Tags - SEMPRE MOSTRAR */}
+          <Collapsible
+            open={!collapsedSections.tags}
+            onOpenChange={() => toggleSection('tags')}
+          >
+            <CollapsibleTrigger className="flex items-center justify-between w-full p-1 hover:bg-muted/50 rounded">
+              <div className="flex items-center gap-2">
+                <Tag className="w-4 h-4 text-muted-foreground" />
+                <span className="text-xs font-medium text-foreground">Tags</span>
+              </div>
+              {collapsedSections.tags ?
+                <ChevronRight className="w-3 h-3 text-muted-foreground" /> :
+                <ChevronDown className="w-3 h-3 text-muted-foreground" />
+              }
+            </CollapsibleTrigger>
 
-              <CollapsibleContent className="mt-2">
-                <div className="flex flex-wrap gap-1 pl-6">
-                  {lead.tags.map((tag) => (
+            <CollapsibleContent className="mt-2">
+              <div className="flex flex-wrap gap-1 pl-6">
+                {lead.tags && lead.tags.length > 0 ? (
+                  lead.tags.map((tag) => (
                     <Badge
                       key={tag.id}
                       variant="outline"
@@ -379,73 +526,112 @@ export const LeadDataSidebar: React.FC<LeadDataSidebarProps> = ({
                     >
                       {tag.name}
                     </Badge>
-                  ))}
-                </div>
-              </CollapsibleContent>
-            </Collapsible>
-          )}
-
-          {/* Seção de Campanha */}
-          {lead.campaign && (
-            <Collapsible
-              open={!collapsedSections.campaign}
-              onOpenChange={() => toggleSection('campaign')}
-            >
-              <CollapsibleTrigger className="flex items-center justify-between w-full p-1 hover:bg-muted/50 rounded">
-                <div className="flex items-center gap-2">
-                  <TrendingUp className="w-4 h-4 text-muted-foreground" />
-                  <span className="text-xs font-medium text-foreground">Campanha</span>
-                </div>
-                {collapsedSections.campaign ?
-                  <ChevronRight className="w-3 h-3 text-muted-foreground" /> :
-                  <ChevronDown className="w-3 h-3 text-muted-foreground" />
-                }
-              </CollapsibleTrigger>
-
-              <CollapsibleContent className="mt-2">
-                <div className="flex items-center gap-3 pl-6">
-                  <TrendingUp className="w-3 h-3 text-muted-foreground" />
-                  <div className="flex-1">
-                    <div className="text-xs font-medium text-foreground">{lead.campaign}</div>
+                  ))
+                ) : (
+                  <div className="text-xs text-muted-foreground">
+                    Nenhuma tag atribuída
                   </div>
-                </div>
-              </CollapsibleContent>
-            </Collapsible>
-          )}
+                )}
+              </div>
+            </CollapsibleContent>
+          </Collapsible>
 
-          {/* Seção de Notas */}
-          {lead.notes && (
-            <Collapsible
-              open={!collapsedSections.notes}
-              onOpenChange={() => toggleSection('notes')}
-            >
-              <CollapsibleTrigger className="flex items-center justify-between w-full p-1 hover:bg-muted/50 rounded">
-                <div className="flex items-center gap-2">
-                  <Edit3 className="w-4 h-4 text-muted-foreground" />
-                  <span className="text-xs font-medium text-foreground">Notas</span>
-                </div>
-                {collapsedSections.notes ?
-                  <ChevronRight className="w-3 h-3 text-muted-foreground" /> :
-                  <ChevronDown className="w-3 h-3 text-muted-foreground" />
-                }
-              </CollapsibleTrigger>
+          {/* Seção de Campanha - SEMPRE MOSTRAR */}
+          <Collapsible
+            open={!collapsedSections.campaign}
+            onOpenChange={() => toggleSection('campaign')}
+          >
+            <CollapsibleTrigger className="flex items-center justify-between w-full p-1 hover:bg-muted/50 rounded">
+              <div className="flex items-center gap-2">
+                <TrendingUp className="w-4 h-4 text-muted-foreground" />
+                <span className="text-xs font-medium text-foreground">Campanha</span>
+              </div>
+              {collapsedSections.campaign ?
+                <ChevronRight className="w-3 h-3 text-muted-foreground" /> :
+                <ChevronDown className="w-3 h-3 text-muted-foreground" />
+              }
+            </CollapsibleTrigger>
 
-              <CollapsibleContent className="mt-2">
-                <div className="pl-6">
-                  <div className="p-2 rounded-lg bg-muted/50 border-muted">
-                    <EditableField
-                      field="notes"
-                      value={lead.notes || ''}
-                    >
-                      <p className="text-xs text-foreground leading-relaxed">
-                        {lead.notes}
-                      </p>
-                    </EditableField>
-                  </div>
+            <CollapsibleContent className="mt-2">
+              <div className="flex items-center gap-3 pl-6">
+                <TrendingUp className="w-3 h-3 text-muted-foreground" />
+                <div className="flex-1">
+                  <EditableField
+                    field="campaign"
+                    value={lead.campaign || ''}
+                  >
+                    <div className="text-xs font-medium text-foreground">
+                      {lead.campaign || 'Clique para definir campanha...'}
+                    </div>
+                  </EditableField>
                 </div>
-              </CollapsibleContent>
-            </Collapsible>
-          )}
+              </div>
+            </CollapsibleContent>
+          </Collapsible>
+
+          {/* Seção de Notas - SEMPRE MOSTRAR */}
+          <Collapsible
+            open={!collapsedSections.notes}
+            onOpenChange={() => toggleSection('notes')}
+          >
+            <CollapsibleTrigger className="flex items-center justify-between w-full p-1 hover:bg-muted/50 rounded">
+              <div className="flex items-center gap-2">
+                <Edit3 className="w-4 h-4 text-muted-foreground" />
+                <span className="text-xs font-medium text-foreground">Notas</span>
+              </div>
+              {collapsedSections.notes ?
+                <ChevronRight className="w-3 h-3 text-muted-foreground" /> :
+                <ChevronDown className="w-3 h-3 text-muted-foreground" />
+              }
+            </CollapsibleTrigger>
+
+            <CollapsibleContent className="mt-2">
+              <div className="pl-6">
+                <div className="p-2 rounded-lg bg-muted/50 border-muted">
+                  <EditableField
+                    field="notes"
+                    value={lead.notes || ''}
+                  >
+                    <p className="text-xs text-foreground leading-relaxed">
+                      {lead.notes || 'Clique para adicionar observações...'}
+                    </p>
+                  </EditableField>
+                </div>
+              </div>
+            </CollapsibleContent>
+          </Collapsible>
+
+          {/* Seção de Mensagens - SEMPRE MOSTRAR */}
+          <Collapsible
+            open={!collapsedSections.messages}
+            onOpenChange={() => toggleSection('messages')}
+          >
+            <CollapsibleTrigger className="flex items-center justify-between w-full p-1 hover:bg-muted/50 rounded">
+              <div className="flex items-center gap-2">
+                <MessageSquare className="w-4 h-4 text-muted-foreground" />
+                <span className="text-xs font-medium text-foreground">Mensagem Inicial</span>
+              </div>
+              {collapsedSections.messages ?
+                <ChevronRight className="w-3 h-3 text-muted-foreground" /> :
+                <ChevronDown className="w-3 h-3 text-muted-foreground" />
+              }
+            </CollapsibleTrigger>
+
+            <CollapsibleContent className="mt-2">
+              <div className="pl-6">
+                <div className="p-2 rounded-lg bg-muted/50 border-muted">
+                  <EditableField
+                    field="message"
+                    value={lead.message || ''}
+                  >
+                    <p className="text-xs text-foreground leading-relaxed">
+                      {lead.message || 'Clique para adicionar mensagem inicial...'}
+                    </p>
+                  </EditableField>
+                </div>
+              </div>
+            </CollapsibleContent>
+          </Collapsible>
         </div>
       </ScrollArea>
     </div>

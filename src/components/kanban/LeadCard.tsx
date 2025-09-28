@@ -20,12 +20,10 @@ import { useCustomStatuses } from '../../hooks/useCustomStatuses';
 
 interface LeadCardProps {
   lead: Lead;
-  onEdit?: (lead: Lead) => void;
-  onDelete?: (leadId: string) => void;
   onOpenModal?: (leadId: string) => void;
 }
 
-export const LeadCard: React.FC<LeadCardProps> = ({ lead, onEdit, onDelete, onOpenModal }) => {
+export const LeadCard: React.FC<LeadCardProps> = ({ lead, onOpenModal }) => {
   const { getStatusByValue } = useCustomStatuses();
   const {
     attributes,
@@ -83,12 +81,17 @@ export const LeadCard: React.FC<LeadCardProps> = ({ lead, onEdit, onDelete, onOp
       style={style}
       {...attributes}
       {...listeners}
+      onClick={(e) => {
+        // Não abrir modal se estiver arrastando ou clicando em botões específicos
+        if (e.defaultPrevented) return;
+        onOpenModal?.(lead.id);
+      }}
       className={cn(
-        "bg-card rounded-lg border shadow-sm p-4 cursor-grab active:cursor-grabbing",
+        "bg-card rounded-lg border shadow-sm p-4 cursor-pointer hover:cursor-pointer",
         "hover:shadow-md transition-shadow duration-200",
         "group relative",
         "w-full overflow-hidden",
-        isDragging && "opacity-50 shadow-lg"
+        isDragging && "opacity-50 shadow-lg cursor-grabbing"
       )}
     >
       {/* Header */}
@@ -246,38 +249,11 @@ export const LeadCard: React.FC<LeadCardProps> = ({ lead, onEdit, onDelete, onOp
               className="h-6 w-6 p-0"
               onClick={(e) => {
                 e.stopPropagation();
+                e.preventDefault();
                 window.open(lead.source_url, '_blank');
               }}
             >
               <ExternalLink className="w-3 h-3" />
-            </Button>
-          )}
-
-          {onOpenModal && (
-            <Button
-              size="sm"
-              variant="ghost"
-              className="h-6 px-2 text-xs"
-              onClick={(e) => {
-                e.stopPropagation();
-                onOpenModal(lead.id);
-              }}
-            >
-              Detalhes
-            </Button>
-          )}
-
-          {onEdit && (
-            <Button
-              size="sm"
-              variant="ghost"
-              className="h-6 px-2 text-xs"
-              onClick={(e) => {
-                e.stopPropagation();
-                onEdit(lead);
-              }}
-            >
-              Editar
             </Button>
           )}
         </div>
