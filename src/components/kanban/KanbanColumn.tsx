@@ -18,6 +18,7 @@ interface KanbanColumnProps {
   onDeleteColumn?: (columnId: string) => void;
   onEditLead?: (lead: Lead) => void;
   onDeleteLead?: (leadId: string) => void;
+  onOpenModal?: (leadId: string) => void;
 }
 
 export const KanbanColumn: React.FC<KanbanColumnProps> = ({
@@ -27,6 +28,7 @@ export const KanbanColumn: React.FC<KanbanColumnProps> = ({
   onDeleteColumn,
   onEditLead,
   onDeleteLead,
+  onOpenModal,
 }) => {
   const [isHovered, setIsHovered] = useState(false);
 
@@ -211,6 +213,7 @@ const getTotalValue = () => {
                   lead={lead}
                   onEdit={onEditLead}
                   onDelete={onDeleteLead}
+                  onOpenModal={onOpenModal}
                 />
               ))}
             </SortableContext>

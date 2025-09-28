@@ -1,34 +1,56 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Link, useLocation } from 'react-router-dom';
+import { createPortal } from 'react-dom';
 import {
   LayoutDashboard,
   KanbanSquare,
   Megaphone,
   Settings,
   Users,
+  ThumbsUp,
   PanelLeftClose,
   PanelRightClose,
 } from 'lucide-react';
 import { AccountSwitcher } from '../AccountSwitcher';
 import { CreateAccountModal } from '../CreateAccountModal';
 
-const navItems = [
+type NavItem = {
+  icon: React.ComponentType<{ className?: string }>;
+  text: string;
+  path: string;
+  isNew?: boolean;
+};
+
+const navItems: NavItem[] = [
   { icon: LayoutDashboard, text: 'Dashboard', path: '/dashboard' },
   { icon: KanbanSquare, text: 'Leads', path: '/kanban' },
   { icon: Megaphone, text: 'Campanhas', path: '/campaigns' },
   { icon: Users, text: 'Usuários', path: '/users' },
   { icon: Settings, text: 'Configurações', path: '/settings' },
+  { icon: ThumbsUp, text: 'Feedbacks', path: '/feedbacks', isNew: true },
 ];
 
 const Sidebar = () => {
   const [isExpanded, setIsExpanded] = useState(false);
   const [showCreateAccount, setShowCreateAccount] = useState(false);
+  const [activeTooltip, setActiveTooltip] = useState<{text: string, rect: DOMRect, isNew?: boolean} | null>(null);
   const location = useLocation();
 
   const sidebarVariants = {
     expanded: { width: '240px' },
     collapsed: { width: '68px' },
+  };
+
+  const handleMouseEnter = (event: React.MouseEvent, text: string, isNew?: boolean) => {
+    if (!isExpanded) {
+      const rect = event.currentTarget.getBoundingClientRect();
+      setActiveTooltip({ text, rect, isNew });
+    }
+  };
+
+  const handleMouseLeave = () => {
+    setActiveTooltip(null);
   };
 
   return (
@@ -96,26 +118,37 @@ const Sidebar = () => {
                   ? 'bg-muted text-foreground'
                   : 'hover:bg-accent'
               }`}
+              onMouseEnter={(e) => handleMouseEnter(e, item.text, item.isNew)}
+              onMouseLeave={handleMouseLeave}
             >
-              <item.icon className="h-5 w-5 flex-shrink-0" />
+              <div className="relative flex-shrink-0">
+                <item.icon className="h-5 w-5" />
+                {item.isNew && !isExpanded && (
+                  <div className="absolute -top-0.5 -right-0.5 px-1 py-0.5 bg-red-500 text-white text-[8px] font-medium rounded-full min-w-[16px] h-4 flex items-center justify-center">
+                    N
+                  </div>
+                )}
+              </div>
               <AnimatePresence>
                 {isExpanded && (
-                  <motion.span
+                  <motion.div
                     initial={{ opacity: 0, width: 0 }}
                     animate={{ opacity: 1, width: 'auto', marginLeft: '1rem' }}
                     exit={{ opacity: 0, width: 0 }}
                     transition={{ duration: 0.2 }}
-                    className="text-sm font-medium overflow-hidden whitespace-nowrap"
+                    className="flex items-center justify-between overflow-hidden whitespace-nowrap flex-1"
                   >
-                    {item.text}
-                  </motion.span>
+                    <span className="text-sm font-medium">
+                      {item.text}
+                    </span>
+                    {item.isNew && (
+                      <span className="ml-2 px-2 py-0.5 text-xs bg-red-500 text-white rounded-full font-medium">
+                        Novo
+                      </span>
+                    )}
+                  </motion.div>
                 )}
               </AnimatePresence>
-              {!isExpanded && (
-                <div className="absolute left-full ml-2 px-2 py-1 bg-popover text-popover-foreground text-xs rounded-md opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none z-[9999] border border-border shadow-lg">
-                  {item.text}
-                </div>
-              )}
             </Link>
           </motion.div>
         ))}
@@ -150,6 +183,27 @@ const Sidebar = () => {
         isOpen={showCreateAccount}
         onClose={() => setShowCreateAccount(false)}
       />
+
+      {/* Portal Tooltip - Rendered outside sidebar to avoid z-index issues */}
+      {activeTooltip && createPortal(
+        <div
+          className="fixed px-2 py-1 bg-popover text-popover-foreground text-xs rounded-md border border-border shadow-lg pointer-events-none z-[999999]"
+          style={{
+            left: activeTooltip.rect.right + 8,
+            top: activeTooltip.rect.top + (activeTooltip.rect.height / 2) - 16,
+          }}
+        >
+          <div className="flex items-center gap-2">
+            {activeTooltip.text}
+            {activeTooltip.isNew && (
+              <span className="px-1.5 py-0.5 text-[10px] bg-red-500 text-white rounded-full font-medium">
+                Novo
+              </span>
+            )}
+          </div>
+        </div>,
+        document.body
+      )}
     </motion.aside>
   );
 };

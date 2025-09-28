@@ -264,7 +264,7 @@ export function FeedbackAdminPage() {
         {/* Header */}
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-3xl font-bold">Feedback Beta - Touch RUN</h1>
+            <h1 className="text-3xl font-bold">Acompanhe o que está sendo pedido</h1>
             <p className="text-muted-foreground">
               {currentView === 'public'
                 ? 'Vote e acompanhe feedbacks da comunidade'
