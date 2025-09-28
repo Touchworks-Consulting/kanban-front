@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect } from 'react';
 import type { Lead, KanbanColumn } from '../../types/kanban';
 import type { LeadModalData } from '../../types/leadModal';
 import { Dialog, DialogContent, DialogTitle, DialogDescription } from '../ui/dialog';
@@ -9,8 +9,9 @@ import { LeadDataSidebar } from './LeadDataSidebar';
 import { LeadDataSidebarSkeleton } from './LeadDataSidebarSkeleton';
 import { ActivitiesArea } from './ActivitiesArea';
 import { ActivitiesAreaSkeleton } from './ActivitiesAreaSkeleton';
-import { leadModalService } from '../../services/leadModalService';
-import { userService, type UserDto } from '../../services/users';
+import { useLeadModalStore } from '../../stores/leadModalStore';
+import { optimizedLeadService } from '../../services/optimizedLeadService';
+import type { UserDto } from '../../services/users';
 
 interface LeadModalProps {
   leadId: string;
@@ -27,141 +28,169 @@ export const LeadModal: React.FC<LeadModalProps> = ({
   onUpdate,
   onDelete,
 }) => {
-  const [lead, setLead] = useState<Lead | null>(null);
-  const [modalData, setModalData] = useState<LeadModalData | null>(null);
-  const [columns, setColumns] = useState<KanbanColumn[]>([]);
-  const [users, setUsers] = useState<UserDto[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  // Use Zustand store instead of local state
+  const {
+    lead,
+    modalData,
+    columns,
+    users,
+    loading,
+    errors,
+    setLead,
+    setModalData,
+    setColumns,
+    setUsers,
+    setIsOpen,
+    setLoading,
+    setError,
+    updateLeadOptimistic,
+    updateAssigneeOptimistic,
+    updateStatusOptimistic,
+    updateColumnOptimistic,
+    rollbackLead,
+    rollbackAssignee,
+    rollbackStatus,
+    rollbackColumn,
+    reset,
+    clearErrors,
+  } = useLeadModalStore();
 
-  const loadModalData = async () => {
+  // Load initial data only once when modal opens
+  const loadInitialData = async () => {
     if (!leadId) return;
 
-    setIsLoading(true);
-    setError(null);
+    setLoading('lead', true);
+    setError('lead', null);
 
     try {
-      const [data, usersList] = await Promise.all([
-        leadModalService.getLeadModalData(leadId),
-        userService.list()
-      ]);
+      const data = await optimizedLeadService.loadInitialData(leadId);
 
-      setLead((data as any).lead);
-      setColumns(data.columns || []);
-      setUsers(usersList || []);
-      setModalData({
-        timeline: data.timeline || [],
-        contacts: data.contacts || [],
-        files: data.files || [],
-        stats: data.stats || {
-          totalActivities: 0,
-          pendingTasks: 0,
-          totalContacts: 0,
-          totalFiles: 0
-        }
-      });
+      setLead(data.lead);
+      setColumns(data.columns);
+      setUsers(data.users);
+      setModalData(data.modalData);
     } catch (err: any) {
       console.error('Erro ao carregar dados do modal:', err);
-      setError('Erro ao carregar dados do lead');
+      setError('lead', 'Erro ao carregar dados do lead');
     } finally {
-      setIsLoading(false);
+      setLoading('lead', false);
     }
   };
 
   useEffect(() => {
     if (isOpen && leadId) {
-      loadModalData();
+      setIsOpen(true);
+      clearErrors();
+      loadInitialData();
+    } else if (!isOpen) {
+      setIsOpen(false);
     }
   }, [isOpen, leadId]);
 
   const handleClose = () => {
-    setLead(null);
-    setModalData(null);
-    setColumns([]);
-    setError(null);
+    reset();
     onClose();
   };
 
-  const handleUpdate = () => {
-    loadModalData();
-    onUpdate?.();
-  };
-
+  // Optimistic update for status changes
   const handleStatusChange = async (status: 'won' | 'lost', reason?: string) => {
     if (!lead) return;
 
+    // Immediate UI update
+    updateStatusOptimistic(status, reason);
+    setLoading('status', true);
+    setError('status', null);
+
     try {
-      await leadModalService.updateLeadStatus(lead.id, status, reason);
-      await loadModalData();
+      const updatedLead = await optimizedLeadService.updateStatus(lead.id, status, reason);
+      setLead(updatedLead); // Update with server response
       onUpdate?.();
     } catch (error) {
       console.error('Erro ao atualizar status do lead:', error);
+      setError('status', 'Erro ao atualizar status');
+      rollbackStatus(); // Rollback on error
+    } finally {
+      setLoading('status', false);
     }
   };
 
+  // Optimistic update for column moves
   const handleMoveToNext = async (nextColumnId: string) => {
     if (!lead) return;
 
+    const targetColumn = columns.find(c => c.id === nextColumnId);
+
+    // Immediate UI update
+    updateColumnOptimistic(nextColumnId, targetColumn);
+    setLoading('column', true);
+    setError('column', null);
+
     try {
-      await leadModalService.moveLeadToColumn(lead.id, nextColumnId);
-      await loadModalData();
+      const updatedLead = await optimizedLeadService.moveToColumn(lead.id, nextColumnId);
+      setLead(updatedLead); // Update with server response
       onUpdate?.();
     } catch (error) {
       console.error('Erro ao mover lead:', error);
+      setError('column', 'Erro ao mover lead');
+      rollbackColumn(); // Rollback on error
+    } finally {
+      setLoading('column', false);
     }
   };
 
+  // Optimistic update for general lead updates
   const handleUpdateLead = async (updates: Partial<Lead>) => {
     if (!lead) return;
 
-    try {
-      // Convert tags to string array if present
-      const updatePayload: any = { ...updates };
-      if (updatePayload.tags) {
-        updatePayload.tags = updatePayload.tags.map((tag: any) =>
-          typeof tag === 'string' ? tag : tag.name || tag.id || String(tag)
-        );
-      }
+    // Immediate UI update
+    updateLeadOptimistic(updates);
+    setLoading('lead', true);
+    setError('lead', null);
 
-      await leadModalService.updateLead(lead.id, updatePayload);
-      await loadModalData();
+    try {
+      const updatedLead = await optimizedLeadService.updateLead(lead.id, updates);
+      setLead(updatedLead); // Update with server response
       onUpdate?.();
     } catch (error) {
       console.error('Erro ao atualizar lead:', error);
+      setError('lead', 'Erro ao atualizar lead');
+      rollbackLead(); // Rollback on error
       throw error;
+    } finally {
+      setLoading('lead', false);
     }
   };
 
-  // Handler unificado para mudança de responsável (usado por header e sidebar)
+  // Optimistic update for assignee changes - NOW TRULY OPTIMIZED!
   const handleAssigneeChange = async (userId: string) => {
     if (!lead) return;
 
-    try {
-      // Payload completo para evitar problemas no backend
-      const updatePayload = {
-        name: lead.name,
-        phone: lead.phone || '',
-        email: lead.email || '',
-        message: lead.message || '',
-        platform: lead.platform || 'WhatsApp',
-        channel: lead.channel || lead.platform || 'WhatsApp',
-        campaign: lead.campaign || 'Orgânico',
-        value: lead.value || 0,
-        notes: lead.notes || '',
-        status: lead.status,
-        assigned_to_user_id: userId || ''
-      };
+    const assignedUser = users.find(u => u.id === userId);
 
-      await leadModalService.updateLead(lead.id, updatePayload);
-      await loadModalData();
+    // Immediate UI update - no more full payload!
+    updateAssigneeOptimistic(userId, assignedUser);
+    setLoading('assignee', true);
+    setError('assignee', null);
+
+    try {
+      const updatedLead = await optimizedLeadService.updateAssignee(lead.id, userId);
+      setLead(updatedLead); // Update with server response
       onUpdate?.();
     } catch (error) {
       console.error('Erro ao alterar responsável:', error);
+      setError('assignee', 'Erro ao alterar responsável');
+      rollbackAssignee(); // Rollback on error
       throw error;
+    } finally {
+      setLoading('assignee', false);
     }
   };
 
   if (!isOpen) return null;
+
+  // Use granular loading states
+  const isMainLoading = loading.lead;
+  const hasMainError = errors.lead;
 
   return (
     <Dialog open={isOpen} onOpenChange={handleClose}>
@@ -172,7 +201,7 @@ export const LeadModal: React.FC<LeadModalProps> = ({
             Modal com informações detalhadas do lead incluindo dados, atividades e arquivos
           </DialogDescription>
         </div>
-        {isLoading ? (
+        {isMainLoading ? (
           <div className="flex flex-col max-h-[95vh]">
             {/* Header Skeleton */}
             <PipelineHeaderSkeleton className="flex-shrink-0" />
@@ -186,28 +215,32 @@ export const LeadModal: React.FC<LeadModalProps> = ({
               <ActivitiesAreaSkeleton className="flex-1" />
             </div>
           </div>
-        ) : error ? (
+        ) : hasMainError ? (
           <div className="flex items-center justify-center h-96 text-center p-6">
             <div>
-              <p className="text-destructive mb-4">{error}</p>
-              <Button onClick={loadModalData} variant="outline">
+              <p className="text-destructive mb-4">{hasMainError}</p>
+              <Button onClick={loadInitialData} variant="outline">
                 Tentar Novamente
               </Button>
             </div>
           </div>
         ) : lead ? (
           <div className="flex flex-col max-h-[95vh]">
-            {/* Header Fixo com Pipeline Visual */}
+            {/* Header Fixo com Pipeline Visual - with granular loading states */}
             <PipelineHeader
               lead={lead}
               columns={columns}
               onStatusChange={handleStatusChange}
               onMoveToNext={handleMoveToNext}
-              onUpdate={handleUpdate}
+              onUpdate={() => {}} // No longer needed - using optimistic updates
               onDelete={onDelete}
               onAssigneeChange={handleAssigneeChange}
               users={users}
               className="flex-shrink-0"
+              // TODO: Add loading states for micro-interactions
+              // isAssigneeLoading={loading.assignee}
+              // isStatusLoading={loading.status}
+              // isColumnLoading={loading.column}
             />
 
             {/* Duas Colunas com Scroll Independente */}
@@ -218,14 +251,20 @@ export const LeadModal: React.FC<LeadModalProps> = ({
                 columns={columns}
                 onUpdateLead={handleUpdateLead}
                 className="w-80 flex-shrink-0"
+                // TODO: Add loading state for lead updates
+                // isUpdating={loading.lead}
+                // updateError={errors.lead}
               />
 
               {/* Coluna Direita - Atividades */}
               <ActivitiesArea
                 leadId={leadId}
                 modalData={modalData}
-                onUpdate={handleUpdate}
+                onUpdate={() => {}} // No longer needed - using optimistic updates
                 className="flex-1"
+                // TODO: Add loading states for activities
+                // isActivitiesLoading={loading.activities}
+                // activitiesError={errors.activities}
               />
             </div>
           </div>
