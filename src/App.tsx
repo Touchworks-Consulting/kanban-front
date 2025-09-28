@@ -25,6 +25,7 @@ import ErrorBoundary from './components/ErrorBoundary';
 import Sidebar from './components/layout/Sidebar';
 import Header from './components/layout/Header';
 import { FeedbackWidget } from './components/FeedbackWidget';
+import { Toaster } from './components/ui/sonner';
 
 // Componente para agrupar rotas que usam o layout principal
 const AppLayout = () => (
@@ -151,6 +152,14 @@ function App() {
                 </ErrorBoundary>
               }
             />
+            <Route
+              path="feedbacks"
+              element={
+                <ErrorBoundary>
+                  <FeedbackAdminPage />
+                </ErrorBoundary>
+              }
+            />
             {/* Redirect antigo WhatsApp para configurações */}
             <Route path="whatsapp-config" element={<Navigate to="/settings" replace />} />
           </Route>
@@ -160,6 +169,7 @@ function App() {
             element={<Navigate to={isAuthenticated ? '/' : '/login'} />}
           />
         </Routes>
+        <Toaster />
       </Router>
     </ErrorBoundary>
   );

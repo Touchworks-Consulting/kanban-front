@@ -23,6 +23,8 @@ export interface Lead {
   updatedAt: string;
   column?: KanbanColumn;
   tags?: Tag[];
+  timeInCurrentStage?: string; // Tempo que o lead está na coluna atual (ex: "3 dias", "2h")
+  stageTimelines?: Record<string, string>; // Tempo gasto em cada etapa { column_id: "2 dias" }
 }
 
 export interface KanbanColumn {

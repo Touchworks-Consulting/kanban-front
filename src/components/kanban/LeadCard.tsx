@@ -22,9 +22,10 @@ interface LeadCardProps {
   lead: Lead;
   onEdit?: (lead: Lead) => void;
   onDelete?: (leadId: string) => void;
+  onOpenModal?: (leadId: string) => void;
 }
 
-export const LeadCard: React.FC<LeadCardProps> = ({ lead, onEdit, onDelete }) => {
+export const LeadCard: React.FC<LeadCardProps> = ({ lead, onEdit, onDelete, onOpenModal }) => {
   const { getStatusByValue } = useCustomStatuses();
   const {
     attributes,
@@ -249,6 +250,20 @@ export const LeadCard: React.FC<LeadCardProps> = ({ lead, onEdit, onDelete }) =>
               }}
             >
               <ExternalLink className="w-3 h-3" />
+            </Button>
+          )}
+
+          {onOpenModal && (
+            <Button
+              size="sm"
+              variant="ghost"
+              className="h-6 px-2 text-xs"
+              onClick={(e) => {
+                e.stopPropagation();
+                onOpenModal(lead.id);
+              }}
+            >
+              Detalhes
             </Button>
           )}
 

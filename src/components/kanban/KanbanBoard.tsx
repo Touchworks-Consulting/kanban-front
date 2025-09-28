@@ -23,6 +23,7 @@ import { CreateColumnModal } from './CreateColumnModal';
 import { EditColumnModal } from './EditColumnModal';
 import { CreateLeadModal } from './CreateLeadModal';
 import { EditLeadModal } from './EditLeadModal';
+import { LeadModal } from './LeadModal';
 import { LossReasonDialog } from './LossReasonDialog';
 import { FilterBar, type FilterState } from './FilterBar';
 import { LoadingSpinner } from '../LoadingSpinner';
@@ -58,6 +59,9 @@ export const KanbanBoard: React.FC = () => {
   const [selectedColumnForLead, setSelectedColumnForLead] = useState<{ id: string; name: string } | null>(null);
   const [selectedColumnForEdit, setSelectedColumnForEdit] = useState<ColumnType | null>(null);
   const [selectedLeadForEdit, setSelectedLeadForEdit] = useState<Lead | null>(null);
+
+  // Lead modal state
+  const [selectedLeadForModal, setSelectedLeadForModal] = useState<string | null>(null);
 
   // Loss reason dialog state
   const [showLossReasonDialog, setShowLossReasonDialog] = useState(false);
@@ -502,6 +506,7 @@ export const KanbanBoard: React.FC = () => {
                     onDeleteColumn={handleDeleteColumn}
                     onEditLead={handleEditLead}
                     onDeleteLead={handleDeleteLead}
+                    onOpenModal={setSelectedLeadForModal}
                   />
                 ))}
               </SortableContext>
@@ -578,6 +583,18 @@ export const KanbanBoard: React.FC = () => {
         onConfirm={handleLossReasonConfirm}
         leadName={pendingLossMove?.leadName || ''}
       />
+
+      {/* Lead Modal */}
+      {selectedLeadForModal && (
+        <LeadModal
+          leadId={selectedLeadForModal}
+          isOpen={!!selectedLeadForModal}
+          onClose={() => setSelectedLeadForModal(null)}
+          onUpdate={() => {
+            fetchBoard(filters);
+          }}
+        />
+      )}
     </div>
   );
 };
