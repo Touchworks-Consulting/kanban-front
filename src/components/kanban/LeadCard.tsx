@@ -14,9 +14,11 @@ import {
 import type { Lead } from '../../types/kanban';
 import { Avatar, AvatarFallback } from '../ui/avatar';
 import { Button } from '../ui/button';
+import { TaskBadge, useTaskBadgeColors } from '../ui/TaskBadge';
 import { cn } from '../../lib/utils';
 import { formatDate } from '../../utils/helpers';
 import { useCustomStatuses } from '../../hooks/useCustomStatuses';
+import { useLeadActivityCounts } from '../../hooks/useActivityCounts';
 
 interface LeadCardProps {
   lead: Lead;
@@ -25,6 +27,16 @@ interface LeadCardProps {
 
 export const LeadCard: React.FC<LeadCardProps> = ({ lead, onOpenModal }) => {
   const { getStatusByValue } = useCustomStatuses();
+  const { counts: activityCounts } = useLeadActivityCounts(lead.id);
+  const taskColors = useTaskBadgeColors(activityCounts || {
+    total_pending: 0,
+    today: 0,
+    overdue: 0,
+    has_tasks: false,
+    has_overdue: false,
+    has_today: false
+  });
+
   const {
     attributes,
     listeners,
@@ -88,10 +100,18 @@ export const LeadCard: React.FC<LeadCardProps> = ({ lead, onOpenModal }) => {
       }}
       className={cn(
         "bg-card rounded-lg border shadow-sm p-4 cursor-pointer hover:cursor-pointer",
-        "hover:shadow-md transition-shadow duration-200",
+        "hover:shadow-md transition-all duration-200",
         "group relative",
         "w-full overflow-hidden",
-        isDragging && "opacity-50 shadow-lg cursor-grabbing"
+        isDragging && "opacity-50 shadow-lg cursor-grabbing",
+        // Aplicar cores baseadas no status das tarefas
+        taskColors && {
+          [taskColors.bgColor]: true,
+          [taskColors.borderColor]: true,
+          "border-2": taskColors.type === 'overdue', // Borda mais grossa para vencidas
+          "ring-1": taskColors.type === 'today', // Ring sutil para tarefas de hoje
+          [taskColors.ringColor]: taskColors.type === 'today'
+        }
       )}
     >
       {/* Header */}
@@ -121,14 +141,25 @@ export const LeadCard: React.FC<LeadCardProps> = ({ lead, onOpenModal }) => {
             </div>
           </div>
         </div>
-        
-        {/* Platform indicator */}
-        {lead.platform && (
-          <div className={cn(
-            "w-2 h-2 rounded-full flex-shrink-0",
-            getPlatformColor(lead.platform)
-          )} />
-        )}
+
+        <div className="flex items-center gap-2 flex-shrink-0">
+          {/* Task Badge */}
+          {activityCounts && (
+            <TaskBadge
+              counts={activityCounts}
+              size="sm"
+              className="flex-shrink-0"
+            />
+          )}
+
+          {/* Platform indicator */}
+          {lead.platform && (
+            <div className={cn(
+              "w-2 h-2 rounded-full flex-shrink-0",
+              getPlatformColor(lead.platform)
+            )} />
+          )}
+        </div>
       </div>
 
       {/* Contact info */}

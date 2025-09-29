@@ -5,13 +5,16 @@ import { ScrollArea } from '../ui/scroll-area';
 import {
   Activity,
   Users,
-  Paperclip
+  Paperclip,
+  CheckSquare,
+  FileText
 } from 'lucide-react';
 import { cn } from '../../lib/utils';
 import type { LeadModalData } from '../../types/leadModal';
 import { LeadTimelineTab } from './tabs/LeadTimelineTab';
 import { LeadContactsTab } from './tabs/LeadContactsTab';
 import { LeadFilesTab } from './tabs/LeadFilesTab';
+import { TasksTab } from './tabs/TasksTab';
 
 interface LeadModalTabsProps {
   leadId: string;
@@ -24,7 +27,10 @@ export const LeadModalTabs: React.FC<LeadModalTabsProps> = ({
   modalData,
   onUpdate
 }) => {
-  const [activeTab, setActiveTab] = useState<'timeline' | 'contacts' | 'files'>('timeline');
+  const [activeTab, setActiveTab] = useState<'activities' | 'tasks' | 'notes' | 'files'>('activities');
+  const [triggerNewTask, setTriggerNewTask] = useState(false);
+
+  // Force browser cache refresh
 
   if (!modalData) {
     return (
@@ -49,19 +55,27 @@ export const LeadModalTabs: React.FC<LeadModalTabsProps> = ({
 
   const tabs = [
     {
-      id: 'timeline' as const,
-      label: 'Timeline',
+      id: 'activities' as const,
+      label: 'Atividades',
       icon: Activity,
       count: modalData.timeline?.length || 0,
       badge: modalData.timeline?.filter(a => a.status === 'pending').length || undefined,
       badgeVariant: 'destructive' as const
     },
     {
-      id: 'contacts' as const,
-      label: 'Contatos',
-      icon: Users,
-      count: modalData.contacts?.length || 0,
-      badge: modalData.contacts?.filter(c => c.is_primary).length || undefined,
+      id: 'tasks' as const,
+      label: 'Tarefas',
+      icon: CheckSquare,
+      count: 0, // Será implementado quando integrarmos com a API
+      badge: undefined, // Mostrará pending tasks
+      badgeVariant: 'destructive' as const
+    },
+    {
+      id: 'notes' as const,
+      label: 'Anotações',
+      icon: FileText,
+      count: 0,
+      badge: undefined,
       badgeVariant: 'default' as const
     },
     {
@@ -122,7 +136,15 @@ export const LeadModalTabs: React.FC<LeadModalTabsProps> = ({
           </div>
 
           <div className="flex items-center gap-2 pr-3">
-            <Button variant="ghost" size="sm" className="ml-2">
+            <Button
+              variant="ghost"
+              size="sm"
+              className="ml-2"
+              onClick={() => {
+                setActiveTab('tasks');
+                setTriggerNewTask(true);
+              }}
+            >
               + Nova Atividade
             </Button>
           </div>
@@ -132,18 +154,29 @@ export const LeadModalTabs: React.FC<LeadModalTabsProps> = ({
       {/* Tab Content with ScrollArea */}
       <div className="flex-1 overflow-hidden">
         <ScrollArea className="h-full">
-          {activeTab === 'timeline' && (
+          {activeTab === 'activities' && (
             <LeadTimelineTab
               leadId={leadId}
               initialActivities={modalData.timeline || []}
             />
           )}
 
-          {activeTab === 'contacts' && (
-            <LeadContactsTab
+          {activeTab === 'tasks' && (
+            <TasksTab
               leadId={leadId}
-              initialContacts={modalData.contacts || []}
+              onUpdate={onUpdate}
+              triggerNewTask={triggerNewTask}
+              onNewTaskCreated={() => setTriggerNewTask(false)}
             />
+          )}
+
+          {activeTab === 'notes' && (
+            <div className="p-6 text-center">
+              <FileText className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
+              <p className="text-muted-foreground">
+                Aba de anotações em desenvolvimento
+              </p>
+            </div>
           )}
 
           {activeTab === 'files' && (
