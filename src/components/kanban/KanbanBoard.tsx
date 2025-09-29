@@ -590,8 +590,38 @@ export const KanbanBoard: React.FC = () => {
           leadId={selectedLeadForModal}
           isOpen={!!selectedLeadForModal}
           onClose={() => setSelectedLeadForModal(null)}
-          onUpdate={() => {
-            fetchBoard(filters);
+          onUpdate={async () => {
+            // Atualizar apenas o lead específico em vez de recarregar todo o board
+            if (selectedLeadForModal && board) {
+              try {
+                // Buscar apenas os dados atualizados do lead
+                const response = await fetch(`/api/leads/${selectedLeadForModal}`);
+                if (response.ok) {
+                  const updatedLead = await response.json();
+
+                  // Atualizar o lead no estado local do board
+                  setBoard(prevBoard => {
+                    if (!prevBoard) return prevBoard;
+
+                    const updatedColumns = prevBoard.columns.map(column => ({
+                      ...column,
+                      leads: column.leads?.map(lead =>
+                        lead.id === selectedLeadForModal ? { ...lead, ...updatedLead.lead } : lead
+                      ) || []
+                    }));
+
+                    return { ...prevBoard, columns: updatedColumns };
+                  });
+                } else {
+                  // Fallback: recarregar todo o board se falhar
+                  await fetchBoard(filters);
+                }
+              } catch (error) {
+                console.error('Erro ao atualizar lead:', error);
+                // Fallback: recarregar todo o board se falhar
+                await fetchBoard(filters);
+              }
+            }
           }}
         />
       )}

@@ -64,19 +64,21 @@ export const LeadCard: React.FC<LeadCardProps> = ({ lead, onOpenModal }) => {
   };
 
   const formatCurrency = (value?: number | string) => {
-    if (!value || value === 0) return 'R$ 0,00';
+    if (!value || value === 0 || value === '0' || value === '') return null; // Retorna null para não exibir
 
     // Convert to number if it's a string
-    let numValue = typeof value === 'string' ? parseFloat(value) : value;
+    let numValue = typeof value === 'string' ? parseFloat(value.replace(',', '.')) : value;
 
     // Check if the number is valid
-    if (isNaN(numValue)) return 'R$ 0,00';
+    if (isNaN(numValue) || numValue <= 0) return null;
 
     return new Intl.NumberFormat('pt-BR', {
       style: 'currency',
       currency: 'BRL',
     }).format(numValue).replace(/\u00A0/g, ' '); // Replace NBSP with regular space for better text wrapping
   };
+
+  // Debug removido - funcionando corretamente
 
   const getInitials = (name: string) => {
     return name
@@ -198,14 +200,16 @@ export const LeadCard: React.FC<LeadCardProps> = ({ lead, onOpenModal }) => {
       )}
 
       {/* Value */}
-      {lead.value && lead.value > 0 && (
-        <div className="flex items-center gap-2 mb-3">
-          <DollarSign className="w-3 h-3 text-green-600" />
-          <span className="text-xs font-medium text-green-600">
-            {formatCurrency(lead.value)}
-          </span>
-        </div>
-      )}
+      {(() => {
+        const formattedValue = formatCurrency(lead.value);
+        return formattedValue && (
+          <div className="flex items-center gap-2 mb-3">
+            <span className="text-xs font-medium text-green-600">
+              {formattedValue}
+            </span>
+          </div>
+        );
+      })()}
 
       {/* Tags */}
       {lead.tags && lead.tags.length > 0 && (

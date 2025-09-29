@@ -26,6 +26,7 @@ import Sidebar from './components/layout/Sidebar';
 import Header from './components/layout/Header';
 import { FeedbackWidget } from './components/FeedbackWidget';
 import { Toaster } from './components/ui/sonner';
+import { activityReminderService } from './services/activityReminderService';
 
 // Componente para agrupar rotas que usam o layout principal
 const AppLayout = () => (
@@ -50,6 +51,32 @@ function App() {
     if (token) {
       refreshAuth();
     }
+
+    // Inicializar serviço de lembretes de atividades
+    activityReminderService.loadPersistedReminders();
+
+    // Listeners para eventos de notificação
+    const handleOpenLeadModal = (event: CustomEvent) => {
+      const { leadId, activityId } = event.detail;
+      console.log(`Abrir modal do lead ${leadId}, atividade ${activityId}`);
+      // Aqui você pode implementar a lógica para abrir o modal do lead
+      // Por exemplo, navegar para a página ou disparar uma ação no store
+    };
+
+    const handleCompleteActivity = (event: CustomEvent) => {
+      const { activityId } = event.detail;
+      console.log(`Marcar atividade ${activityId} como concluída`);
+      // Aqui você pode implementar a lógica para marcar a atividade como concluída
+      // Por exemplo, chamar a API de atividades
+    };
+
+    window.addEventListener('openLeadModal', handleOpenLeadModal as EventListener);
+    window.addEventListener('completeActivity', handleCompleteActivity as EventListener);
+
+    return () => {
+      window.removeEventListener('openLeadModal', handleOpenLeadModal as EventListener);
+      window.removeEventListener('completeActivity', handleCompleteActivity as EventListener);
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 

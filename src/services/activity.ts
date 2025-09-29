@@ -48,9 +48,9 @@ export interface CreateActivityDto {
   activity_type: Activity['activity_type'];
   title: string;
   description?: string;
-  priority?: Activity['priority'];
+  priority?: Activity['priority']; // Reativado temporariamente para melhorias visuais
   scheduled_for?: string;
-  reminder_at?: string;
+  // reminder_at?: string; // Ainda removido até migração
   duration_minutes?: number;
   status?: Activity['status'];
 }
@@ -93,9 +93,7 @@ export const activityService = {
       limit?: number;
     }
   ): Promise<ActivityListResponse> {
-    const response = await api.get(`/api/leads/${leadId}/activities`, {
-      params
-    });
+    const response = await api.get(`/api/leads/${leadId}/activities`, params);
     return response.data;
   },
 

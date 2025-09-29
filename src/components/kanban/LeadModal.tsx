@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import type { Lead, KanbanColumn } from '../../types/kanban';
 import type { LeadModalData } from '../../types/leadModal';
 import { Dialog, DialogContent, DialogTitle, DialogDescription } from '../ui/dialog';
@@ -9,6 +9,7 @@ import { LeadDataSidebar } from './LeadDataSidebar';
 import { LeadDataSidebarSkeleton } from './LeadDataSidebarSkeleton';
 import { ActivitiesArea } from './ActivitiesArea';
 import { ActivitiesAreaSkeleton } from './ActivitiesAreaSkeleton';
+import { AgendaPanel } from './AgendaPanel';
 import { useLeadModalStore } from '../../stores/leadModalStore';
 import { optimizedLeadService } from '../../services/optimizedLeadService';
 import type { UserDto } from '../../services/users';
@@ -28,6 +29,8 @@ export const LeadModal: React.FC<LeadModalProps> = ({
   onUpdate,
   onDelete,
 }) => {
+  // Removido: Estado para comunicação com AgendaPanel - não mais necessário
+
   // Use Zustand store instead of local state
   const {
     lead,
@@ -232,7 +235,20 @@ export const LeadModal: React.FC<LeadModalProps> = ({
               columns={columns}
               onStatusChange={handleStatusChange}
               onMoveToNext={handleMoveToNext}
-              onUpdate={() => {}} // No longer needed - using optimistic updates
+              onUpdate={async () => {
+                // Atualizar o estado interno do modal primeiro
+                if (leadId) {
+                  try {
+                    const data = await optimizedLeadService.loadInitialData(leadId);
+                    setLead(data.lead); // Atualizar estado interno do modal
+                  } catch (error) {
+                    console.error('Erro ao atualizar lead no modal:', error);
+                  }
+                }
+
+                // Depois atualizar o board
+                onUpdate?.();
+              }}
               onDelete={onDelete}
               onAssigneeChange={handleAssigneeChange}
               users={users}
@@ -243,28 +259,38 @@ export const LeadModal: React.FC<LeadModalProps> = ({
               // isColumnLoading={loading.column}
             />
 
-            {/* Duas Colunas com Scroll Independente */}
+            {/* Três Colunas com Scroll Independente */}
             <div className="flex flex-1 min-h-0">
               {/* Coluna Esquerda - Dados do Lead */}
               <LeadDataSidebar
                 lead={lead}
                 columns={columns}
                 onUpdateLead={handleUpdateLead}
-                className="w-80 flex-shrink-0"
+                className="w-72 flex-shrink-0"
                 // TODO: Add loading state for lead updates
                 // isUpdating={loading.lead}
                 // updateError={errors.lead}
               />
 
-              {/* Coluna Direita - Atividades */}
+              {/* Coluna Central - Atividades */}
               <ActivitiesArea
                 leadId={leadId}
                 modalData={modalData}
+                lead={lead}
                 onUpdate={() => {}} // No longer needed - using optimistic updates
                 className="flex-1"
                 // TODO: Add loading states for activities
                 // isActivitiesLoading={loading.activities}
                 // activitiesError={errors.activities}
+              />
+
+              {/* Coluna Direita - Agenda de Atividades */}
+              <AgendaPanel
+                leadId={leadId}
+                onNewActivity={() => {
+                  // TODO: Implementar nova lógica direta se necessário
+                  console.log('AgendaPanel: Nova atividade clicada - funcionalidade desabilitada temporariamente');
+                }}
               />
             </div>
           </div>

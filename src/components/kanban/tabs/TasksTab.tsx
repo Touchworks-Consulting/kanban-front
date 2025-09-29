@@ -41,14 +41,15 @@ import { TaskForm } from '../forms/TaskForm';
 interface TasksTabProps {
   leadId: string;
   onUpdate?: () => void;
-  triggerNewTask?: boolean;
+  triggerNewTask?: number;
   onNewTaskCreated?: () => void;
+  leadName?: string; // Nome do lead para auto-preenchimento
 }
 
 type TaskFilter = 'all' | 'pending' | 'completed' | 'overdue' | 'today';
 type TaskSort = 'newest' | 'oldest' | 'priority' | 'due_date';
 
-export const TasksTab: React.FC<TasksTabProps> = ({ leadId, onUpdate, triggerNewTask, onNewTaskCreated }) => {
+export const TasksTab: React.FC<TasksTabProps> = ({ leadId, onUpdate, triggerNewTask, onNewTaskCreated, leadName }) => {
   const [activities, setActivities] = useState<Activity[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -56,7 +57,17 @@ export const TasksTab: React.FC<TasksTabProps> = ({ leadId, onUpdate, triggerNew
   const [sort, setSort] = useState<TaskSort>('newest');
   const [searchTerm, setSearchTerm] = useState('');
   const [showCreateForm, setShowCreateForm] = useState(false);
+  const [lastTriggerCount, setLastTriggerCount] = useState(0);
   const [editingActivity, setEditingActivity] = useState<Activity | null>(null);
+  const [isInitialized, setIsInitialized] = useState(false);
+
+  // Sincronizar com triggerNewTask inicial para evitar trigger falso
+  useEffect(() => {
+    if (!isInitialized && triggerNewTask !== undefined) {
+      setLastTriggerCount(triggerNewTask);
+      setIsInitialized(true);
+    }
+  }, [triggerNewTask, isInitialized]);
 
   // Carregar atividades
   const loadActivities = async () => {
@@ -82,11 +93,13 @@ export const TasksTab: React.FC<TasksTabProps> = ({ leadId, onUpdate, triggerNew
 
   // Responder ao trigger de nova tarefa
   useEffect(() => {
-    if (triggerNewTask) {
+    // Só responder a triggers depois da inicialização
+    if (isInitialized && triggerNewTask && triggerNewTask > lastTriggerCount) {
       setShowCreateForm(true);
+      setLastTriggerCount(triggerNewTask);
       onNewTaskCreated?.();
     }
-  }, [triggerNewTask, onNewTaskCreated]);
+  }, [triggerNewTask, lastTriggerCount, onNewTaskCreated, isInitialized]);
 
   // Filtrar e ordenar atividades
   const filteredAndSortedActivities = React.useMemo(() => {
@@ -257,58 +270,41 @@ export const TasksTab: React.FC<TasksTabProps> = ({ leadId, onUpdate, triggerNew
   };
 
   return (
-    <div className="space-y-6">
-      {/* Header com estatísticas */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h3 className="text-lg font-semibold">Atividades e Tarefas</h3>
-          <p className="text-sm text-muted-foreground">
-            {stats.total} total • {stats.pending} pendente{stats.pending !== 1 ? 's' : ''} • {stats.overdue} vencida{stats.overdue !== 1 ? 's' : ''}
-          </p>
-        </div>
-        <Button onClick={() => setShowCreateForm(true)} size="sm">
-          <Plus className="w-4 h-4 mr-2" />
-          Nova Atividade
-        </Button>
-      </div>
-
-      {/* Filtros e busca */}
-      <div className="flex flex-col sm:flex-row gap-4">
+    <div className="space-y-4">
+      {/* Filtros compactos */}
+      <div className="flex items-center gap-2">
         <div className="flex-1">
           <Input
-            placeholder="Buscar atividades..."
+            placeholder="Buscar..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full"
+            className="h-8 text-sm"
           />
         </div>
-        <div className="flex gap-2">
-          <Select value={filter} onValueChange={(value: TaskFilter) => setFilter(value)}>
-            <SelectTrigger className="w-32">
-              <Filter className="w-4 h-4 mr-2" />
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Todas ({stats.total})</SelectItem>
-              <SelectItem value="pending">Pendentes ({stats.pending})</SelectItem>
-              <SelectItem value="completed">Concluídas ({stats.completed})</SelectItem>
-              <SelectItem value="overdue">Vencidas ({stats.overdue})</SelectItem>
-              <SelectItem value="today">Hoje</SelectItem>
-            </SelectContent>
-          </Select>
-
-          <Select value={sort} onValueChange={(value: TaskSort) => setSort(value)}>
-            <SelectTrigger className="w-32">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="newest">Mais recentes</SelectItem>
-              <SelectItem value="oldest">Mais antigas</SelectItem>
-              <SelectItem value="priority">Prioridade</SelectItem>
-              <SelectItem value="due_date">Data de vencimento</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
+        <Select value={filter} onValueChange={(value: TaskFilter) => setFilter(value)}>
+          <SelectTrigger className="w-28 h-8">
+            <Filter className="w-3 h-3 mr-1" />
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">Todas</SelectItem>
+            <SelectItem value="pending">Pendentes</SelectItem>
+            <SelectItem value="completed">Concluídas</SelectItem>
+            <SelectItem value="overdue">Vencidas</SelectItem>
+            <SelectItem value="today">Hoje</SelectItem>
+          </SelectContent>
+        </Select>
+        <Select value={sort} onValueChange={(value: TaskSort) => setSort(value)}>
+          <SelectTrigger className="w-24 h-8">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="newest">Recentes</SelectItem>
+            <SelectItem value="oldest">Antigas</SelectItem>
+            <SelectItem value="priority">Prioridade</SelectItem>
+            <SelectItem value="due_date">Vencimento</SelectItem>
+          </SelectContent>
+        </Select>
       </div>
 
       {/* Lista de atividades */}
@@ -317,17 +313,12 @@ export const TasksTab: React.FC<TasksTabProps> = ({ leadId, onUpdate, triggerNew
           <Card>
             <CardContent className="p-8 text-center">
               <CheckSquare className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
-              <p className="text-muted-foreground mb-4">
+              <p className="text-muted-foreground">
                 {searchTerm || filter !== 'all'
                   ? 'Nenhuma atividade encontrada com os filtros aplicados'
-                  : 'Nenhuma atividade criada ainda'
+                  : 'Nenhuma atividade criada ainda. Use o botão "Nova atividade" no topo para começar.'
                 }
               </p>
-              {!searchTerm && filter === 'all' && (
-                <Button onClick={() => setShowCreateForm(true)} variant="outline">
-                  Criar primeira atividade
-                </Button>
-              )}
             </CardContent>
           </Card>
         ) : (
@@ -337,7 +328,7 @@ export const TasksTab: React.FC<TasksTabProps> = ({ leadId, onUpdate, triggerNew
               className={cn(
                 "transition-all duration-200 hover:shadow-md",
                 activity.status === 'completed' && "opacity-75",
-                activity.is_overdue && activity.status === 'pending' && "border-red-200 bg-red-50"
+                activity.is_overdue && activity.status === 'pending' && "border-2 border-red-500 shadow-red-100"
               )}
             >
               <CardContent className="p-4">
@@ -357,30 +348,47 @@ export const TasksTab: React.FC<TasksTabProps> = ({ leadId, onUpdate, triggerNew
                   </Button>
 
                   <div className="flex-1 min-w-0">
-                    {/* Título e tipo */}
-                    <div className="flex items-center gap-2 mb-2">
-                      {getActivityIcon(activity.activity_type)}
-                      <h4 className={cn(
-                        "font-medium text-sm",
-                        activity.status === 'completed' && "line-through text-muted-foreground"
+                    {/* Título com ícone destacado */}
+                    <div className="flex items-start gap-3 mb-2">
+                      <div className={cn(
+                        "flex-shrink-0 w-8 h-8 rounded-lg flex items-center justify-center",
+                        activity.activity_type === 'call' && "bg-green-100 text-green-600",
+                        activity.activity_type === 'email' && "bg-blue-100 text-blue-600",
+                        activity.activity_type === 'whatsapp' && "bg-green-100 text-green-600",
+                        activity.activity_type === 'meeting' && "bg-purple-100 text-purple-600",
+                        activity.activity_type === 'note' && "bg-orange-100 text-orange-600",
+                        activity.activity_type === 'task' && "bg-gray-100 text-gray-600",
+                        activity.activity_type === 'follow_up' && "bg-indigo-100 text-indigo-600"
                       )}>
-                        {activity.title}
-                      </h4>
-
-                      {/* Badges */}
-                      <div className="flex items-center gap-1">
-                        <Badge
-                          variant="outline"
-                          className={cn("text-xs", getPriorityColor(activity.priority))}
-                        >
-                          {activity.priority}
-                        </Badge>
-
-                        {activity.is_overdue && activity.status === 'pending' && (
-                          <Badge variant="destructive" className="text-xs">
-                            Vencida
+                        {getActivityIcon(activity.activity_type)}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <h4 className={cn(
+                          "font-medium text-sm leading-5",
+                          activity.status === 'completed' && "line-through text-muted-foreground"
+                        )}>
+                          {activity.title}
+                        </h4>
+                        <div className="flex items-center gap-2 mt-1">
+                          <Badge
+                            variant="outline"
+                            className={cn("text-xs flex items-center gap-1", getPriorityColor(activity.priority))}
+                          >
+                            {activity.priority === 'urgent' && <span className="w-2 h-2 rounded-full bg-red-500" />}
+                            {activity.priority === 'high' && <span className="w-2 h-2 rounded-full bg-orange-500" />}
+                            {activity.priority === 'medium' && <span className="w-2 h-2 rounded-full bg-yellow-500" />}
+                            {activity.priority === 'low' && <span className="w-2 h-2 rounded-full bg-green-500" />}
+                            {activity.priority === 'low' ? 'Baixa' :
+                             activity.priority === 'medium' ? 'Média' :
+                             activity.priority === 'high' ? 'Alta' : 'Urgente'}
                           </Badge>
-                        )}
+                          {activity.is_overdue && activity.status === 'pending' && (
+                            <Badge variant="destructive" className="text-xs flex items-center gap-1">
+                              <AlertTriangle className="w-3 h-3" />
+                              Vencida
+                            </Badge>
+                          )}
+                        </div>
                       </div>
                     </div>
 
@@ -472,6 +480,7 @@ export const TasksTab: React.FC<TasksTabProps> = ({ leadId, onUpdate, triggerNew
         }
         task={editingActivity}
         leadId={leadId}
+        leadName={leadName}
       />
     </div>
   );

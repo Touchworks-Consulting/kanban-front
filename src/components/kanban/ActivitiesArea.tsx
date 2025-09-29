@@ -17,15 +17,19 @@ import {
   AlertCircle,
   MoreHorizontal,
   Filter,
-  Search
+  Search,
+  CheckSquare
 } from 'lucide-react';
 import { cn } from '../../lib/utils';
 import type { LeadModalData } from '../../types/leadModal';
+import type { Lead } from '../../types/kanban';
 import { formatDate, formatDistanceToNow } from '../../utils/helpers';
+import { TasksTab } from './tabs/TasksTab';
 
 interface ActivitiesAreaProps {
   leadId: string;
   modalData?: LeadModalData | null;
+  lead?: Lead | null;
   onUpdate?: () => void;
   className?: string;
 }
@@ -33,10 +37,23 @@ interface ActivitiesAreaProps {
 export const ActivitiesArea: React.FC<ActivitiesAreaProps> = ({
   leadId,
   modalData,
+  lead,
   onUpdate,
   className
 }) => {
-  const [activeTab, setActiveTab] = useState('timeline');
+  const [activeTab, setActiveTab] = useState('tasks');
+  const [triggerNewTask, setTriggerNewTask] = useState(0);
+
+  const handleNewActivity = React.useCallback(() => {
+    setActiveTab('tasks');
+    setTriggerNewTask(prev => prev + 1);
+  }, []);
+
+  const handleNewTaskCreated = React.useCallback(() => {
+    // Não precisa fazer nada, o contador já foi incrementado
+  }, []);
+
+  // Remover registro automático para evitar chamadas indevidas
 
   const getActivityIcon = (type: string) => {
     switch (type) {
@@ -44,12 +61,16 @@ export const ActivitiesArea: React.FC<ActivitiesAreaProps> = ({
         return Phone;
       case 'email':
         return Mail;
+      case 'whatsapp':
+        return MessageSquare;
       case 'meeting':
         return Calendar;
       case 'note':
         return MessageSquare;
       case 'task':
         return CheckCircle;
+      case 'follow_up':
+        return Activity;
       default:
         return Activity;
     }
@@ -61,12 +82,16 @@ export const ActivitiesArea: React.FC<ActivitiesAreaProps> = ({
         return 'text-green-600 bg-green-50 border-green-200';
       case 'email':
         return 'text-blue-600 bg-blue-50 border-blue-200';
+      case 'whatsapp':
+        return 'text-green-600 bg-green-50 border-green-200';
       case 'meeting':
         return 'text-purple-600 bg-purple-50 border-purple-200';
       case 'note':
         return 'text-orange-600 bg-orange-50 border-orange-200';
       case 'task':
-        return 'text-red-600 bg-red-50 border-red-200';
+        return 'text-gray-600 bg-gray-50 border-gray-200';
+      case 'follow_up':
+        return 'text-indigo-600 bg-indigo-50 border-indigo-200';
       default:
         return 'text-gray-600 bg-gray-50 border-gray-200';
     }
@@ -104,85 +129,89 @@ export const ActivitiesArea: React.FC<ActivitiesAreaProps> = ({
 
   return (
     <div className={cn('bg-background flex flex-col min-h-0', className)}>
-      {/* Header da área de atividades */}
-      <div className="border-b px-4 py-3 flex-shrink-0">
+      {/* Navegação de tabs simplificada */}
+      <div className="border-b flex-shrink-0 px-2">
         <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <h2 className="text-sm font-semibold text-foreground">Atividades</h2>
-            <div className="flex items-center gap-1">
-              <Button variant="ghost" size="sm" className="h-6 px-2">
-                <Filter className="w-3 h-3 mr-1" />
-                <span className="text-xs">Filtros</span>
-              </Button>
-              <Button variant="ghost" size="sm" className="h-6 px-2">
-                <Search className="w-3 h-3 mr-1" />
-                <span className="text-xs">Buscar</span>
-              </Button>
-            </div>
+          <div className="flex">
+            <Button
+              variant={activeTab === 'tasks' ? 'default' : 'ghost'}
+              className={cn(
+                'rounded-none border-b-2 px-3 py-2 text-sm',
+                activeTab === 'tasks'
+                  ? 'border-primary bg-primary/10 text-primary'
+                  : 'border-transparent hover:bg-muted'
+              )}
+              onClick={() => setActiveTab('tasks')}
+            >
+              <CheckSquare className="w-4 h-4 mr-1" />
+              Tarefas
+            </Button>
+            <Button
+              variant={activeTab === 'timeline' ? 'default' : 'ghost'}
+              className={cn(
+                'rounded-none border-b-2 px-3 py-2 text-sm',
+                activeTab === 'timeline'
+                  ? 'border-primary bg-primary/10 text-primary'
+                  : 'border-transparent hover:bg-muted'
+              )}
+              onClick={() => setActiveTab('timeline')}
+            >
+              <Activity className="w-4 h-4 mr-1" />
+              Timeline
+              <Badge variant="secondary" className="ml-1 h-4 px-1 text-xs">
+                {activities.length}
+              </Badge>
+            </Button>
+            <Button
+              variant={activeTab === 'files' ? 'default' : 'ghost'}
+              className={cn(
+                'rounded-none border-b-2 px-3 py-2 text-sm',
+                activeTab === 'files'
+                  ? 'border-primary bg-primary/10 text-primary'
+                  : 'border-transparent hover:bg-muted'
+              )}
+              onClick={() => setActiveTab('files')}
+            >
+              <Paperclip className="w-4 h-4 mr-1" />
+              Arquivos
+              <Badge variant="secondary" className="ml-1 h-4 px-1 text-xs">
+                {files.length}
+              </Badge>
+            </Button>
           </div>
-          <Button variant="default" size="sm">
-            <Plus className="w-3 h-3 mr-1" />
-            <span className="text-xs">Nova atividade</span>
-          </Button>
-        </div>
-      </div>
 
-      {/* Navegação de tabs */}
-      <div className="border-b flex-shrink-0">
-        <div className="flex">
-          <Button
-            variant={activeTab === 'timeline' ? 'default' : 'ghost'}
-            className={cn(
-              'rounded-none border-b-2 px-4 py-3',
-              activeTab === 'timeline'
-                ? 'border-primary bg-primary/10 text-primary'
-                : 'border-transparent hover:bg-muted'
-            )}
-            onClick={() => setActiveTab('timeline')}
-          >
-            <Activity className="w-4 h-4 mr-2" />
-            Timeline
-            <Badge variant="secondary" className="ml-2">
-              {activities.length}
-            </Badge>
-          </Button>
-          <Button
-            variant={activeTab === 'contacts' ? 'default' : 'ghost'}
-            className={cn(
-              'rounded-none border-b-2 px-4 py-3',
-              activeTab === 'contacts'
-                ? 'border-primary bg-primary/10 text-primary'
-                : 'border-transparent hover:bg-muted'
-            )}
-            onClick={() => setActiveTab('contacts')}
-          >
-            <Users className="w-4 h-4 mr-2" />
-            Contatos
-            <Badge variant="secondary" className="ml-2">
-              {contacts.length}
-            </Badge>
-          </Button>
-          <Button
-            variant={activeTab === 'files' ? 'default' : 'ghost'}
-            className={cn(
-              'rounded-none border-b-2 px-4 py-3',
-              activeTab === 'files'
-                ? 'border-primary bg-primary/10 text-primary'
-                : 'border-transparent hover:bg-muted'
-            )}
-            onClick={() => setActiveTab('files')}
-          >
-            <Paperclip className="w-4 h-4 mr-2" />
-            Arquivos
-            <Badge variant="secondary" className="ml-2">
-              {files.length}
-            </Badge>
-          </Button>
+          {/* Botão Nova atividade apenas para tab de tarefas */}
+          {activeTab === 'tasks' && (
+            <Button
+              variant="default"
+              size="sm"
+              onClick={handleNewActivity}
+              className="h-7 px-3 text-xs"
+            >
+              <Plus className="w-3 h-3 mr-1" />
+              Nova
+            </Button>
+          )}
         </div>
       </div>
 
       {/* Conteúdo das tabs */}
       <div className="flex-1 min-h-0">
+        {/* Tasks Tab */}
+        {activeTab === 'tasks' && (
+          <ScrollArea className="h-full">
+            <div className="p-6">
+              <TasksTab
+                leadId={leadId}
+                onUpdate={onUpdate}
+                triggerNewTask={triggerNewTask}
+                onNewTaskCreated={handleNewTaskCreated}
+                leadName={lead?.name}
+              />
+            </div>
+          </ScrollArea>
+        )}
+
         {/* Timeline Tab */}
         {activeTab === 'timeline' && (
             <ScrollArea className="h-full">
@@ -211,7 +240,10 @@ export const ActivitiesArea: React.FC<ActivitiesAreaProps> = ({
                             </div>
 
                             {/* Conteúdo da atividade */}
-                            <div className="flex-1 bg-white border border-gray-200 rounded-lg p-4 hover:shadow-sm transition-shadow">
+                            <div className={cn(
+                              "flex-1 bg-white border border-gray-200 rounded-lg p-4 hover:shadow-sm transition-shadow",
+                              activity.is_overdue && activity.status === 'pending' && "border-2 border-red-500 shadow-red-100"
+                            )}>
                               <div className="flex items-start justify-between mb-2">
                                 <div className="flex-1">
                                   <h4 className="font-medium text-gray-900 mb-1">
@@ -272,54 +304,6 @@ export const ActivitiesArea: React.FC<ActivitiesAreaProps> = ({
             </ScrollArea>
         )}
 
-        {/* Contacts Tab */}
-        {activeTab === 'contacts' && (
-            <ScrollArea className="h-full">
-              <div className="p-6">
-                {contacts.length > 0 ? (
-                  <div className="space-y-4">
-                    {contacts.map((contact) => (
-                      <div key={contact.id} className="border border-gray-200 rounded-lg p-4">
-                        <div className="flex items-start justify-between">
-                          <div className="flex-1">
-                            <h4 className="font-medium text-gray-900">{contact.name}</h4>
-                            {contact.email && (
-                              <p className="text-sm text-gray-600">{contact.email}</p>
-                            )}
-                            {contact.phone && (
-                              <p className="text-sm text-gray-600">{contact.phone}</p>
-                            )}
-                            {contact.is_primary && (
-                              <Badge variant="outline" className="mt-2">
-                                Contato principal
-                              </Badge>
-                            )}
-                          </div>
-                          <Button variant="ghost" size="sm">
-                            <MoreHorizontal className="h-4 w-4" />
-                          </Button>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                ) : (
-                  <div className="text-center py-12">
-                    <Users className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                    <h3 className="text-lg font-medium text-gray-900 mb-2">
-                      Nenhum contato adicionado
-                    </h3>
-                    <p className="text-gray-600 mb-4">
-                      Adicione pessoas relacionadas a este negócio
-                    </p>
-                    <Button variant="outline">
-                      <Plus className="h-4 w-4 mr-2" />
-                      Adicionar contato
-                    </Button>
-                  </div>
-                )}
-              </div>
-            </ScrollArea>
-        )}
 
         {/* Files Tab */}
         {activeTab === 'files' && (
@@ -363,6 +347,7 @@ export const ActivitiesArea: React.FC<ActivitiesAreaProps> = ({
               </div>
             </ScrollArea>
         )}
+
       </div>
     </div>
   );
