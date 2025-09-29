@@ -284,9 +284,8 @@ export const LeadModal: React.FC<LeadModalProps> = ({
                 // activitiesError={errors.activities}
               />
 
-              {/* Coluna Direita - Agenda de Atividades */}
+              {/* Coluna Direita - Agenda Global do Usuário */}
               <AgendaPanel
-                leadId={leadId}
                 onNewActivity={() => {
                   // TODO: Implementar nova lógica direta se necessário
                   console.log('AgendaPanel: Nova atividade clicada - funcionalidade desabilitada temporariamente');

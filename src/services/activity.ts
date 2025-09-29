@@ -159,6 +159,19 @@ export const activityService = {
     return response.data;
   },
 
+  // Get user's activities in a date range (for agenda view)
+  async getUserActivitiesInRange(startDate: string, endDate: string, userId?: string): Promise<{ success: boolean; activities: Activity[]; count: number }> {
+    const endpoint = userId ? `/api/users/${userId}/activities/range` : '/api/activities/range';
+    const response = await api.get(endpoint, {
+      params: {
+        start_date: startDate,
+        end_date: endDate
+        // Removed status filter - get both pending and overdue activities for agenda
+      }
+    });
+    return response.data;
+  },
+
   // Bulk update activity status (for quick actions)
   async bulkUpdateStatus(
     activityIds: string[],
