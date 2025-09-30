@@ -261,28 +261,45 @@ export const useSmartSearch = (
     });
 
     if (hasSearchTerm || hasOtherFilters || onlySortByChanged) {
-      setSearchResult(prev => ({ ...prev, isSearchingLocal: true }));
-      
-      const localResult = performLocalSearch(searchFilters);
-      
-      setSearchResult(prev => ({
-        ...prev,
-        localResults: localResult,
-        isSearchingLocal: false,
-        searchPerformed: true
-      }));
+      // Para ordenação pura (sem outros filtros), NÃO fazer busca local
+      // Busca local não implementa ordenação, então vamos direto para API
+      if (onlySortByChanged) {
+        console.log('🔍 SortBy mudou - pulando busca local, indo direto para API');
+        setSearchResult(prev => ({
+          ...prev,
+          isSearchingLocal: false,
+          localResults: null,
+          searchPerformed: true
+        }));
 
-      // Debounced API search - enabled for sortBy changes
-      if (enableAPISearch && (hasSearchTerm || hasOtherFilters || onlySortByChanged)) {
-        // Reduce debounce for sorting - it should be immediate
-        const delay = onlySortByChanged ? 50 : debounceMs;
-        console.log('🔍 Scheduling API search in', delay, 'ms');
-        debounceTimer.current = setTimeout(() => {
-          console.log('🔍 Performing API search with filters:', searchFilters);
+        // API search IMEDIATA para ordenação (sem debounce)
+        if (enableAPISearch) {
+          console.log('🔍 Performing IMMEDIATE API search for sorting:', searchFilters.sortBy);
           performAPISearch(searchFilters);
-        }, delay);
+        }
       } else {
-        console.log('🔍 Not scheduling API search - conditions not met');
+        // Para busca/filtros, fazer busca local primeiro
+        setSearchResult(prev => ({ ...prev, isSearchingLocal: true }));
+
+        const localResult = performLocalSearch(searchFilters);
+
+        setSearchResult(prev => ({
+          ...prev,
+          localResults: localResult,
+          isSearchingLocal: false,
+          searchPerformed: true
+        }));
+
+        // Debounced API search para filtros
+        if (enableAPISearch && (hasSearchTerm || hasOtherFilters)) {
+          console.log('🔍 Scheduling API search in', debounceMs, 'ms');
+          debounceTimer.current = setTimeout(() => {
+            console.log('🔍 Performing API search with filters:', searchFilters);
+            performAPISearch(searchFilters);
+          }, debounceMs);
+        } else {
+          console.log('🔍 Not scheduling API search - conditions not met');
+        }
       }
     } else {
       // Clear results if search is too short
@@ -316,30 +333,57 @@ export const useSmartSearch = (
 
   // Return the best available result
   let result = board;
-  
-  // Se temos filtros ativos OU ordenação diferente do padrão, usar resultados filtrados
-  const hasActiveFilters = filters.search ||
+
+  // Verificar se temos filtros ativos (excluindo sortBy puro)
+  const hasSearchOrFilters = filters.search ||
     filters.platform !== 'all' ||
     filters.period !== 'all' ||
     (filters.period === 'custom' && filters.dateRange) ||
     filters.valueRange !== 'all' ||
-    filters.tags.length > 0 ||
-    (filters.sortBy && filters.sortBy !== 'updated_desc');
-    
-  if (hasActiveFilters) {
-    // Para ordenação, preferir resultados da API quando disponíveis
-    if (filters.sortBy && filters.sortBy !== 'updated_desc' && searchResult.apiResults) {
-      console.log('🔍 Using API results for sorting:', filters.sortBy);
-      result = searchResult.apiResults;
-    } else if (searchResult.localResults) {
-      console.log('🔍 Using local results for filtering');
-      result = searchResult.localResults;
+    filters.tags.length > 0;
+
+  const hasSortBy = filters.sortBy && filters.sortBy !== 'updated_desc';
+
+  if (hasSearchOrFilters || hasSortBy) {
+    // Para ordenação PURA (sem outros filtros)
+    if (hasSortBy && !hasSearchOrFilters) {
+      // Preferir API results se disponível, caso contrário usar board
+      // O board já vem ordenado do fetchBoard(sortBy)
+      if (searchResult.apiResults) {
+        console.log('🔍 Using API results for sorting:', filters.sortBy);
+        result = searchResult.apiResults;
+      } else {
+        console.log('🔍 Using board (from fetchBoard with sortBy) while API loads:', filters.sortBy);
+        result = board; // Board já vem ordenado do fetchBoard
+      }
+    }
+    // Para busca/filtros (com ou sem ordenação)
+    else if (hasSearchOrFilters) {
+      // Preferir resultados da API quando disponíveis
+      if (searchResult.apiResults) {
+        console.log('🔍 Using API results for search/filters');
+        result = searchResult.apiResults;
+      } else if (searchResult.localResults) {
+        console.log('🔍 Using local results for filtering');
+        result = searchResult.localResults;
+      }
     }
   }
   
   const isSearching = searchResult.isSearchingLocal;
   const isSearchingAPI = searchResult.isSearchingAPI;
   const searchPerformed = searchResult.searchPerformed;
+
+  // Log de debug para diagnosticar problemas de ordenação
+  console.log('🔍 useSmartSearch RETURN:', {
+    hasSortBy,
+    hasSearchOrFilters,
+    resultSource: result === board ? 'board (original)' :
+                  result === searchResult.apiResults ? 'apiResults' :
+                  result === searchResult.localResults ? 'localResults' : 'unknown',
+    sortBy: filters.sortBy,
+    firstLeadInFirstColumn: result?.columns[0]?.leads?.[0]?.name || 'N/A'
+  });
 
   return {
     result,

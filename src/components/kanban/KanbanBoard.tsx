@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import {
   DndContext,
   DragOverlay,
@@ -109,15 +109,20 @@ export const KanbanBoard: React.FC = () => {
     })
   );
 
+  // Memoizar a função de fetch para evitar re-renders desnecessários
+  const loadBoard = useCallback(() => {
+    fetchBoard(filters.sortBy);
+  }, [fetchBoard, filters.sortBy]);
+
   useEffect(() => {
-    fetchBoard();
-  }, [fetchBoard]);
+    loadBoard();
+  }, [loadBoard]);
 
   // Reagir à mudança de conta
   useEffect(() => {
     const handleAccountChange = (event: CustomEvent) => {
       console.log('👂 KanbanBoard: Detectada mudança de conta, recarregando dados...', event.detail);
-      fetchBoard();
+      loadBoard();
     };
 
     window.addEventListener('accountChanged', handleAccountChange as EventListener);
@@ -125,7 +130,7 @@ export const KanbanBoard: React.FC = () => {
     return () => {
       window.removeEventListener('accountChanged', handleAccountChange as EventListener);
     };
-  }, [fetchBoard]);
+  }, [loadBoard]);
 
   // Custom collision detection
   const collisionDetectionStrategy = (args: any) => {
@@ -591,37 +596,10 @@ export const KanbanBoard: React.FC = () => {
           isOpen={!!selectedLeadForModal}
           onClose={() => setSelectedLeadForModal(null)}
           onUpdate={async () => {
-            // Atualizar apenas o lead específico em vez de recarregar todo o board
-            if (selectedLeadForModal && board) {
-              try {
-                // Buscar apenas os dados atualizados do lead
-                const response = await fetch(`/api/leads/${selectedLeadForModal}`);
-                if (response.ok) {
-                  const updatedLead = await response.json();
-
-                  // Atualizar o lead no estado local do board
-                  setBoard(prevBoard => {
-                    if (!prevBoard) return prevBoard;
-
-                    const updatedColumns = prevBoard.columns.map(column => ({
-                      ...column,
-                      leads: column.leads?.map(lead =>
-                        lead.id === selectedLeadForModal ? { ...lead, ...updatedLead.lead } : lead
-                      ) || []
-                    }));
-
-                    return { ...prevBoard, columns: updatedColumns };
-                  });
-                } else {
-                  // Fallback: recarregar todo o board se falhar
-                  await fetchBoard(filters);
-                }
-              } catch (error) {
-                console.error('Erro ao atualizar lead:', error);
-                // Fallback: recarregar todo o board se falhar
-                await fetchBoard(filters);
-              }
-            }
+            // Recarregar todo o board para garantir consistência
+            // Isso garante que todas as mudanças (tags, status, campos, etc) sejam refletidas
+            // Mantém a ordenação atual
+            await fetchBoard(filters.sortBy);
           }}
         />
       )}

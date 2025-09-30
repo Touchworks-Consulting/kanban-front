@@ -51,8 +51,13 @@ export const useKanbanStore = create<KanbanState>()(
       // Fetch board with columns and leads
       fetchBoard: async (sortBy?: string) => {
         try {
+          console.log('📊 fetchBoard chamado com sortBy:', sortBy);
           set({ loading: true, error: null });
           const response = await kanbanService.getBoard(sortBy);
+          console.log('📊 fetchBoard retornou:', {
+            totalColumns: response.board.columns.length,
+            firstLeadInFirstColumn: response.board.columns[0]?.leads?.[0]?.name || 'N/A'
+          });
           set({ board: response.board, loading: false });
         } catch (error: any) {
           set({
@@ -161,11 +166,12 @@ export const useKanbanStore = create<KanbanState>()(
           set(state => ({ ...state, previousBoard: null }));
 
           // Update the lead with the response data to ensure consistency
+          // NÃO ordenar aqui - manter a ordem que veio do backend/filtros
           const updatedColumns = board.columns.map(column => ({
             ...column,
-            leads: (column.leads || []).map(lead => 
+            leads: (column.leads || []).map(lead =>
               lead.id === id ? response.lead : lead
-            ).sort((a, b) => a.position - b.position)
+            )
           }));
 
           set({
