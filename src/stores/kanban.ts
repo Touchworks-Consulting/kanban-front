@@ -51,8 +51,13 @@ export const useKanbanStore = create<KanbanState>()(
       // Fetch board with columns and leads
       fetchBoard: async (sortBy?: string) => {
         try {
+          console.log('📊 fetchBoard chamado com sortBy:', sortBy);
           set({ loading: true, error: null });
           const response = await kanbanService.getBoard(sortBy);
+          console.log('📊 fetchBoard retornou:', {
+            totalColumns: response.board.columns.length,
+            firstLeadInFirstColumn: response.board.columns[0]?.leads?.[0]?.name || 'N/A'
+          });
           set({ board: response.board, loading: false });
         } catch (error: any) {
           set({
@@ -98,23 +103,27 @@ export const useKanbanStore = create<KanbanState>()(
         try {
           set({ error: null });
           const response = await kanbanService.updateLead(id, data);
-          
+
           const { board } = get();
           if (!board) return;
 
           const updatedColumns = board.columns.map(column => ({
             ...column,
-            leads: (column.leads || []).map(lead => 
+            leads: (column.leads || []).map(lead =>
               lead.id === id ? response.lead : lead
             )
           }));
 
+          // Criar novo objeto board para forçar re-render e invalidar cache
           set({
             board: {
               ...board,
-              columns: updatedColumns
-            }
+              columns: updatedColumns,
+              _updatedAt: Date.now() // Força mudança de referência
+            } as any
           });
+
+          console.log('✅ Lead atualizado - cache invalidado');
         } catch (error: any) {
           set({ error: error.response?.data?.error || 'Erro ao atualizar lead' });
           throw error;
@@ -126,7 +135,7 @@ export const useKanbanStore = create<KanbanState>()(
         try {
           set({ error: null });
           await kanbanService.deleteLead(id);
-          
+
           const { board } = get();
           if (!board) return;
 
@@ -138,9 +147,12 @@ export const useKanbanStore = create<KanbanState>()(
           set({
             board: {
               ...board,
-              columns: updatedColumns
-            }
+              columns: updatedColumns,
+              _updatedAt: Date.now()
+            } as any
           });
+
+          console.log('✅ Lead deletado - cache invalidado');
         } catch (error: any) {
           set({ error: error.response?.data?.error || 'Erro ao deletar lead' });
           throw error;
@@ -161,11 +173,12 @@ export const useKanbanStore = create<KanbanState>()(
           set(state => ({ ...state, previousBoard: null }));
 
           // Update the lead with the response data to ensure consistency
+          // NÃO ordenar aqui - manter a ordem que veio do backend/filtros
           const updatedColumns = board.columns.map(column => ({
             ...column,
-            leads: (column.leads || []).map(lead => 
+            leads: (column.leads || []).map(lead =>
               lead.id === id ? response.lead : lead
-            ).sort((a, b) => a.position - b.position)
+            )
           }));
 
           set({

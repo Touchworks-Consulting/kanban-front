@@ -7,6 +7,7 @@ import type { Lead, KanbanBoard } from '../types/kanban';
 interface SearchResult {
   localResults: KanbanBoard | null;
   apiResults: KanbanBoard | null;
+  apiResultsFilters: string | null; // JSON string of filters used for API results
   isSearchingLocal: boolean;
   isSearchingAPI: boolean;
   searchPerformed: boolean;
@@ -34,15 +35,23 @@ export const useSmartSearch = (
   const [searchResult, setSearchResult] = useState<SearchResult>({
     localResults: null,
     apiResults: null,
+    apiResultsFilters: null,
     isSearchingLocal: false,
     isSearchingAPI: false,
     searchPerformed: false,
     searchTerm: ''
   });
 
-  const searchCache = useRef(new Map<string, KanbanBoard>());
+  const searchCache = useRef(new Map<string, { data: KanbanBoard; timestamp: number }>());
+  const CACHE_TTL = 60000; // 1 minuto de cache
   const debounceTimer = useRef<NodeJS.Timeout>();
   const abortController = useRef<AbortController>();
+
+  // Limpar cache quando board original mudar (dados foram atualizados)
+  useEffect(() => {
+    console.log('🧹 Board mudou - limpando cache de busca');
+    searchCache.current.clear();
+  }, [board]);
 
   // Local search function
   const performLocalSearch = useCallback((searchFilters: FilterState): KanbanBoard | null => {
@@ -157,14 +166,26 @@ export const useSmartSearch = (
 
     const cacheKey = JSON.stringify(searchFilters);
 
-    if (searchCache.current.has(cacheKey)) {
-      console.log('🔍 Using cached API result');
-      setSearchResult(prev => ({
-        ...prev,
-        apiResults: searchCache.current.get(cacheKey)!,
-        isSearchingAPI: false
-      }));
-      return;
+    const cached = searchCache.current.get(cacheKey);
+    if (cached) {
+      const age = Date.now() - cached.timestamp;
+      if (age < CACHE_TTL) {
+        console.log('🔍 Using cached API result (age:', Math.round(age / 1000), 's)', {
+          cacheKey: JSON.parse(cacheKey),
+          firstLeadInCache: cached.data.columns[0]?.leads?.[0]?.name || 'N/A',
+          totalLeadsInCache: cached.data.columns.reduce((sum, col) => sum + (col.leads?.length || 0), 0)
+        });
+        setSearchResult(prev => ({
+          ...prev,
+          apiResults: cached.data,
+          apiResultsFilters: cacheKey,
+          isSearchingAPI: false
+        }));
+        return;
+      } else {
+        console.log('🧹 Cache expired, removing');
+        searchCache.current.delete(cacheKey);
+      }
     }
 
     try {
@@ -176,9 +197,7 @@ export const useSmartSearch = (
       
       setSearchResult(prev => ({ ...prev, isSearchingAPI: true }));
 
-      console.log('🔍 Making API call to searchBoard');
-
-      const response = await kanbanService.searchBoard({
+      const apiPayload = {
         search: searchFilters.search || undefined,
         platform: searchFilters.platform !== 'all' ? searchFilters.platform : undefined,
         period: searchFilters.period !== 'all' ? searchFilters.period : undefined,
@@ -186,34 +205,33 @@ export const useSmartSearch = (
         valueRange: searchFilters.valueRange !== 'all' ? searchFilters.valueRange : undefined,
         tags: searchFilters.tags.length > 0 ? searchFilters.tags : undefined,
         sortBy: searchFilters.sortBy || undefined
-      }, {
+      };
+
+      console.log('🔍 Making API call to searchBoard with payload:', apiPayload);
+
+      const response = await kanbanService.searchBoard(apiPayload, {
         signal: abortController.current.signal
       });
 
-      console.log('🔍 API response received:', response);
-      
+      console.log('🔍 API response received:', {
+        totalColumns: response.board.columns.length,
+        firstLeadInFirstColumn: response.board.columns[0]?.leads?.[0]?.name || 'N/A',
+        totalLeadsAcrossAllColumns: response.board.columns.reduce((sum, col) => sum + (col.leads?.length || 0), 0)
+      });
+
       if (response.board) {
-        searchCache.current.set(cacheKey, response.board);
-        
-        setSearchResult(prev => {
-          // Só atualizar se a API trouxe resultados válidos ou se não temos resultados locais
-          const hasLocalResults = prev.localResults;
-          const apiHasData = response.board.columns.some(col => col.leads && col.leads.length > 0);
-          
-          if (apiHasData || !hasLocalResults) {
-            return {
-              ...prev,
-              apiResults: response.board,
-              isSearchingAPI: false
-            };
-          } else {
-            // API não trouxe dados, manter resultados locais e parar loading
-            return {
-              ...prev,
-              isSearchingAPI: false
-            };
-          }
+        // SEMPRE atualizar com a resposta da API - ela é a fonte da verdade
+        searchCache.current.set(cacheKey, {
+          data: response.board,
+          timestamp: Date.now()
         });
+
+        setSearchResult(prev => ({
+          ...prev,
+          apiResults: response.board,
+          apiResultsFilters: cacheKey,
+          isSearchingAPI: false
+        }));
       }
       
     } catch (error: any) {
@@ -261,28 +279,45 @@ export const useSmartSearch = (
     });
 
     if (hasSearchTerm || hasOtherFilters || onlySortByChanged) {
-      setSearchResult(prev => ({ ...prev, isSearchingLocal: true }));
-      
-      const localResult = performLocalSearch(searchFilters);
-      
-      setSearchResult(prev => ({
-        ...prev,
-        localResults: localResult,
-        isSearchingLocal: false,
-        searchPerformed: true
-      }));
+      // Para ordenação pura (sem outros filtros), NÃO fazer busca local
+      // Busca local não implementa ordenação, então vamos direto para API
+      if (onlySortByChanged) {
+        console.log('🔍 SortBy mudou - pulando busca local, indo direto para API');
+        setSearchResult(prev => ({
+          ...prev,
+          isSearchingLocal: false,
+          localResults: null,
+          searchPerformed: true
+        }));
 
-      // Debounced API search - enabled for sortBy changes
-      if (enableAPISearch && (hasSearchTerm || hasOtherFilters || onlySortByChanged)) {
-        // Reduce debounce for sorting - it should be immediate
-        const delay = onlySortByChanged ? 50 : debounceMs;
-        console.log('🔍 Scheduling API search in', delay, 'ms');
-        debounceTimer.current = setTimeout(() => {
-          console.log('🔍 Performing API search with filters:', searchFilters);
+        // API search IMEDIATA para ordenação (sem debounce)
+        if (enableAPISearch) {
+          console.log('🔍 Performing IMMEDIATE API search for sorting:', searchFilters.sortBy);
           performAPISearch(searchFilters);
-        }, delay);
+        }
       } else {
-        console.log('🔍 Not scheduling API search - conditions not met');
+        // Para busca/filtros, fazer busca local primeiro
+        setSearchResult(prev => ({ ...prev, isSearchingLocal: true }));
+
+        const localResult = performLocalSearch(searchFilters);
+
+        setSearchResult(prev => ({
+          ...prev,
+          localResults: localResult,
+          isSearchingLocal: false,
+          searchPerformed: true
+        }));
+
+        // Debounced API search para filtros
+        if (enableAPISearch && (hasSearchTerm || hasOtherFilters)) {
+          console.log('🔍 Scheduling API search in', debounceMs, 'ms');
+          debounceTimer.current = setTimeout(() => {
+            console.log('🔍 Performing API search with filters:', searchFilters);
+            performAPISearch(searchFilters);
+          }, debounceMs);
+        } else {
+          console.log('🔍 Not scheduling API search - conditions not met');
+        }
       }
     } else {
       // Clear results if search is too short
@@ -290,6 +325,7 @@ export const useSmartSearch = (
         ...prev,
         localResults: null,
         apiResults: null,
+        apiResultsFilters: null,
         isSearchingLocal: false,
         isSearchingAPI: false,
         searchPerformed: false
@@ -316,30 +352,60 @@ export const useSmartSearch = (
 
   // Return the best available result
   let result = board;
-  
-  // Se temos filtros ativos OU ordenação diferente do padrão, usar resultados filtrados
-  const hasActiveFilters = filters.search ||
+
+  // Verificar se temos filtros ativos (excluindo sortBy puro)
+  const hasSearchOrFilters = filters.search ||
     filters.platform !== 'all' ||
     filters.period !== 'all' ||
     (filters.period === 'custom' && filters.dateRange) ||
     filters.valueRange !== 'all' ||
-    filters.tags.length > 0 ||
-    (filters.sortBy && filters.sortBy !== 'updated_desc');
-    
-  if (hasActiveFilters) {
-    // Para ordenação, preferir resultados da API quando disponíveis
-    if (filters.sortBy && filters.sortBy !== 'updated_desc' && searchResult.apiResults) {
-      console.log('🔍 Using API results for sorting:', filters.sortBy);
-      result = searchResult.apiResults;
-    } else if (searchResult.localResults) {
-      console.log('🔍 Using local results for filtering');
-      result = searchResult.localResults;
+    filters.tags.length > 0;
+
+  const hasSortBy = filters.sortBy && filters.sortBy !== 'updated_desc';
+
+  // Criar chave dos filtros atuais para comparar com apiResultsFilters
+  const currentFiltersKey = JSON.stringify(filters);
+  const apiResultsMatchCurrentFilters = searchResult.apiResultsFilters === currentFiltersKey;
+
+  if (hasSearchOrFilters || hasSortBy) {
+    // Para ordenação PURA (sem outros filtros)
+    if (hasSortBy && !hasSearchOrFilters) {
+      // Preferir API results se disponível E corresponder aos filtros atuais
+      if (searchResult.apiResults && apiResultsMatchCurrentFilters) {
+        console.log('🔍 Using API results for sorting:', filters.sortBy);
+        result = searchResult.apiResults;
+      } else {
+        console.log('🔍 Using board (from fetchBoard with sortBy) while API loads:', filters.sortBy);
+        result = board; // Board já vem ordenado do fetchBoard
+      }
+    }
+    // Para busca/filtros (com ou sem ordenação)
+    else if (hasSearchOrFilters) {
+      // Preferir resultados da API quando disponíveis E correspondem aos filtros atuais
+      if (searchResult.apiResults && apiResultsMatchCurrentFilters) {
+        console.log('🔍 Using API results for search/filters (match: true)');
+        result = searchResult.apiResults;
+      } else if (searchResult.localResults) {
+        console.log('🔍 Using local results for filtering (API match:', apiResultsMatchCurrentFilters, ')');
+        result = searchResult.localResults;
+      }
     }
   }
   
   const isSearching = searchResult.isSearchingLocal;
   const isSearchingAPI = searchResult.isSearchingAPI;
   const searchPerformed = searchResult.searchPerformed;
+
+  // Log de debug para diagnosticar problemas de ordenação
+  console.log('🔍 useSmartSearch RETURN:', {
+    hasSortBy,
+    hasSearchOrFilters,
+    resultSource: result === board ? 'board (original)' :
+                  result === searchResult.apiResults ? 'apiResults' :
+                  result === searchResult.localResults ? 'localResults' : 'unknown',
+    sortBy: filters.sortBy,
+    firstLeadInFirstColumn: result?.columns[0]?.leads?.[0]?.name || 'N/A'
+  });
 
   return {
     result,

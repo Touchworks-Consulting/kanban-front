@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState, useCallback, useMemo } from 'react';
 import type { Lead, KanbanColumn } from '../../types/kanban';
 import type { LeadModalData } from '../../types/leadModal';
 import { Dialog, DialogContent, DialogTitle, DialogDescription } from '../ui/dialog';
@@ -9,6 +9,7 @@ import { LeadDataSidebar } from './LeadDataSidebar';
 import { LeadDataSidebarSkeleton } from './LeadDataSidebarSkeleton';
 import { ActivitiesArea } from './ActivitiesArea';
 import { ActivitiesAreaSkeleton } from './ActivitiesAreaSkeleton';
+import { AgendaPanel } from './AgendaPanel';
 import { useLeadModalStore } from '../../stores/leadModalStore';
 import { optimizedLeadService } from '../../services/optimizedLeadService';
 import type { UserDto } from '../../services/users';
@@ -28,6 +29,8 @@ export const LeadModal: React.FC<LeadModalProps> = ({
   onUpdate,
   onDelete,
 }) => {
+  // Removido: Estado para comunicação com AgendaPanel - não mais necessário
+
   // Use Zustand store instead of local state
   const {
     lead,
@@ -138,8 +141,32 @@ export const LeadModal: React.FC<LeadModalProps> = ({
     }
   };
 
-  // Optimistic update for general lead updates
-  const handleUpdateLead = async (updates: Partial<Lead>) => {
+  // Optimistic update for general lead updates (sidebar fields)
+  const handleUpdateLead = useCallback(async (updates: Partial<Lead>) => {
+    if (!lead) return;
+
+    // Immediate UI update
+    updateLeadOptimistic(updates);
+    setLoading('sidebarField', true); // Use specific loading state for sidebar fields
+    setError('lead', null);
+
+    try {
+      await optimizedLeadService.updateLead(lead.id, updates);
+      console.log('✅ handleUpdateLead: Campo atualizado com sucesso', { field: Object.keys(updates)[0], value: Object.values(updates)[0] });
+      // Don't setLead() with server response for sidebar updates - optimistic update is sufficient
+      // Don't call onUpdate() for sidebar fields - prevents full modal refresh
+    } catch (error) {
+      console.error('Erro ao atualizar lead:', error);
+      setError('lead', 'Erro ao atualizar lead');
+      rollbackLead(); // Rollback on error
+      throw error;
+    } finally {
+      setLoading('sidebarField', false);
+    }
+  }, [lead, updateLeadOptimistic, setLoading, setError, rollbackLead]);
+
+  // Optimistic update for status changes that may affect board visibility
+  const handleStatusUpdate = useCallback(async (updates: Partial<Lead>) => {
     if (!lead) return;
 
     // Immediate UI update
@@ -150,16 +177,16 @@ export const LeadModal: React.FC<LeadModalProps> = ({
     try {
       const updatedLead = await optimizedLeadService.updateLead(lead.id, updates);
       setLead(updatedLead); // Update with server response
-      onUpdate?.();
+      onUpdate?.(); // Call onUpdate for status changes as they may affect board visibility
     } catch (error) {
-      console.error('Erro ao atualizar lead:', error);
-      setError('lead', 'Erro ao atualizar lead');
+      console.error('Erro ao atualizar status:', error);
+      setError('lead', 'Erro ao atualizar status');
       rollbackLead(); // Rollback on error
       throw error;
     } finally {
       setLoading('lead', false);
     }
-  };
+  }, [lead, updateLeadOptimistic, setLoading, setError, setLead, rollbackLead, onUpdate]);
 
   // Optimistic update for assignee changes - NOW TRULY OPTIMIZED!
   const handleAssigneeChange = async (userId: string) => {
@@ -175,7 +202,7 @@ export const LeadModal: React.FC<LeadModalProps> = ({
     try {
       const updatedLead = await optimizedLeadService.updateAssignee(lead.id, userId);
       setLead(updatedLead); // Update with server response
-      onUpdate?.();
+      // Don't call onUpdate() for assignee changes - optimistic updates are sufficient
     } catch (error) {
       console.error('Erro ao alterar responsável:', error);
       setError('assignee', 'Erro ao alterar responsável');
@@ -192,9 +219,39 @@ export const LeadModal: React.FC<LeadModalProps> = ({
   const isMainLoading = loading.lead;
   const hasMainError = errors.lead;
 
+  // Memoize lead object for sidebar to prevent unnecessary re-renders
+  const leadForSidebar = useMemo(() => lead, [
+    lead?.id,
+    lead?.name,
+    lead?.phone,
+    lead?.email,
+    lead?.value,
+    lead?.status,
+    lead?.campaign,
+    lead?.platform,
+    lead?.notes,
+    lead?.message,
+    lead?.assigned_to_user_id,
+    lead?.column_id,
+    lead?.createdAt,
+    lead?.updatedAt,
+    JSON.stringify(lead?.tags)
+  ]);
+
+  // Memoize lead object for header to prevent unnecessary re-renders
+  const leadForHeader = useMemo(() => lead, [
+    lead?.id,
+    lead?.name,
+    lead?.value,
+    lead?.status,
+    lead?.column_id,
+    lead?.assigned_to_user_id,
+    lead?.updatedAt
+  ]);
+
   return (
     <Dialog open={isOpen} onOpenChange={handleClose}>
-      <DialogContent className="max-w-7xl max-h-[95vh] overflow-hidden focus:outline-none border-0 p-0 [&>button]:!visible [&>button]:!opacity-100 [&>button]:!bg-white [&>button]:!border [&>button]:!shadow-sm [&>button]:!z-50 [&>button]:!top-2 [&>button]:!right-2">
+      <DialogContent className="max-w-7xl max-h-[95vh] overflow-hidden focus:outline-none border-0 p-0 [&>button]:!visible [&>button]:!opacity-100 [&>button]:!bg-background [&>button]:!text-foreground [&>button]:!border [&>button]:!border-border [&>button]:!shadow-sm [&>button]:!z-50 [&>button]:!top-2 [&>button]:!right-2 [&>button]:hover:!bg-muted">
         <div className="sr-only">
           <DialogTitle>{lead ? `Lead: ${lead.name}` : 'Detalhes do Lead'}</DialogTitle>
           <DialogDescription>
@@ -225,14 +282,27 @@ export const LeadModal: React.FC<LeadModalProps> = ({
             </div>
           </div>
         ) : lead ? (
-          <div className="flex flex-col max-h-[95vh]">
+          <div className="flex flex-col max-h-[95vh] overflow-hidden w-full">
             {/* Header Fixo com Pipeline Visual - with granular loading states */}
             <PipelineHeader
-              lead={lead}
+              lead={leadForHeader}
               columns={columns}
               onStatusChange={handleStatusChange}
               onMoveToNext={handleMoveToNext}
-              onUpdate={() => {}} // No longer needed - using optimistic updates
+              onUpdate={async () => {
+                // Atualizar o estado interno do modal primeiro
+                if (leadId) {
+                  try {
+                    const data = await optimizedLeadService.loadInitialData(leadId);
+                    setLead(data.lead); // Atualizar estado interno do modal
+                  } catch (error) {
+                    console.error('Erro ao atualizar lead no modal:', error);
+                  }
+                }
+
+                // Depois atualizar o board
+                onUpdate?.();
+              }}
               onDelete={onDelete}
               onAssigneeChange={handleAssigneeChange}
               users={users}
@@ -243,28 +313,39 @@ export const LeadModal: React.FC<LeadModalProps> = ({
               // isColumnLoading={loading.column}
             />
 
-            {/* Duas Colunas com Scroll Independente */}
-            <div className="flex flex-1 min-h-0">
+            {/* Três Colunas com Scroll Independente */}
+            <div className="flex flex-1 min-h-0 overflow-hidden">
               {/* Coluna Esquerda - Dados do Lead */}
               <LeadDataSidebar
-                lead={lead}
+                lead={leadForSidebar}
                 columns={columns}
                 onUpdateLead={handleUpdateLead}
-                className="w-80 flex-shrink-0"
-                // TODO: Add loading state for lead updates
-                // isUpdating={loading.lead}
-                // updateError={errors.lead}
+                onStatusUpdate={handleStatusUpdate}
+                users={users}
+                onAssigneeChange={handleAssigneeChange}
+                className="w-72 flex-shrink-0"
+                // Optionally pass loading state for subtle feedback
+                // isUpdating={loading.sidebarField}
               />
 
-              {/* Coluna Direita - Atividades */}
+              {/* Coluna Central - Atividades */}
               <ActivitiesArea
                 leadId={leadId}
                 modalData={modalData}
+                lead={lead}
                 onUpdate={() => {}} // No longer needed - using optimistic updates
                 className="flex-1"
                 // TODO: Add loading states for activities
                 // isActivitiesLoading={loading.activities}
                 // activitiesError={errors.activities}
+              />
+
+              {/* Coluna Direita - Agenda Global do Usuário */}
+              <AgendaPanel
+                onNewActivity={() => {
+                  // TODO: Implementar nova lógica direta se necessário
+                  console.log('AgendaPanel: Nova atividade clicada - funcionalidade desabilitada temporariamente');
+                }}
               />
             </div>
           </div>

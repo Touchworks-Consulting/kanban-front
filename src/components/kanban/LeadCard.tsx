@@ -14,9 +14,11 @@ import {
 import type { Lead } from '../../types/kanban';
 import { Avatar, AvatarFallback } from '../ui/avatar';
 import { Button } from '../ui/button';
+import { TaskBadge, useTaskBadgeColors } from '../ui/TaskBadge';
 import { cn } from '../../lib/utils';
 import { formatDate } from '../../utils/helpers';
 import { useCustomStatuses } from '../../hooks/useCustomStatuses';
+import { useLeadActivityCounts } from '../../hooks/useActivityCounts';
 
 interface LeadCardProps {
   lead: Lead;
@@ -25,6 +27,16 @@ interface LeadCardProps {
 
 export const LeadCard: React.FC<LeadCardProps> = ({ lead, onOpenModal }) => {
   const { getStatusByValue } = useCustomStatuses();
+  const { counts: activityCounts } = useLeadActivityCounts(lead.id);
+  const taskColors = useTaskBadgeColors(activityCounts || {
+    total_pending: 0,
+    today: 0,
+    overdue: 0,
+    has_tasks: false,
+    has_overdue: false,
+    has_today: false
+  });
+
   const {
     attributes,
     listeners,
@@ -52,19 +64,21 @@ export const LeadCard: React.FC<LeadCardProps> = ({ lead, onOpenModal }) => {
   };
 
   const formatCurrency = (value?: number | string) => {
-    if (!value || value === 0) return 'R$ 0,00';
+    if (!value || value === 0 || value === '0' || value === '') return null; // Retorna null para não exibir
 
     // Convert to number if it's a string
-    let numValue = typeof value === 'string' ? parseFloat(value) : value;
+    let numValue = typeof value === 'string' ? parseFloat(value.replace(',', '.')) : value;
 
     // Check if the number is valid
-    if (isNaN(numValue)) return 'R$ 0,00';
+    if (isNaN(numValue) || numValue <= 0) return null;
 
     return new Intl.NumberFormat('pt-BR', {
       style: 'currency',
       currency: 'BRL',
     }).format(numValue).replace(/\u00A0/g, ' '); // Replace NBSP with regular space for better text wrapping
   };
+
+  // Debug removido - funcionando corretamente
 
   const getInitials = (name: string) => {
     return name
@@ -88,10 +102,18 @@ export const LeadCard: React.FC<LeadCardProps> = ({ lead, onOpenModal }) => {
       }}
       className={cn(
         "bg-card rounded-lg border shadow-sm p-4 cursor-pointer hover:cursor-pointer",
-        "hover:shadow-md transition-shadow duration-200",
+        "hover:shadow-md transition-all duration-200",
         "group relative",
         "w-full overflow-hidden",
-        isDragging && "opacity-50 shadow-lg cursor-grabbing"
+        isDragging && "opacity-50 shadow-lg cursor-grabbing",
+        // Aplicar cores baseadas no status das tarefas
+        taskColors && {
+          [taskColors.bgColor]: true,
+          [taskColors.borderColor]: true,
+          "border-2": taskColors.type === 'overdue', // Borda mais grossa para vencidas
+          "ring-1": taskColors.type === 'today', // Ring sutil para tarefas de hoje
+          [taskColors.ringColor]: taskColors.type === 'today'
+        }
       )}
     >
       {/* Header */}
@@ -121,14 +143,25 @@ export const LeadCard: React.FC<LeadCardProps> = ({ lead, onOpenModal }) => {
             </div>
           </div>
         </div>
-        
-        {/* Platform indicator */}
-        {lead.platform && (
-          <div className={cn(
-            "w-2 h-2 rounded-full flex-shrink-0",
-            getPlatformColor(lead.platform)
-          )} />
-        )}
+
+        <div className="flex items-center gap-2 flex-shrink-0">
+          {/* Task Badge */}
+          {activityCounts && (
+            <TaskBadge
+              counts={activityCounts}
+              size="sm"
+              className="flex-shrink-0"
+            />
+          )}
+
+          {/* Platform indicator */}
+          {lead.platform && (
+            <div className={cn(
+              "w-2 h-2 rounded-full flex-shrink-0",
+              getPlatformColor(lead.platform)
+            )} />
+          )}
+        </div>
       </div>
 
       {/* Contact info */}
@@ -167,14 +200,16 @@ export const LeadCard: React.FC<LeadCardProps> = ({ lead, onOpenModal }) => {
       )}
 
       {/* Value */}
-      {lead.value && lead.value > 0 && (
-        <div className="flex items-center gap-2 mb-3">
-          <DollarSign className="w-3 h-3 text-green-600" />
-          <span className="text-xs font-medium text-green-600">
-            {formatCurrency(lead.value)}
-          </span>
-        </div>
-      )}
+      {(() => {
+        const formattedValue = formatCurrency(lead.value);
+        return formattedValue && (
+          <div className="flex items-center gap-2 mb-3">
+            <span className="text-xs font-medium text-green-600">
+              {formattedValue}
+            </span>
+          </div>
+        );
+      })()}
 
       {/* Tags */}
       {lead.tags && lead.tags.length > 0 && (

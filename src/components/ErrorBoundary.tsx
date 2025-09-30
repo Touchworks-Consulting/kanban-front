@@ -1,5 +1,6 @@
-import React, { Component, ReactNode } from 'react';
+import React, { Component, ErrorInfo, ReactNode } from 'react';
 import { AlertTriangle, RefreshCw } from 'lucide-react';
+import { Button } from './ui/button';
 
 interface Props {
   children: ReactNode;
@@ -9,13 +10,12 @@ interface Props {
 interface State {
   hasError: boolean;
   error: Error | null;
-  errorInfo: string | null;
+  errorInfo: ErrorInfo | null;
 }
 
-class ErrorBoundary extends Component<Props, State> {
+export default class ErrorBoundary extends Component<Props, State> {
   constructor(props: Props) {
     super(props);
-
     this.state = {
       hasError: false,
       error: null,
@@ -23,106 +23,69 @@ class ErrorBoundary extends Component<Props, State> {
     };
   }
 
-  static getDerivedStateFromError(error: Error): Partial<State> {
-    // Update state so the next render will show the fallback UI
+  static getDerivedStateFromError(error: Error): State {
     return {
       hasError: true,
-      error: error
+      error,
+      errorInfo: null
     };
   }
 
-  componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
-    // Log the error to console and potentially to error reporting service
-    console.error('Error caught by boundary:', error, errorInfo);
-
+  componentDidCatch(error: Error, errorInfo: ErrorInfo) {
+    console.error('🔴 ErrorBoundary caught an error:', error, errorInfo);
     this.setState({
-      error: error,
-      errorInfo: errorInfo.componentStack
+      error,
+      errorInfo
     });
-
-    // In production, you might want to log this to an error reporting service
-    // like Sentry, LogRocket, etc.
-    if (process.env.NODE_ENV === 'production') {
-      // Example: Sentry.captureException(error, { contexts: { react: { componentStack: errorInfo.componentStack } } });
-    }
   }
 
-  handleReload = () => {
-    // Clear error state and reload the page
+  handleReset = () => {
     this.setState({
       hasError: false,
       error: null,
       errorInfo: null
     });
-
-    // Reload the page to get a fresh start
     window.location.reload();
-  };
-
-  handleRetry = () => {
-    // Just clear the error state to retry rendering
-    this.setState({
-      hasError: false,
-      error: null,
-      errorInfo: null
-    });
   };
 
   render() {
     if (this.state.hasError) {
-      // Use custom fallback if provided, otherwise use default
       if (this.props.fallback) {
         return this.props.fallback;
       }
 
-      // Default error UI
       return (
-        <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center px-4">
-          <div className="max-w-md w-full bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6 text-center">
-            <div className="w-16 h-16 mx-auto mb-4 text-red-500">
-              <AlertTriangle className="w-full h-full" />
+        <div className="flex items-center justify-center min-h-screen bg-background p-4">
+          <div className="max-w-md w-full bg-card rounded-lg border shadow-lg p-6 space-y-4">
+            <div className="flex items-center gap-3 text-destructive">
+              <AlertTriangle className="w-8 h-8" />
+              <h2 className="text-xl font-semibold">Algo deu errado</h2>
             </div>
 
-            <h1 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
-              Algo deu errado
-            </h1>
-
-            <p className="text-gray-600 dark:text-gray-400 mb-6">
-              Ocorreu um erro inesperado na aplicação. Você pode tentar recarregar a página ou tentar novamente.
+            <p className="text-muted-foreground">
+              Ocorreu um erro inesperado. Por favor, recarregue a página.
             </p>
 
-            {/* Show error details in development */}
-            {process.env.NODE_ENV === 'development' && this.state.error && (
-              <details className="mb-6 text-left">
-                <summary className="cursor-pointer text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  Detalhes do erro (desenvolvimento)
+            {this.state.error && (
+              <details className="text-sm bg-muted p-3 rounded">
+                <summary className="cursor-pointer font-medium mb-2">
+                  Detalhes técnicos
                 </summary>
-                <div className="bg-gray-100 dark:bg-gray-700 rounded p-3 text-xs font-mono text-red-600 dark:text-red-400 overflow-auto max-h-32">
-                  <div className="font-semibold">{this.state.error.name}</div>
-                  <div className="mb-2">{this.state.error.message}</div>
-                  {this.state.errorInfo && (
-                    <div className="whitespace-pre-wrap">{this.state.errorInfo}</div>
-                  )}
-                </div>
+                <pre className="text-xs overflow-auto whitespace-pre-wrap">
+                  {this.state.error.toString()}
+                  {this.state.errorInfo?.componentStack}
+                </pre>
               </details>
             )}
 
-            <div className="flex gap-3 justify-center">
-              <button
-                onClick={this.handleRetry}
-                className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600 transition-colors"
-              >
-                Tentar novamente
-              </button>
-
-              <button
-                onClick={this.handleReload}
-                className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700 transition-colors flex items-center gap-2"
-              >
-                <RefreshCw className="w-4 h-4" />
-                Recarregar página
-              </button>
-            </div>
+            <Button
+              onClick={this.handleReset}
+              className="w-full"
+              variant="default"
+            >
+              <RefreshCw className="w-4 h-4 mr-2" />
+              Recarregar Página
+            </Button>
           </div>
         </div>
       );
@@ -131,5 +94,3 @@ class ErrorBoundary extends Component<Props, State> {
     return this.props.children;
   }
 }
-
-export default ErrorBoundary;

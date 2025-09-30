@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback, useRef } from 'react';
 import {
   DndContext,
   DragOverlay,
@@ -109,15 +109,32 @@ export const KanbanBoard: React.FC = () => {
     })
   );
 
+  // Ref para controlar se já carregou o board inicial
+  const hasLoadedRef = useRef(false);
+
+  // Carregar board apenas uma vez no mount
   useEffect(() => {
-    fetchBoard();
-  }, [fetchBoard]);
+    if (!hasLoadedRef.current) {
+      console.log('📊 Carregando board inicial');
+      fetchBoard(filters.sortBy);
+      hasLoadedRef.current = true;
+    }
+  }, []); // Dependências vazias - executa só no mount
+
+  // Recarregar apenas quando sortBy mudar (não no mount)
+  useEffect(() => {
+    if (hasLoadedRef.current) {
+      console.log('🔄 SortBy mudou - recarregando board');
+      fetchBoard(filters.sortBy);
+    }
+  }, [filters.sortBy]); // Apenas sortBy - fetchBoard é estável do Zustand
 
   // Reagir à mudança de conta
   useEffect(() => {
     const handleAccountChange = (event: CustomEvent) => {
       console.log('👂 KanbanBoard: Detectada mudança de conta, recarregando dados...', event.detail);
-      fetchBoard();
+      hasLoadedRef.current = false; // Permitir reload
+      fetchBoard(filters.sortBy);
     };
 
     window.addEventListener('accountChanged', handleAccountChange as EventListener);
@@ -125,7 +142,7 @@ export const KanbanBoard: React.FC = () => {
     return () => {
       window.removeEventListener('accountChanged', handleAccountChange as EventListener);
     };
-  }, [fetchBoard]);
+  }, [fetchBoard, filters.sortBy]);
 
   // Custom collision detection
   const collisionDetectionStrategy = (args: any) => {
@@ -590,8 +607,11 @@ export const KanbanBoard: React.FC = () => {
           leadId={selectedLeadForModal}
           isOpen={!!selectedLeadForModal}
           onClose={() => setSelectedLeadForModal(null)}
-          onUpdate={() => {
-            fetchBoard(filters);
+          onUpdate={async () => {
+            // Recarregar todo o board para garantir consistência
+            // Isso garante que todas as mudanças (tags, status, campos, etc) sejam refletidas
+            // Mantém a ordenação atual
+            await fetchBoard(filters.sortBy);
           }}
         />
       )}
