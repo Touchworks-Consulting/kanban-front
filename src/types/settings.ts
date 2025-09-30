@@ -64,4 +64,5 @@ export interface CustomStatus {
 export interface LossReason {
   id: string;
   name: string;
+  order: number;
 }
