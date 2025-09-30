@@ -88,9 +88,9 @@ export const useTaskBadgeColors = (counts: ActivityCounts) => {
   if (counts.has_overdue) {
     return {
       type: 'overdue' as const,
-      bgColor: 'bg-red-50',
-      borderColor: 'border-red-200',
-      textColor: 'text-red-800',
+      bgColor: 'bg-card',
+      borderColor: 'border-red-400',
+      textColor: 'text-card-foreground',
       ringColor: 'ring-red-500',
       badgeColor: 'bg-red-100'
     };
@@ -99,9 +99,9 @@ export const useTaskBadgeColors = (counts: ActivityCounts) => {
   if (counts.has_today) {
     return {
       type: 'today' as const,
-      bgColor: 'bg-orange-50',
-      borderColor: 'border-orange-200',
-      textColor: 'text-orange-800',
+      bgColor: 'bg-card',
+      borderColor: 'border-orange-400',
+      textColor: 'text-card-foreground',
       ringColor: 'ring-orange-500',
       badgeColor: 'bg-orange-100'
     };
@@ -109,9 +109,9 @@ export const useTaskBadgeColors = (counts: ActivityCounts) => {
 
   return {
     type: 'pending' as const,
-    bgColor: 'bg-blue-50',
-    borderColor: 'border-blue-200',
-    textColor: 'text-blue-800',
+    bgColor: 'bg-card',
+    borderColor: 'border-blue-400',
+    textColor: 'text-card-foreground',
     ringColor: 'ring-blue-500',
     badgeColor: 'bg-blue-100'
   };

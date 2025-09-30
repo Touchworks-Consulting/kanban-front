@@ -12,6 +12,7 @@ interface LoadingState {
   assignee: boolean;
   status: boolean;
   column: boolean;
+  sidebarField: boolean; // For individual field updates in sidebar
 }
 
 interface ErrorState {
@@ -92,6 +93,7 @@ const initialLoadingState: LoadingState = {
   assignee: false,
   status: false,
   column: false,
+  sidebarField: false,
 };
 
 const initialErrorState: ErrorState = {

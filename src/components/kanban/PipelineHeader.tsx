@@ -62,7 +62,7 @@ interface PipelineHeaderProps {
   className?: string;
 }
 
-export const PipelineHeader: React.FC<PipelineHeaderProps> = ({
+const PipelineHeaderComponent: React.FC<PipelineHeaderProps> = ({
   lead,
   columns,
   onStatusChange,
@@ -631,3 +631,5 @@ export const PipelineHeader: React.FC<PipelineHeaderProps> = ({
     </>
   );
 };
+
+export const PipelineHeader = React.memo(PipelineHeaderComponent);

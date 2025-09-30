@@ -34,7 +34,7 @@ interface ActivitiesAreaProps {
   className?: string;
 }
 
-export const ActivitiesArea: React.FC<ActivitiesAreaProps> = ({
+const ActivitiesAreaComponent: React.FC<ActivitiesAreaProps> = ({
   leadId,
   modalData,
   lead,
@@ -198,7 +198,7 @@ export const ActivitiesArea: React.FC<ActivitiesAreaProps> = ({
       {/* Conteúdo das tabs */}
       <div className="flex-1 min-h-0">
         {/* Tasks Tab */}
-        {activeTab === 'tasks' && (
+        <div className={cn("h-full", activeTab !== 'tasks' && "hidden")}>
           <ScrollArea className="h-full">
             <div className="p-6">
               <TasksTab
@@ -210,10 +210,10 @@ export const ActivitiesArea: React.FC<ActivitiesAreaProps> = ({
               />
             </div>
           </ScrollArea>
-        )}
+        </div>
 
         {/* Timeline Tab */}
-        {activeTab === 'timeline' && (
+        <div className={cn("h-full", activeTab !== 'timeline' && "hidden")}>
             <ScrollArea className="h-full">
               <div className="p-6">
                 {activities.length > 0 ? (
@@ -242,7 +242,7 @@ export const ActivitiesArea: React.FC<ActivitiesAreaProps> = ({
                             {/* Conteúdo da atividade */}
                             <div className={cn(
                               "flex-1 bg-white border border-gray-200 rounded-lg p-4 hover:shadow-sm transition-shadow",
-                              activity.is_overdue && activity.status === 'pending' && "border-2 border-red-500 shadow-red-100"
+                              activity.scheduled_for && activity.status === 'pending' && new Date(activity.scheduled_for) < new Date() && "border-2 border-red-500"
                             )}>
                               <div className="flex items-start justify-between mb-2">
                                 <div className="flex-1">
@@ -286,27 +286,20 @@ export const ActivitiesArea: React.FC<ActivitiesAreaProps> = ({
                     })}
                   </div>
                 ) : (
-                  <div className="text-center py-12">
-                    <Activity className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                    <h3 className="text-lg font-medium text-gray-900 mb-2">
-                      Nenhuma atividade ainda
-                    </h3>
-                    <p className="text-gray-600 mb-4">
-                      Comece registrando uma ligação, email ou reunião com este lead
+                  <div className="flex flex-col items-center justify-center py-8 text-center">
+                    <Activity className="w-6 h-6 text-muted-foreground mb-2" />
+                    <p className="text-sm text-muted-foreground">
+                      Nenhuma atividade registrada
                     </p>
-                    <Button variant="default">
-                      <Plus className="h-4 w-4 mr-2" />
-                      Primeira atividade
-                    </Button>
                   </div>
                 )}
               </div>
             </ScrollArea>
-        )}
+        </div>
 
 
         {/* Files Tab */}
-        {activeTab === 'files' && (
+        <div className={cn("h-full", activeTab !== 'files' && "hidden")}>
             <ScrollArea className="h-full">
               <div className="p-6">
                 {files.length > 0 ? (
@@ -330,25 +323,24 @@ export const ActivitiesArea: React.FC<ActivitiesAreaProps> = ({
                     ))}
                   </div>
                 ) : (
-                  <div className="text-center py-12">
-                    <Paperclip className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                    <h3 className="text-lg font-medium text-gray-900 mb-2">
+                  <div className="flex flex-col items-center justify-center py-8 text-center">
+                    <Paperclip className="w-6 h-6 text-muted-foreground mb-2" />
+                    <p className="text-sm text-muted-foreground mb-4">
                       Nenhum arquivo anexado
-                    </h3>
-                    <p className="text-gray-600 mb-4">
-                      Faça upload de propostas, contratos ou outros documentos
                     </p>
-                    <Button variant="outline">
-                      <Plus className="h-4 w-4 mr-2" />
+                    <Button variant="outline" size="sm">
+                      <Plus className="h-3 h-3 mr-1" />
                       Anexar arquivo
                     </Button>
                   </div>
                 )}
               </div>
             </ScrollArea>
-        )}
+        </div>
 
       </div>
     </div>
   );
 };
+
+export const ActivitiesArea = React.memo(ActivitiesAreaComponent);

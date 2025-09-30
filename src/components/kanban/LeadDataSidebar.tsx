@@ -38,15 +38,17 @@ interface LeadDataSidebarProps {
   columns: KanbanColumn[];
   className?: string;
   onUpdateLead?: (updates: Partial<Lead>) => Promise<void>;
+  onStatusUpdate?: (updates: Partial<Lead>) => Promise<void>;
   users?: Array<{ id: string; name: string; email: string; role?: string; is_active: boolean }>;
   onAssigneeChange?: (userId: string) => Promise<void>;
 }
 
-export const LeadDataSidebar: React.FC<LeadDataSidebarProps> = ({
+const LeadDataSidebarComponent: React.FC<LeadDataSidebarProps> = ({
   lead,
   columns,
   className,
   onUpdateLead,
+  onStatusUpdate,
   users = [],
   onAssigneeChange
 }) => {
@@ -124,10 +126,12 @@ export const LeadDataSidebar: React.FC<LeadDataSidebarProps> = ({
   };
 
   const handleStatusChange = async (newStatus: string) => {
-    if (!onUpdateLead) return;
+    // Use onStatusUpdate if available (which calls board update), otherwise fallback to onUpdateLead
+    const updateHandler = onStatusUpdate || onUpdateLead;
+    if (!updateHandler) return;
 
     try {
-      await onUpdateLead({ status: newStatus });
+      await updateHandler({ status: newStatus });
     } catch (error) {
       console.error('Erro ao alterar status:', error);
     }
@@ -637,3 +641,5 @@ export const LeadDataSidebar: React.FC<LeadDataSidebarProps> = ({
     </div>
   );
 };
+
+export const LeadDataSidebar = React.memo(LeadDataSidebarComponent);

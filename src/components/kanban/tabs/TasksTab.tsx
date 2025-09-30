@@ -222,14 +222,14 @@ export const TasksTab: React.FC<TasksTabProps> = ({ leadId, onUpdate, triggerNew
     }
   };
 
-  // Obter cor da prioridade
+  // Obter cor da prioridade (apenas bordas coloridas)
   const getPriorityColor = (priority: Activity['priority']) => {
     switch (priority) {
-      case 'urgent': return 'bg-red-100 text-red-800 border-red-200';
-      case 'high': return 'bg-orange-100 text-orange-800 border-orange-200';
-      case 'medium': return 'bg-yellow-100 text-yellow-800 border-yellow-200';
-      case 'low': return 'bg-green-100 text-green-800 border-green-200';
-      default: return 'bg-gray-100 text-gray-800 border-gray-200';
+      case 'urgent': return 'text-red-700 border-red-300';
+      case 'high': return 'text-orange-700 border-orange-300';
+      case 'medium': return 'text-yellow-700 border-yellow-300';
+      case 'low': return 'text-green-700 border-green-300';
+      default: return 'text-gray-700 border-gray-300';
     }
   };
 
@@ -310,17 +310,15 @@ export const TasksTab: React.FC<TasksTabProps> = ({ leadId, onUpdate, triggerNew
       {/* Lista de atividades */}
       <div className="space-y-3">
         {filteredAndSortedActivities.length === 0 ? (
-          <Card>
-            <CardContent className="p-8 text-center">
-              <CheckSquare className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
-              <p className="text-muted-foreground">
-                {searchTerm || filter !== 'all'
-                  ? 'Nenhuma atividade encontrada com os filtros aplicados'
-                  : 'Nenhuma atividade criada ainda. Use o botão "Nova atividade" no topo para começar.'
-                }
-              </p>
-            </CardContent>
-          </Card>
+          <div className="flex flex-col items-center justify-center py-8 text-center">
+            <CheckSquare className="w-6 h-6 text-muted-foreground mb-2" />
+            <p className="text-sm text-muted-foreground">
+              {searchTerm || filter !== 'all'
+                ? 'Nenhuma atividade encontrada'
+                : 'Nenhuma tarefa ainda'
+              }
+            </p>
+          </div>
         ) : (
           filteredAndSortedActivities.map((activity) => (
             <Card
@@ -328,7 +326,7 @@ export const TasksTab: React.FC<TasksTabProps> = ({ leadId, onUpdate, triggerNew
               className={cn(
                 "transition-all duration-200 hover:shadow-md",
                 activity.status === 'completed' && "opacity-75",
-                activity.is_overdue && activity.status === 'pending' && "border-2 border-red-500 shadow-red-100"
+                activity.is_overdue && activity.status === 'pending' && "border-2 border-red-500"
               )}
             >
               <CardContent className="p-4">
