@@ -44,7 +44,12 @@ export const StatusSettings: React.FC = () => {
   const loadLossReasons = async () => {
     try {
       const data = await settingsService.getLossReasons();
-      setLossReasons(data.lossReasons || []);
+      // Garantir que todos os loss reasons tenham o campo 'order'
+      const reasonsWithOrder = (data.lossReasons || []).map((reason, index) => ({
+        ...reason,
+        order: reason.order !== undefined ? reason.order : index
+      }));
+      setLossReasons(reasonsWithOrder);
     } catch (error) {
       throw new Error('Failed to load loss reasons');
     }
@@ -126,7 +131,8 @@ export const StatusSettings: React.FC = () => {
   const addNewLossReason = () => {
     const newReason: LossReason = {
       id: `reason_${Date.now()}`,
-      name: 'Novo Motivo'
+      name: 'Novo Motivo',
+      order: Math.max(...lossReasons.map(r => r.order || 0), 0) + 1
     };
     setLossReasons([...lossReasons, newReason]);
     setEditingLossReason(newReason.id);
@@ -160,6 +166,22 @@ export const StatusSettings: React.FC = () => {
     sortedStatuses[newIndex].order = temp;
 
     setStatuses(sortedStatuses);
+  };
+
+  const moveLossReason = (reasonId: string, direction: 'up' | 'down') => {
+    const sortedReasons = [...lossReasons].sort((a, b) => (a.order || 0) - (b.order || 0));
+    const currentIndex = sortedReasons.findIndex(r => r.id === reasonId);
+
+    if (currentIndex === -1) return;
+    if (direction === 'up' && currentIndex === 0) return;
+    if (direction === 'down' && currentIndex === sortedReasons.length - 1) return;
+
+    const newIndex = direction === 'up' ? currentIndex - 1 : currentIndex + 1;
+    const temp = sortedReasons[currentIndex].order;
+    sortedReasons[currentIndex].order = sortedReasons[newIndex].order;
+    sortedReasons[newIndex].order = temp;
+
+    setLossReasons(sortedReasons);
   };
 
   if (loading) {
@@ -341,8 +363,28 @@ export const StatusSettings: React.FC = () => {
         </div>
 
         <div className="space-y-3">
-          {lossReasons.map((reason) => (
+          {lossReasons
+            .sort((a, b) => (a.order || 0) - (b.order || 0))
+            .map((reason) => (
             <div key={reason.id} className="flex items-center gap-3 p-3 border rounded-lg bg-muted/20">
+              {/* Order Controls */}
+              <div className="flex flex-col gap-1">
+                <button
+                  onClick={() => moveLossReason(reason.id, 'up')}
+                  className="w-6 h-6 flex items-center justify-center text-muted-foreground hover:text-foreground border rounded"
+                  title="Mover para cima"
+                >
+                  <ChevronUp className="w-3 h-3" />
+                </button>
+                <button
+                  onClick={() => moveLossReason(reason.id, 'down')}
+                  className="w-6 h-6 flex items-center justify-center text-muted-foreground hover:text-foreground border rounded"
+                  title="Mover para baixo"
+                >
+                  <ChevronDown className="w-3 h-3" />
+                </button>
+              </div>
+
               <div className="flex-1">
                 {editingLossReason === reason.id ? (
                   <input

@@ -11,6 +11,7 @@ export interface CustomStatus {
 export interface LossReason {
   id: string;
   name: string;
+  order: number;
 }
 
 export interface SettingsResponse<T> {
@@ -152,6 +153,10 @@ class SettingsService {
 
     if (!reason.id?.trim()) {
       errors.push('ID do motivo é obrigatório');
+    }
+
+    if (typeof reason.order !== 'number' || reason.order < 0) {
+      errors.push('Ordem deve ser um número positivo');
     }
 
     return errors;

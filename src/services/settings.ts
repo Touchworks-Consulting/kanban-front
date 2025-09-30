@@ -191,6 +191,10 @@ class SettingsService {
       errors.push('ID do motivo é obrigatório');
     }
 
+    if (typeof reason.order !== 'number' || reason.order < 0) {
+      errors.push('Ordem deve ser um número positivo');
+    }
+
     return errors;
   }
 
