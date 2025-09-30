@@ -17,6 +17,7 @@ import {
 import { Plus, AlertCircle, Search } from 'lucide-react';
 import { useKanbanStore } from '../../stores';
 import { useSmartSearch } from '../../hooks/useSmartSearch';
+import { useBulkActivityCounts } from '../../hooks/useActivityCounts';
 import { KanbanColumn } from './KanbanColumn';
 import { LeadCard } from './LeadCard';
 import { CreateColumnModal } from './CreateColumnModal';
@@ -97,6 +98,15 @@ export const KanbanBoard: React.FC = () => {
 
   const totalLeads = board ? board.columns.reduce((sum, col) => sum + (col.leads?.length || 0), 0) : 0;
   const filteredLeadsCount = filteredBoard ? filteredBoard.columns.reduce((sum, col) => sum + (col.leads?.length || 0), 0) : 0;
+
+  // Coletar IDs de todos os leads visíveis para buscar contagens em bulk
+  const visibleLeadIds = React.useMemo(() => {
+    if (!filteredBoard) return [];
+    return filteredBoard.columns.flatMap(col => (col.leads || []).map(lead => lead.id));
+  }, [filteredBoard]);
+
+  // Buscar contagens de atividades em bulk para todos os leads visíveis
+  const { countsMap: activityCountsMap } = useBulkActivityCounts(visibleLeadIds);
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -524,6 +534,7 @@ export const KanbanBoard: React.FC = () => {
                     onEditLead={handleEditLead}
                     onDeleteLead={handleDeleteLead}
                     onOpenModal={setSelectedLeadForModal}
+                    activityCountsMap={activityCountsMap}
                   />
                 ))}
               </SortableContext>

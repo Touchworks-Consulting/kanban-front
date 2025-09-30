@@ -213,25 +213,73 @@ export const useSmartSearch = (
         signal: abortController.current.signal
       });
 
+      const totalLeadsInResponse = response.board.columns.reduce((sum, col) => sum + (col.leads?.length || 0), 0);
+
       console.log('🔍 API response received:', {
         totalColumns: response.board.columns.length,
         firstLeadInFirstColumn: response.board.columns[0]?.leads?.[0]?.name || 'N/A',
-        totalLeadsAcrossAllColumns: response.board.columns.reduce((sum, col) => sum + (col.leads?.length || 0), 0)
+        totalLeadsAcrossAllColumns: totalLeadsInResponse
       });
 
       if (response.board) {
-        // SEMPRE atualizar com a resposta da API - ela é a fonte da verdade
-        searchCache.current.set(cacheKey, {
-          data: response.board,
-          timestamp: Date.now()
-        });
+        // Validar se a API realmente filtrou quando temos termo de busca
+        let shouldUseAPIResults = true;
 
-        setSearchResult(prev => ({
-          ...prev,
-          apiResults: response.board,
-          apiResultsFilters: cacheKey,
-          isSearchingAPI: false
-        }));
+        if (searchFilters.search && searchFilters.search.length >= minSearchLength) {
+          // Se temos resultados locais e a API retornou muitos mais leads, algo está errado
+          const localTotal = searchResult.localResults?.columns.reduce((sum, col) => sum + (col.leads?.length || 0), 0) || 0;
+
+          console.log('🔍 Validação de resultados da API:', {
+            searchTerm: searchFilters.search,
+            localTotal,
+            apiTotal: totalLeadsInResponse,
+            ratio: localTotal > 0 ? (totalLeadsInResponse / localTotal).toFixed(2) + 'x' : 'N/A'
+          });
+
+          // Validação 1: Se API retornou 3x ou mais leads que a busca local, provavelmente não filtrou
+          const ratioTooHigh = localTotal > 0 && totalLeadsInResponse > localTotal * 3;
+
+          // Validação 2: Se API retornou mais de 50% dos leads totais com termo de busca ativo, provavelmente não filtrou
+          // (assumindo que board original tem todos os leads)
+          const boardTotal = board?.columns.reduce((sum, col) => sum + (col.leads?.length || 0), 0) || 0;
+          const returningMostLeads = boardTotal > 0 && totalLeadsInResponse > boardTotal * 0.5;
+
+          if (ratioTooHigh || returningMostLeads) {
+            console.warn('⚠️ API NÃO FILTROU CORRETAMENTE:', {
+              apiRetornou: totalLeadsInResponse,
+              buscaLocalEncontrou: localTotal,
+              totalNoBoard: boardTotal,
+              motivoRejeicao: ratioTooHigh ? 'Ratio muito alto (>3x)' : 'Retornou >50% dos leads totais'
+            });
+            console.warn('📌 Mantendo resultados LOCAIS para garantir precisão da busca');
+            shouldUseAPIResults = false;
+          }
+        }
+
+        if (shouldUseAPIResults) {
+          // API filtrou corretamente - usar seus resultados
+          searchCache.current.set(cacheKey, {
+            data: response.board,
+            timestamp: Date.now()
+          });
+
+          setSearchResult(prev => ({
+            ...prev,
+            apiResults: response.board,
+            apiResultsFilters: cacheKey,
+            isSearchingAPI: false
+          }));
+        } else {
+          // API não filtrou corretamente - manter resultados locais
+          // Marcar explicitamente que a API falhou para este termo de busca
+          setSearchResult(prev => ({
+            ...prev,
+            apiResults: null, // Limpar resultados ruins da API
+            apiResultsFilters: null, // Invalida qualquer correspondência de filtro
+            isSearchingAPI: false
+            // localResults continuará sendo usado pela lógica de retorno
+          }));
+        }
       }
       
     } catch (error: any) {
@@ -386,7 +434,8 @@ export const useSmartSearch = (
         console.log('🔍 Using API results for search/filters (match: true)');
         result = searchResult.apiResults;
       } else if (searchResult.localResults) {
-        console.log('🔍 Using local results for filtering (API match:', apiResultsMatchCurrentFilters, ')');
+        const localCount = searchResult.localResults.columns.reduce((sum, col) => sum + (col.leads?.length || 0), 0);
+        console.log('🔍 Using local results for filtering (API match:', apiResultsMatchCurrentFilters, ') - Total leads:', localCount);
         result = searchResult.localResults;
       }
     }
