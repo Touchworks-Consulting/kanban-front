@@ -163,6 +163,9 @@ export const TasksTab: React.FC<TasksTabProps> = ({ leadId, onUpdate, triggerNew
       setActivities(prev => [response.activity, ...prev]);
       setShowCreateForm(false);
       onUpdate?.();
+
+      // Disparar evento para atualizar a agenda global
+      window.dispatchEvent(new CustomEvent('activity-created', { detail: response.activity }));
     } catch (err: any) {
       console.error('Erro ao criar atividade:', err);
     }
@@ -175,6 +178,9 @@ export const TasksTab: React.FC<TasksTabProps> = ({ leadId, onUpdate, triggerNew
       setActivities(prev => prev.map(a => a.id === activityId ? response.activity : a));
       setEditingActivity(null);
       onUpdate?.();
+
+      // Disparar evento para atualizar a agenda global
+      window.dispatchEvent(new CustomEvent('activity-updated', { detail: response.activity }));
     } catch (err: any) {
       console.error('Erro ao atualizar atividade:', err);
     }
@@ -188,6 +194,9 @@ export const TasksTab: React.FC<TasksTabProps> = ({ leadId, onUpdate, triggerNew
       await activityService.deleteActivity(activityId);
       setActivities(prev => prev.filter(a => a.id !== activityId));
       onUpdate?.();
+
+      // Disparar evento para atualizar a agenda global
+      window.dispatchEvent(new CustomEvent('activity-deleted', { detail: { id: activityId } }));
     } catch (err: any) {
       console.error('Erro ao excluir atividade:', err);
     }

@@ -125,11 +125,11 @@ export const TaskForm: React.FC<TaskFormProps> = ({
         activity_type: task.activity_type,
         title: task.title,
         description: task.description || '',
-        priority: task.priority,
+        priority: task.priority || 'medium', // Garantir valor padrão
         scheduled_for: task.scheduled_for || '',
         reminder_at: task.reminder_at || '',
         duration_minutes: task.duration_minutes,
-        status: task.status
+        status: task.status || 'pending' // Garantir valor padrão
       });
       // Converter strings para Date objects para os datepickers
       setScheduledDate(task.scheduled_for ? new Date(task.scheduled_for) : undefined);
@@ -258,9 +258,18 @@ export const TaskForm: React.FC<TaskFormProps> = ({
   };
 
   const handleChange = (field: keyof CreateActivityDto, value: any) => {
+    // Garantir valores padrões para enums que não podem ser vazios
+    let sanitizedValue = value;
+    if (field === 'priority' && (!value || value === '')) {
+      sanitizedValue = 'medium';
+    }
+    if (field === 'status' && (!value || value === '')) {
+      sanitizedValue = 'pending';
+    }
+
     setFormData(prev => ({
       ...prev,
-      [field]: value
+      [field]: sanitizedValue
     }));
 
     // Limpar erro do campo quando usuário digita
@@ -350,7 +359,7 @@ export const TaskForm: React.FC<TaskFormProps> = ({
               <div className="space-y-1">
                 <Label htmlFor="priority" className="text-xs font-medium text-gray-700">Prioridade</Label>
                 <Select
-                  value={formData.priority}
+                  value={formData.priority || 'medium'}
                   onValueChange={(value) => handleChange('priority', value)}
                 >
                   <SelectTrigger className="h-8">

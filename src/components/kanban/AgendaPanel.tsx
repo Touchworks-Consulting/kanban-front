@@ -36,9 +36,11 @@ export const AgendaPanel: React.FC<AgendaPanelProps> = ({
   const [isCollapsed, setIsCollapsed] = useState(true);
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
 
-  const loadUserActivities = useCallback(async () => {
+  const loadUserActivities = useCallback(async (silent = false) => {
     try {
-      setLoading(true);
+      if (!silent) {
+        setLoading(true);
+      }
 
       // Usar getUpcomingActivities diretamente já que range endpoint não existe
       const response = await activityService.getUpcomingActivities(undefined, 30);
@@ -57,12 +59,36 @@ export const AgendaPanel: React.FC<AgendaPanelProps> = ({
     } catch (error) {
       console.error('Erro ao carregar atividades do usuário:', error);
     } finally {
-      setLoading(false);
+      if (!silent) {
+        setLoading(false);
+      }
     }
   }, []);
 
   useEffect(() => {
     loadUserActivities();
+  }, [loadUserActivities]);
+
+  // Ouvir eventos de atividades para recarregar (silenciosamente)
+  useEffect(() => {
+    const handleActivityChange = (eventName: string) => () => {
+      console.log(`📅 Agenda: ${eventName} - recarregando silenciosamente...`);
+      loadUserActivities(true); // Silent reload - não mostra loading
+    };
+
+    const handleCreated = handleActivityChange('Atividade criada');
+    const handleUpdated = handleActivityChange('Atividade atualizada');
+    const handleDeleted = handleActivityChange('Atividade deletada');
+
+    window.addEventListener('activity-created', handleCreated);
+    window.addEventListener('activity-updated', handleUpdated);
+    window.addEventListener('activity-deleted', handleDeleted);
+
+    return () => {
+      window.removeEventListener('activity-created', handleCreated);
+      window.removeEventListener('activity-updated', handleUpdated);
+      window.removeEventListener('activity-deleted', handleDeleted);
+    };
   }, [loadUserActivities]);
 
   const getActivityIcon = (type: Activity['activity_type']) => {
@@ -294,7 +320,7 @@ export const AgendaPanel: React.FC<AgendaPanelProps> = ({
                       </div>
 
                       {/* Coluna de atividades */}
-                      <div className="flex-1 p-1 relative overflow-hidden">
+                      <div className="flex-1 p-1 relative min-w-0">
                         {/* Marcador de horário atual */}
                         {isCurrent && (
                           <div className="absolute left-0 top-1/2 w-full flex items-center">
@@ -309,10 +335,9 @@ export const AgendaPanel: React.FC<AgendaPanelProps> = ({
                             <div
                               key={activity.id}
                               className={cn(
-                                "p-1.5 rounded border bg-card hover:shadow-sm transition-shadow cursor-pointer",
+                                "p-1.5 rounded border bg-card hover:shadow-sm transition-shadow cursor-pointer w-full",
                                 activity.is_overdue && "border-red-500 border-2"
                               )}
-                              style={{ maxWidth: 'calc(100% - 4px)' }}
                             >
                               <div className="flex items-center gap-1.5">
                                 <div className="flex-shrink-0">

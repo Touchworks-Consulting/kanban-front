@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useEffect, useState, useCallback, useRef } from 'react';
 import {
   DndContext,
   DragOverlay,
@@ -109,20 +109,32 @@ export const KanbanBoard: React.FC = () => {
     })
   );
 
-  // Memoizar a função de fetch para evitar re-renders desnecessários
-  const loadBoard = useCallback(() => {
-    fetchBoard(filters.sortBy);
-  }, [fetchBoard, filters.sortBy]);
+  // Ref para controlar se já carregou o board inicial
+  const hasLoadedRef = useRef(false);
 
+  // Carregar board apenas uma vez no mount
   useEffect(() => {
-    loadBoard();
-  }, [loadBoard]);
+    if (!hasLoadedRef.current) {
+      console.log('📊 Carregando board inicial');
+      fetchBoard(filters.sortBy);
+      hasLoadedRef.current = true;
+    }
+  }, []); // Dependências vazias - executa só no mount
+
+  // Recarregar apenas quando sortBy mudar (não no mount)
+  useEffect(() => {
+    if (hasLoadedRef.current) {
+      console.log('🔄 SortBy mudou - recarregando board');
+      fetchBoard(filters.sortBy);
+    }
+  }, [filters.sortBy]); // Apenas sortBy - fetchBoard é estável do Zustand
 
   // Reagir à mudança de conta
   useEffect(() => {
     const handleAccountChange = (event: CustomEvent) => {
       console.log('👂 KanbanBoard: Detectada mudança de conta, recarregando dados...', event.detail);
-      loadBoard();
+      hasLoadedRef.current = false; // Permitir reload
+      fetchBoard(filters.sortBy);
     };
 
     window.addEventListener('accountChanged', handleAccountChange as EventListener);
@@ -130,7 +142,7 @@ export const KanbanBoard: React.FC = () => {
     return () => {
       window.removeEventListener('accountChanged', handleAccountChange as EventListener);
     };
-  }, [loadBoard]);
+  }, [fetchBoard, filters.sortBy]);
 
   // Custom collision detection
   const collisionDetectionStrategy = (args: any) => {
