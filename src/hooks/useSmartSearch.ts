@@ -288,7 +288,7 @@ export const useSmartSearch = (
         setSearchResult(prev => ({ ...prev, isSearchingAPI: false }));
       }
     }
-  }, [enableAPISearch]);
+  }, [enableAPISearch, minSearchLength, board]);
 
   // Main search handler
   const handleSearch = useCallback((searchFilters: FilterState) => {
