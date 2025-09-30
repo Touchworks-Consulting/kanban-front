@@ -282,7 +282,7 @@ export const LeadModal: React.FC<LeadModalProps> = ({
             </div>
           </div>
         ) : lead ? (
-          <div className="flex flex-col max-h-[95vh]">
+          <div className="flex flex-col max-h-[95vh] overflow-hidden w-full">
             {/* Header Fixo com Pipeline Visual - with granular loading states */}
             <PipelineHeader
               lead={leadForHeader}
@@ -314,13 +314,15 @@ export const LeadModal: React.FC<LeadModalProps> = ({
             />
 
             {/* Três Colunas com Scroll Independente */}
-            <div className="flex flex-1 min-h-0">
+            <div className="flex flex-1 min-h-0 overflow-hidden">
               {/* Coluna Esquerda - Dados do Lead */}
               <LeadDataSidebar
                 lead={leadForSidebar}
                 columns={columns}
                 onUpdateLead={handleUpdateLead}
                 onStatusUpdate={handleStatusUpdate}
+                users={users}
+                onAssigneeChange={handleAssigneeChange}
                 className="w-72 flex-shrink-0"
                 // Optionally pass loading state for subtle feedback
                 // isUpdating={loading.sidebarField}

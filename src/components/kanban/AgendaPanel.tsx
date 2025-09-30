@@ -206,7 +206,7 @@ export const AgendaPanel: React.FC<AgendaPanelProps> = ({
 
   return (
     <div className={cn(
-      "flex-shrink-0 border-l bg-background transition-all duration-300",
+      "flex-shrink-0 border-l bg-background transition-all duration-300 overflow-hidden",
       isCollapsed ? "w-12" : "w-72"
     )}>
       {isCollapsed ? (
@@ -290,8 +290,8 @@ export const AgendaPanel: React.FC<AgendaPanelProps> = ({
             )}
           </div>
 
-          <ScrollArea className="h-full">
-            <div className="relative px-1">
+          <ScrollArea className="h-[calc(95vh-180px)]">
+            <div className="relative" style={{ width: '288px', maxWidth: '288px' }}>
               {/* Layout da agenda com horários */}
               <div className="min-h-full">
                 {timeSlots.map((slot) => {
@@ -308,9 +308,10 @@ export const AgendaPanel: React.FC<AgendaPanelProps> = ({
                         "flex border-b border-border/50 min-h-[60px] relative",
                         isCurrent && "bg-primary/5"
                       )}
+                      style={{ width: '288px', maxWidth: '288px' }}
                     >
                       {/* Coluna de horário */}
-                      <div className="w-14 p-1 border-r border-border/50 flex-shrink-0">
+                      <div className="w-14 p-1 border-r border-border/50 flex-shrink-0" style={{ width: '56px', minWidth: '56px', maxWidth: '56px' }}>
                         <span className={cn(
                           "text-xs font-medium",
                           isCurrent ? "text-primary font-bold" : "text-muted-foreground"
@@ -320,7 +321,7 @@ export const AgendaPanel: React.FC<AgendaPanelProps> = ({
                       </div>
 
                       {/* Coluna de atividades */}
-                      <div className="flex-1 p-1 relative min-w-0">
+                      <div className="p-1 relative overflow-hidden" style={{ width: '232px', maxWidth: '232px' }}>
                         {/* Marcador de horário atual */}
                         {isCurrent && (
                           <div className="absolute left-0 top-1/2 w-full flex items-center">
@@ -330,16 +331,17 @@ export const AgendaPanel: React.FC<AgendaPanelProps> = ({
                         )}
 
                         {/* Atividades do horário */}
-                        <div className="space-y-1 relative z-10">
+                        <div className="space-y-1 relative z-10" style={{ width: '224px', maxWidth: '224px' }}>
                           {slotActivities.map((activity) => (
                             <div
                               key={activity.id}
                               className={cn(
-                                "p-1.5 rounded border bg-card hover:shadow-sm transition-shadow cursor-pointer w-full",
+                                "p-1.5 rounded border bg-card hover:shadow-sm transition-shadow cursor-pointer overflow-hidden",
                                 activity.is_overdue && "border-red-500 border-2"
                               )}
+                              style={{ width: '224px', maxWidth: '224px' }}
                             >
-                              <div className="flex items-center gap-1.5">
+                              <div className="flex items-center gap-1.5 min-w-0" style={{ width: '100%', maxWidth: '100%' }}>
                                 <div className="flex-shrink-0">
                                   {getActivityIcon(activity.activity_type)}
                                 </div>
