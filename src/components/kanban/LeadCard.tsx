@@ -19,15 +19,21 @@ import { cn } from '../../lib/utils';
 import { formatDate } from '../../utils/helpers';
 import { useCustomStatuses } from '../../hooks/useCustomStatuses';
 import { useLeadActivityCounts } from '../../hooks/useActivityCounts';
+import type { ActivityCounts } from '../../services/activity';
 
 interface LeadCardProps {
   lead: Lead;
   onOpenModal?: (leadId: string) => void;
+  activityCounts?: ActivityCounts | null; // Prop opcional para bulk loading
 }
 
-export const LeadCard: React.FC<LeadCardProps> = ({ lead, onOpenModal }) => {
+export const LeadCard: React.FC<LeadCardProps> = ({ lead, onOpenModal, activityCounts: externalCounts }) => {
   const { getStatusByValue } = useCustomStatuses();
-  const { counts: activityCounts } = useLeadActivityCounts(lead.id);
+
+  // Usar contagem externa se fornecida, senão buscar individualmente
+  const { counts: internalCounts } = useLeadActivityCounts(externalCounts ? '' : lead.id);
+  const activityCounts = externalCounts || internalCounts;
+
   const taskColors = useTaskBadgeColors(activityCounts || {
     total_pending: 0,
     today: 0,

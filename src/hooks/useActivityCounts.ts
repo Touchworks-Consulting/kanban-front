@@ -1,33 +1,86 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { activityService } from '../services/activity';
 import type { ActivityCounts, LeadActivityCounts } from '../services/activity';
+
+// Cache global para contagens de atividades
+const activityCountsCache = new Map<string, { data: ActivityCounts; timestamp: number }>();
+const CACHE_TTL = 30000; // 30 segundos
+
+// Request deduplication - armazena promises em andamento
+const pendingRequests = new Map<string, Promise<ActivityCounts>>();
 
 // Hook para contagem de atividades de um único lead
 export const useLeadActivityCounts = (leadId: string) => {
   const [counts, setCounts] = useState<ActivityCounts | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const isMounted = useRef(true);
 
   const fetchCounts = useCallback(async () => {
     if (!leadId) return;
 
-    setLoading(true);
-    setError(null);
+    // Verificar cache primeiro
+    const cached = activityCountsCache.get(leadId);
+    if (cached) {
+      const age = Date.now() - cached.timestamp;
+      if (age < CACHE_TTL) {
+        setCounts(cached.data);
+        return;
+      } else {
+        activityCountsCache.delete(leadId);
+      }
+    }
+
+    // Verificar se já há uma requisição em andamento para este lead
+    let existingRequest = pendingRequests.get(leadId);
+
+    if (!existingRequest) {
+      // Criar nova requisição
+      setLoading(true);
+      setError(null);
+
+      existingRequest = activityService.getLeadActivityCounts(leadId)
+        .then(response => {
+          // Armazenar no cache
+          activityCountsCache.set(leadId, {
+            data: response.counts,
+            timestamp: Date.now()
+          });
+          return response.counts;
+        })
+        .finally(() => {
+          // Remover da fila de pendentes
+          pendingRequests.delete(leadId);
+        });
+
+      pendingRequests.set(leadId, existingRequest);
+    }
 
     try {
-      const response = await activityService.getLeadActivityCounts(leadId);
-      setCounts(response.counts);
+      const result = await existingRequest;
+      if (isMounted.current) {
+        setCounts(result);
+      }
     } catch (err: any) {
-      console.error('Erro ao buscar contagens de atividades:', err);
-      setError(err.message || 'Erro ao carregar contagens');
-      setCounts(null);
+      if (isMounted.current) {
+        console.error('Erro ao buscar contagens de atividades:', err);
+        setError(err.message || 'Erro ao carregar contagens');
+        setCounts(null);
+      }
     } finally {
-      setLoading(false);
+      if (isMounted.current) {
+        setLoading(false);
+      }
     }
   }, [leadId]);
 
   useEffect(() => {
+    isMounted.current = true;
     fetchCounts();
+
+    return () => {
+      isMounted.current = false;
+    };
   }, [fetchCounts]);
 
   return {

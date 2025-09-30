@@ -4,6 +4,7 @@ import { SortableContext, verticalListSortingStrategy, useSortable } from '@dnd-
 import { CSS } from '@dnd-kit/utilities';
 import { Plus, MoreHorizontal, Edit, Trash2, DollarSign, GripVertical } from 'lucide-react';
 import type { KanbanColumn as ColumnType, Lead } from '../../types/kanban';
+import type { ActivityCounts } from '../../services/activity';
 import { LeadCard } from './LeadCard';
 import { Button } from '../ui/button';
 import { ScrollArea } from '../ui/scroll-area';
@@ -19,6 +20,7 @@ interface KanbanColumnProps {
   onEditLead?: (lead: Lead) => void;
   onDeleteLead?: (leadId: string) => void;
   onOpenModal?: (leadId: string) => void;
+  activityCountsMap?: Map<string, ActivityCounts>;
 }
 
 export const KanbanColumn: React.FC<KanbanColumnProps> = ({
@@ -29,6 +31,7 @@ export const KanbanColumn: React.FC<KanbanColumnProps> = ({
   onEditLead,
   onDeleteLead,
   onOpenModal,
+  activityCountsMap,
 }) => {
   const [isHovered, setIsHovered] = useState(false);
 
@@ -214,6 +217,7 @@ const getTotalValue = () => {
                   onEdit={onEditLead}
                   onDelete={onDeleteLead}
                   onOpenModal={onOpenModal}
+                  activityCounts={activityCountsMap?.get(lead.id) || null}
                 />
               ))}
             </SortableContext>
