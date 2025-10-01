@@ -19,8 +19,8 @@ export default defineConfig({
     headers: {
       // Permitir iframe em qualquer domínio (para integração externa)
       // Em produção, considere restringir para domínios específicos
-      'X-Frame-Options': 'ALLOWALL',
-      'Content-Security-Policy': "frame-ancestors *"
+      'X-Frame-Options': 'SAMEORIGIN',
+      'Content-Security-Policy': "frame-ancestors 'self' file: http: https:"
     }
   },
 })
