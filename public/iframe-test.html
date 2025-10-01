@@ -125,64 +125,30 @@
       display: block;
     }
 
-    /* Modal Overlay */
-    .modal-overlay {
+    /* Iframe Container */
+    .iframe-container {
       display: none;
       position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      background: rgba(0, 0, 0, 0.7);
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 90vw;
+      max-width: 1400px;
+      height: 95vh;
       z-index: 9999;
-      animation: fadeIn 0.3s ease;
-    }
-
-    .modal-overlay.active {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-
-    .modal-content {
-      width: 95%;
-      height: 90%;
-      background: white;
-      border-radius: 12px;
-      overflow: hidden;
-      box-shadow: 0 25px 50px rgba(0, 0, 0, 0.5);
       animation: slideUp 0.3s ease;
-      position: relative;
     }
 
-    .modal-close {
-      position: absolute;
-      top: 15px;
-      right: 15px;
-      background: #ff4444;
-      color: white;
-      border: none;
-      width: 36px;
-      height: 36px;
-      border-radius: 50%;
-      cursor: pointer;
-      font-size: 20px;
-      font-weight: bold;
-      z-index: 10000;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      transition: background 0.2s;
-    }
-
-    .modal-close:hover {
-      background: #cc0000;
+    .iframe-container.active {
+      display: block;
     }
 
     .modal-iframe {
       width: 100%;
       height: 100%;
       border: none;
+      border-radius: 8px;
+      box-shadow: 0 25px 50px rgba(0, 0, 0, 0.3);
     }
 
     @keyframes fadeIn {
@@ -271,12 +237,9 @@
     </div>
   </div>
 
-  <!-- Modal Overlay -->
-  <div class="modal-overlay" id="modalOverlay">
-    <div class="modal-content">
-      <button class="modal-close" id="closeBtn">×</button>
-      <iframe id="leadIframe" class="modal-iframe"></iframe>
-    </div>
+  <!-- Iframe Container -->
+  <div class="iframe-container" id="iframeContainer">
+    <iframe id="leadIframe" class="modal-iframe"></iframe>
   </div>
 
   <script>
@@ -289,9 +252,8 @@
     const phoneInput = document.getElementById('phone');
     const submitBtn = document.getElementById('submitBtn');
     const statusDiv = document.getElementById('status');
-    const modalOverlay = document.getElementById('modalOverlay');
+    const iframeContainer = document.getElementById('iframeContainer');
     const leadIframe = document.getElementById('leadIframe');
-    const closeBtn = document.getElementById('closeBtn');
     const eventLog = document.getElementById('eventLog');
     const eventList = document.getElementById('eventList');
 
@@ -324,15 +286,15 @@
     function openModal(leadId, apiKey) {
       const iframeUrl = `${FRONTEND_URL}/embed/lead-modal/${leadId}?api_key=${apiKey}`;
       leadIframe.src = iframeUrl;
-      modalOverlay.classList.add('active');
+      iframeContainer.classList.add('active');
       addEvent(`Modal aberto para lead: ${leadId}`);
     }
 
     // Fechar modal
     function closeModal() {
-      modalOverlay.classList.remove('active');
+      iframeContainer.classList.remove('active');
       leadIframe.src = '';
-      addEvent('Modal fechado manualmente');
+      addEvent('Modal fechado');
     }
 
     // Event listeners
@@ -392,15 +354,6 @@
       } finally {
         submitBtn.disabled = false;
         submitBtn.textContent = 'Abrir LeadModal';
-      }
-    });
-
-    closeBtn.addEventListener('click', closeModal);
-
-    // Fechar modal ao clicar no overlay
-    modalOverlay.addEventListener('click', (e) => {
-      if (e.target === modalOverlay) {
-        closeModal();
       }
     });
 
