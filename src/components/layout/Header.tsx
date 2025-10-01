@@ -12,7 +12,6 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { ModeToggle } from '../mode-toggle';
 import NotificationHeader from '../header/NotificationHeader';
-import { TasksNotificationBadge } from '../header/TasksNotificationBadge';
 
 const getPageTitle = (pathname: string) => {
   switch (pathname) {
@@ -49,15 +48,7 @@ const Header = () => {
       <h1 className="text-xl font-semibold">{pageTitle}</h1>
       <div className="flex items-center space-x-4">
         {token && account?.id && (
-          <>
-            <TasksNotificationBadge
-              onClick={() => navigate('/kanban?focus=tasks')}
-            />
-            <NotificationHeader
-              accountId={account.id}
-              token={token}
-            />
-          </>
+          <NotificationHeader />
         )}
         <ModeToggle />
         <DropdownMenu>
