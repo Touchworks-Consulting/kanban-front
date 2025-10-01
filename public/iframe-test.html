@@ -125,6 +125,23 @@
       display: block;
     }
 
+    /* Backdrop (fundo semi-transparente) */
+    .iframe-backdrop {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.5);
+      z-index: 9998;
+      animation: fadeIn 0.3s ease;
+    }
+
+    .iframe-backdrop.active {
+      display: block;
+    }
+
     /* Iframe Container */
     .iframe-container {
       display: none;
@@ -237,6 +254,9 @@
     </div>
   </div>
 
+  <!-- Backdrop -->
+  <div class="iframe-backdrop" id="iframeBackdrop"></div>
+
   <!-- Iframe Container -->
   <div class="iframe-container" id="iframeContainer">
     <iframe id="leadIframe" class="modal-iframe"></iframe>
@@ -252,6 +272,7 @@
     const phoneInput = document.getElementById('phone');
     const submitBtn = document.getElementById('submitBtn');
     const statusDiv = document.getElementById('status');
+    const iframeBackdrop = document.getElementById('iframeBackdrop');
     const iframeContainer = document.getElementById('iframeContainer');
     const leadIframe = document.getElementById('leadIframe');
     const eventLog = document.getElementById('eventLog');
@@ -286,16 +307,21 @@
     function openModal(leadId, apiKey) {
       const iframeUrl = `${FRONTEND_URL}/embed/lead-modal/${leadId}?api_key=${apiKey}`;
       leadIframe.src = iframeUrl;
+      iframeBackdrop.classList.add('active');
       iframeContainer.classList.add('active');
       addEvent(`Modal aberto para lead: ${leadId}`);
     }
 
     // Fechar modal
     function closeModal() {
+      iframeBackdrop.classList.remove('active');
       iframeContainer.classList.remove('active');
       leadIframe.src = '';
       addEvent('Modal fechado');
     }
+
+    // Fechar ao clicar no backdrop
+    iframeBackdrop.addEventListener('click', closeModal);
 
     // Event listeners
     form.addEventListener('submit', async (e) => {
