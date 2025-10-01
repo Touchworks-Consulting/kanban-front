@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { Settings, Phone, User, Bell, Shield, Database, Download, Trash2, RotateCcw } from 'lucide-react';
+import { Settings, Phone, User, Bell, Shield, Database, Download, Trash2, RotateCcw, Key } from 'lucide-react';
 import { Button } from '../components/ui/button';
 import { Alert, AlertDescription } from '../components/ui/alert';
 import { LoadingSpinner } from '../components/LoadingSpinner';
 import { WhatsAppSettings } from '../components/settings/WhatsAppSettings';
 import { StatusSettings } from '../components/settings/StatusSettings';
+import { ApiKeySettings } from '../components/settings/ApiKeySettings';
 import { useSettingsStore } from '../stores';
 
 interface SettingsTabProps {
@@ -18,6 +19,7 @@ const SettingsTabs: React.FC<SettingsTabProps> = ({ activeTab, setActiveTab }) =
     { id: 'status', label: 'Status dos Leads', icon: Settings },
     { id: 'whatsapp', label: 'WhatsApp', icon: Phone },
     { id: 'notifications', label: 'Notificações', icon: Bell },
+    { id: 'api-key', label: 'Chave de API', icon: Key },
     { id: 'security', label: 'Segurança', icon: Shield },
     { id: 'data', label: 'Dados', icon: Database },
   ];
@@ -233,6 +235,9 @@ export const SettingsPage: React.FC = () => {
 
       case 'whatsapp':
         return <WhatsAppSettings />;
+
+      case 'api-key':
+        return <ApiKeySettings />;
 
       case 'notifications':
         return (
