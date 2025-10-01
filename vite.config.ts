@@ -16,5 +16,11 @@ export default defineConfig({
         changeOrigin: true,
       },
     },
+    headers: {
+      // Permitir iframe em qualquer domínio (para integração externa)
+      // Em produção, considere restringir para domínios específicos
+      'X-Frame-Options': 'ALLOWALL',
+      'Content-Security-Policy': "frame-ancestors *"
+    }
   },
 })

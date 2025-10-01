@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Button } from '../../ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '../../ui/card';
 import { Badge } from '../../ui/badge';
@@ -49,7 +49,7 @@ interface TasksTabProps {
 type TaskFilter = 'all' | 'pending' | 'completed' | 'overdue' | 'today';
 type TaskSort = 'newest' | 'oldest' | 'priority' | 'due_date';
 
-export const TasksTab: React.FC<TasksTabProps> = ({ leadId, onUpdate, triggerNewTask, onNewTaskCreated, leadName }) => {
+const TasksTabComponent: React.FC<TasksTabProps> = ({ leadId, onUpdate, triggerNewTask, onNewTaskCreated, leadName }) => {
   const [activities, setActivities] = useState<Activity[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -70,7 +70,7 @@ export const TasksTab: React.FC<TasksTabProps> = ({ leadId, onUpdate, triggerNew
   }, [triggerNewTask, isInitialized]);
 
   // Carregar atividades
-  const loadActivities = async () => {
+  const loadActivities = useCallback(async () => {
     setLoading(true);
     setError(null);
 
@@ -85,11 +85,11 @@ export const TasksTab: React.FC<TasksTabProps> = ({ leadId, onUpdate, triggerNew
     } finally {
       setLoading(false);
     }
-  };
+  }, [leadId]);
 
   useEffect(() => {
     loadActivities();
-  }, [leadId]);
+  }, [leadId, loadActivities]);
 
   // Responder ao trigger de nova tarefa
   useEffect(() => {
@@ -492,3 +492,13 @@ export const TasksTab: React.FC<TasksTabProps> = ({ leadId, onUpdate, triggerNew
     </div>
   );
 };
+
+// Memoize component to prevent unnecessary re-renders
+export const TasksTab = React.memo(TasksTabComponent, (prevProps, nextProps) => {
+  // Only re-render if these specific props change
+  return (
+    prevProps.leadId === nextProps.leadId &&
+    prevProps.triggerNewTask === nextProps.triggerNewTask &&
+    prevProps.leadName === nextProps.leadName
+  );
+});
