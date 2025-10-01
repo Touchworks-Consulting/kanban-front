@@ -19,6 +19,7 @@ import { PlansPage } from './pages/PlansPage';
 import TermsPage from './pages/TermsPage';
 import PrivacyPage from './pages/PrivacyPage';
 import { FeedbackAdminPage } from './pages/FeedbackAdminPage';
+import { EmbedLeadModalPage } from './pages/EmbedLeadModalPage';
 import { ProtectedRoute } from './components/ProtectedRoute';
 import { LoadingSpinner } from './components/LoadingSpinner';
 import ErrorBoundary from './components/ErrorBoundary';
@@ -111,6 +112,9 @@ function App() {
           <Route path="/terms" element={<TermsPage />} />
           <Route path="/privacy" element={<PrivacyPage />} />
           <Route path="/feedback-admin" element={<FeedbackAdminPage />} />
+
+          {/* Rota pública para iframe (autenticação via API key) */}
+          <Route path="/embed/lead-modal/:leadId" element={<EmbedLeadModalPage />} />
 
           <Route
             path="/"
