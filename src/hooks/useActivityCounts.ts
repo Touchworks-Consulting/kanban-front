@@ -153,10 +153,12 @@ export const useUserActivityCounts = () => {
     setError(null);
 
     try {
+      console.log('📊 [useUserActivityCounts] Fetching activity counts...');
       const response = await activityService.getActivityCounts();
+      console.log('📊 [useUserActivityCounts] Response:', response);
       setCounts(response.counts);
     } catch (err: any) {
-      console.error('Erro ao buscar contagens do usuário:', err);
+      console.error('❌ [useUserActivityCounts] Erro ao buscar contagens do usuário:', err);
       setError(err.message || 'Erro ao carregar contagens');
       setCounts(null);
     } finally {
