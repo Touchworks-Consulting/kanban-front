@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { Badge } from '../ui/badge';
 import { Button } from '../ui/button';
 import { Input } from '../ui/input';
@@ -36,17 +37,27 @@ const customStyles = `
     transform: translateY(-1px);
   }
 
-  .pipeline-tooltip {
-    pointer-events: none;
+  .pipeline-stage {
+    transition: all 0.2s ease;
+  }
+
+  .pipeline-stage:hover {
+    transform: scale(1.05);
+    filter: brightness(1.1);
+  }
+
+  .pipeline-stage.clickable {
+    cursor: pointer;
   }
 
   @keyframes fadeIn {
-    from { opacity: 0; transform: translate(-50%, -100%) scale(0.8); }
-    to { opacity: 1; transform: translate(-50%, -100%) scale(1); }
+    from { opacity: 0; transform: translateY(-8px); }
+    to { opacity: 1; transform: translateY(0); }
   }
 
-  .group:hover .pipeline-tooltip {
-    animation: fadeIn 0.2s ease-out;
+  .pipeline-tooltip-portal {
+    animation: fadeIn 0.15s ease-out;
+    pointer-events: none;
   }
 `;
 
@@ -82,6 +93,9 @@ const PipelineHeaderComponent: React.FC<PipelineHeaderProps> = ({
   const [editingField, setEditingField] = useState<string | null>(null);
   const [editValue, setEditValue] = useState<string>('');
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+
+  // Estado para tooltip portal
+  const [hoveredStage, setHoveredStage] = useState<{ column: KanbanColumn; rect: DOMRect } | null>(null);
 
   const isWon = lead.status === 'won';
   const isLost = lead.status === 'lost';
@@ -285,6 +299,35 @@ const PipelineHeaderComponent: React.FC<PipelineHeaderProps> = ({
     return '#e5e7eb';
   };
 
+  // Handler para clique em etapa do pipeline
+  const handleStageClick = async (columnId: string) => {
+    if (!isActive || !onMoveToNext || isLoading) return;
+
+    const targetColumn = sortedColumns.find(col => col.id === columnId);
+    if (!targetColumn) return;
+
+    try {
+      setIsLoading(true);
+      await onMoveToNext(columnId);
+      toast.success(`Lead movido para ${targetColumn.name}`);
+    } catch (error) {
+      console.error('Erro ao mover lead:', error);
+      toast.error('Erro ao mover lead de coluna');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Handler para hover de etapa
+  const handleStageMouseEnter = (column: KanbanColumn, event: React.MouseEvent<HTMLDivElement>) => {
+    const rect = event.currentTarget.getBoundingClientRect();
+    setHoveredStage({ column, rect });
+  };
+
+  const handleStageMouseLeave = () => {
+    setHoveredStage(null);
+  };
+
   // Componente para campos editáveis
   const EditableField = ({
     field,
@@ -348,10 +391,63 @@ const PipelineHeaderComponent: React.FC<PipelineHeaderProps> = ({
     );
   };
 
+  // Componente Portal para Tooltip
+  const TooltipPortal = () => {
+    if (!hoveredStage) return null;
+
+    const { column, rect } = hoveredStage;
+    const currentColumnIndex = sortedColumns.findIndex(col => col.id === lead.column_id);
+    const hoveredIndex = sortedColumns.findIndex(col => col.id === column.id);
+    const isPassed = hoveredIndex < currentColumnIndex;
+    const isCurrent = hoveredIndex === currentColumnIndex;
+
+    // Calcular tempo na etapa
+    let stageTime = '';
+    if (isCurrent) {
+      stageTime = lead.timeInCurrentStage || formatDistanceToNow(lead.updatedAt);
+    } else if (isPassed && lead.stageTimelines?.[column.id]) {
+      stageTime = lead.stageTimelines[column.id];
+    } else if (isPassed) {
+      stageTime = '- dias';
+    } else {
+      stageTime = '0 dias';
+    }
+
+    return createPortal(
+      <div
+        className="pipeline-tooltip-portal fixed px-3 py-2 bg-gray-900 text-white text-xs rounded-lg shadow-lg z-[9999]"
+        style={{
+          left: `${rect.left + rect.width / 2}px`,
+          top: `${rect.top - 10}px`,
+          transform: 'translate(-50%, -100%)',
+        }}
+      >
+        <div className="font-semibold mb-0.5">{column.name}</div>
+        <div className="text-gray-300">Tempo: {stageTime}</div>
+        {isActive && (
+          <div className="text-gray-400 text-[10px] mt-1">
+            {hoveredIndex === currentColumnIndex ? '(Etapa atual)' : 'Clique para mover'}
+          </div>
+        )}
+        {/* Seta do tooltip */}
+        <div
+          className="absolute left-1/2 transform -translate-x-1/2"
+          style={{ top: '100%' }}
+        >
+          <div className="border-8 border-transparent border-t-gray-900"></div>
+        </div>
+      </div>,
+      document.body
+    );
+  };
+
   return (
     <>
       {/* Estilos CSS customizados */}
       <style>{customStyles}</style>
+
+      {/* Tooltip Portal */}
+      <TooltipPortal />
 
       <div className={cn('bg-background border-b sticky top-0 z-10', className)}>
       {/* Primeira linha - Nome, Status, Ações */}
@@ -543,7 +639,7 @@ const PipelineHeaderComponent: React.FC<PipelineHeaderProps> = ({
               {sortedColumns.map((column, index) => {
                 const isPassed = index < currentColumnIndex;
                 const isCurrent = index === currentColumnIndex;
-                const isActive = isPassed || isCurrent;
+                const isStageActive = isPassed || isCurrent;
 
                 // Obter tempo gasto nesta etapa
                 let stageTime = '';
@@ -557,29 +653,27 @@ const PipelineHeaderComponent: React.FC<PipelineHeaderProps> = ({
                   stageTime = '0 dias'; // Etapas futuras
                 }
 
+                const canClick = isActive && !isLoading;
+
                 return (
                   <div
                     key={column.id}
                     className={cn(
-                      "group relative flex-1 flex items-center justify-center px-1 sm:px-2 transition-all duration-300",
-                      "cursor-pointer"
+                      "pipeline-stage relative flex-1 flex items-center justify-center px-1 sm:px-2",
+                      canClick && "clickable"
                     )}
                     style={{
                       minWidth: '60px'
                     }}
+                    onClick={() => canClick && handleStageClick(column.id)}
+                    onMouseEnter={(e) => handleStageMouseEnter(column, e)}
+                    onMouseLeave={handleStageMouseLeave}
                   >
                     <div className={cn(
                       "text-[10px] sm:text-xs font-medium truncate text-center",
-                      isActive ? "text-white" : "text-muted-foreground"
+                      isStageActive ? "text-white" : "text-muted-foreground"
                     )}>
                       {stageTime}
-                    </div>
-
-                    {/* Tooltip completo no hover */}
-                    <div className="pipeline-tooltip absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-2 py-1 bg-gray-900 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity duration-200 whitespace-nowrap z-10 pointer-events-none">
-                      <div className="font-medium">{column.name}</div>
-                      <div className="text-gray-300">Tempo: {stageTime}</div>
-                      <div className="absolute top-full left-1/2 transform -translate-x-1/2 border-4 border-transparent border-t-gray-900"></div>
                     </div>
                   </div>
                 );
