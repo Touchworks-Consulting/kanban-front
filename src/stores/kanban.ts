@@ -34,6 +34,7 @@ interface KanbanState {
   // Optimistic updates
   optimisticMoveLead: (leadId: string, sourceColumnId: string, targetColumnId: string, newPosition: number) => void;
   revertOptimisticMove: () => void;
+  optimisticUpdateLead: (leadId: string, updates: Partial<Lead>) => void;
 
   // Cleanup
   cleanup: () => void;
@@ -291,6 +292,27 @@ export const useKanbanStore = create<KanbanState>()(
             previousBoard: null // Clear after revert
           });
         }
+      },
+
+      // Optimistic update for lead fields (from modal)
+      optimisticUpdateLead: (leadId: string, updates: Partial<Lead>) => {
+        const { board } = get();
+        if (!board) return;
+
+        const updatedColumns = board.columns.map(column => ({
+          ...column,
+          leads: (column.leads || []).map(lead =>
+            lead.id === leadId ? { ...lead, ...updates } : lead
+          )
+        }));
+
+        set({
+          board: {
+            ...board,
+            columns: updatedColumns,
+            _updatedAt: Date.now() // Force cache invalidation
+          } as any
+        });
       },
 
       // Create column

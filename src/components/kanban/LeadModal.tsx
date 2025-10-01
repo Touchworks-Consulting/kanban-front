@@ -11,6 +11,7 @@ import { ActivitiesArea } from './ActivitiesArea';
 import { ActivitiesAreaSkeleton } from './ActivitiesAreaSkeleton';
 import { AgendaPanel } from './AgendaPanel';
 import { useLeadModalStore } from '../../stores/leadModalStore';
+import { useKanbanStore } from '../../stores';
 import { optimizedLeadService } from '../../services/optimizedLeadService';
 import type { UserDto } from '../../services/users';
 
@@ -31,7 +32,7 @@ export const LeadModal: React.FC<LeadModalProps> = ({
 }) => {
   // Removido: Estado para comunicação com AgendaPanel - não mais necessário
 
-  // Use Zustand store instead of local state
+  // Use Zustand store with selective subscriptions to minimize re-renders
   const {
     lead,
     modalData,
@@ -57,6 +58,7 @@ export const LeadModal: React.FC<LeadModalProps> = ({
     reset,
     clearErrors,
   } = useLeadModalStore();
+
 
   // Load initial data only once when modal opens
   const loadInitialData = async () => {
@@ -91,6 +93,12 @@ export const LeadModal: React.FC<LeadModalProps> = ({
   }, [isOpen, leadId]);
 
   const handleClose = () => {
+    // Sync lead changes to board before closing (without API call)
+    if (lead && leadId) {
+      const { optimisticUpdateLead } = useKanbanStore.getState();
+      optimisticUpdateLead(leadId, lead);
+    }
+
     reset();
     onClose();
   };
@@ -141,7 +149,7 @@ export const LeadModal: React.FC<LeadModalProps> = ({
     }
   };
 
-  // Optimistic update for general lead updates (sidebar fields)
+  // Optimistic update for all sidebar field updates (including status)
   const handleUpdateLead = useCallback(async (updates: Partial<Lead>) => {
     if (!lead) return;
 
@@ -164,29 +172,6 @@ export const LeadModal: React.FC<LeadModalProps> = ({
       setLoading('sidebarField', false);
     }
   }, [lead, updateLeadOptimistic, setLoading, setError, rollbackLead]);
-
-  // Optimistic update for status changes that may affect board visibility
-  const handleStatusUpdate = useCallback(async (updates: Partial<Lead>) => {
-    if (!lead) return;
-
-    // Immediate UI update
-    updateLeadOptimistic(updates);
-    setLoading('lead', true);
-    setError('lead', null);
-
-    try {
-      const updatedLead = await optimizedLeadService.updateLead(lead.id, updates);
-      setLead(updatedLead); // Update with server response
-      onUpdate?.(); // Call onUpdate for status changes as they may affect board visibility
-    } catch (error) {
-      console.error('Erro ao atualizar status:', error);
-      setError('lead', 'Erro ao atualizar status');
-      rollbackLead(); // Rollback on error
-      throw error;
-    } finally {
-      setLoading('lead', false);
-    }
-  }, [lead, updateLeadOptimistic, setLoading, setError, setLead, rollbackLead, onUpdate]);
 
   // Optimistic update for assignee changes - NOW TRULY OPTIMIZED!
   const handleAssigneeChange = async (userId: string) => {
@@ -219,8 +204,28 @@ export const LeadModal: React.FC<LeadModalProps> = ({
   const isMainLoading = loading.lead;
   const hasMainError = errors.lead;
 
-  // Memoize lead object for sidebar to prevent unnecessary re-renders
-  const leadForSidebar = useMemo(() => lead, [
+  // Memoize lead object for sidebar - create NEW object with STABLE reference
+  // This ensures that if individual field values don't change, the returned object reference stays the same
+  const leadForSidebar = useMemo(() => {
+    if (!lead) return null;
+    return {
+      id: lead.id,
+      name: lead.name,
+      phone: lead.phone,
+      email: lead.email,
+      value: lead.value,
+      status: lead.status,
+      campaign: lead.campaign,
+      platform: lead.platform,
+      notes: lead.notes,
+      message: lead.message,
+      assigned_to_user_id: lead.assigned_to_user_id,
+      column_id: lead.column_id,
+      createdAt: lead.createdAt,
+      updatedAt: lead.updatedAt,
+      tags: lead.tags,
+    } as Lead;
+  }, [
     lead?.id,
     lead?.name,
     lead?.phone,
@@ -234,19 +239,44 @@ export const LeadModal: React.FC<LeadModalProps> = ({
     lead?.assigned_to_user_id,
     lead?.column_id,
     lead?.createdAt,
-    lead?.updatedAt,
     JSON.stringify(lead?.tags)
   ]);
 
-  // Memoize lead object for header to prevent unnecessary re-renders
-  const leadForHeader = useMemo(() => lead, [
+  // Memoize lead object for header - create NEW object with STABLE reference
+  const leadForHeader = useMemo(() => {
+    if (!lead) return null;
+    return {
+      id: lead.id,
+      name: lead.name,
+      value: lead.value,
+      status: lead.status,
+      column_id: lead.column_id,
+      assigned_to_user_id: lead.assigned_to_user_id,
+      updatedAt: lead.updatedAt,
+      phone: lead.phone,
+      email: lead.email,
+      column: lead.column,
+      assignedUser: lead.assignedUser,
+    } as Lead;
+  }, [
     lead?.id,
     lead?.name,
     lead?.value,
     lead?.status,
     lead?.column_id,
     lead?.assigned_to_user_id,
-    lead?.updatedAt
+  ]);
+
+  // Stable references for ActivitiesArea to prevent unnecessary re-renders
+  const leadName = useMemo(() => lead?.name, [lead?.name]);
+
+  const memoizedModalData = useMemo(() => modalData, [
+    modalData?.timeline?.length,
+    modalData?.contacts?.length,
+    modalData?.files?.length,
+    JSON.stringify(modalData?.timeline?.map(t => t.id)),
+    JSON.stringify(modalData?.contacts?.map(c => c.id)),
+    JSON.stringify(modalData?.files?.map(f => f.id))
   ]);
 
   return (
@@ -320,7 +350,6 @@ export const LeadModal: React.FC<LeadModalProps> = ({
                 lead={leadForSidebar}
                 columns={columns}
                 onUpdateLead={handleUpdateLead}
-                onStatusUpdate={handleStatusUpdate}
                 users={users}
                 onAssigneeChange={handleAssigneeChange}
                 className="w-72 flex-shrink-0"
@@ -331,8 +360,8 @@ export const LeadModal: React.FC<LeadModalProps> = ({
               {/* Coluna Central - Atividades */}
               <ActivitiesArea
                 leadId={leadId}
-                modalData={modalData}
-                lead={lead}
+                modalData={memoizedModalData}
+                leadName={leadName}
                 onUpdate={() => {}} // No longer needed - using optimistic updates
                 className="flex-1"
                 // TODO: Add loading states for activities

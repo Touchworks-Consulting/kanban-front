@@ -22,14 +22,13 @@ import {
 } from 'lucide-react';
 import { cn } from '../../lib/utils';
 import type { LeadModalData } from '../../types/leadModal';
-import type { Lead } from '../../types/kanban';
 import { formatDate, formatDistanceToNow } from '../../utils/helpers';
 import { TasksTab } from './tabs/TasksTab';
 
 interface ActivitiesAreaProps {
   leadId: string;
   modalData?: LeadModalData | null;
-  lead?: Lead | null;
+  leadName?: string;
   onUpdate?: () => void;
   className?: string;
 }
@@ -37,7 +36,7 @@ interface ActivitiesAreaProps {
 const ActivitiesAreaComponent: React.FC<ActivitiesAreaProps> = ({
   leadId,
   modalData,
-  lead,
+  leadName,
   onUpdate,
   className
 }) => {
@@ -206,7 +205,7 @@ const ActivitiesAreaComponent: React.FC<ActivitiesAreaProps> = ({
                 onUpdate={onUpdate}
                 triggerNewTask={triggerNewTask}
                 onNewTaskCreated={handleNewTaskCreated}
-                leadName={lead?.name}
+                leadName={leadName}
               />
             </div>
           </ScrollArea>
@@ -343,4 +342,11 @@ const ActivitiesAreaComponent: React.FC<ActivitiesAreaProps> = ({
   );
 };
 
-export const ActivitiesArea = React.memo(ActivitiesAreaComponent);
+export const ActivitiesArea = React.memo(ActivitiesAreaComponent, (prevProps, nextProps) => {
+  // Only re-render if these specific props change
+  return (
+    prevProps.leadId === nextProps.leadId &&
+    prevProps.leadName === nextProps.leadName &&
+    prevProps.modalData === nextProps.modalData
+  );
+});

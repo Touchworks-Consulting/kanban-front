@@ -38,7 +38,6 @@ interface LeadDataSidebarProps {
   columns: KanbanColumn[];
   className?: string;
   onUpdateLead?: (updates: Partial<Lead>) => Promise<void>;
-  onStatusUpdate?: (updates: Partial<Lead>) => Promise<void>;
   users?: Array<{ id: string; name: string; email: string; role?: string; is_active: boolean }>;
   onAssigneeChange?: (userId: string) => Promise<void>;
 }
@@ -48,7 +47,6 @@ const LeadDataSidebarComponent: React.FC<LeadDataSidebarProps> = ({
   columns,
   className,
   onUpdateLead,
-  onStatusUpdate,
   users = [],
   onAssigneeChange
 }) => {
@@ -126,12 +124,11 @@ const LeadDataSidebarComponent: React.FC<LeadDataSidebarProps> = ({
   };
 
   const handleStatusChange = async (newStatus: string) => {
-    // Use onStatusUpdate if available (which calls board update), otherwise fallback to onUpdateLead
-    const updateHandler = onStatusUpdate || onUpdateLead;
-    if (!updateHandler) return;
+    // Use same handler as other fields for consistent behavior
+    if (!onUpdateLead) return;
 
     try {
-      await updateHandler({ status: newStatus });
+      await onUpdateLead({ status: newStatus });
     } catch (error) {
       console.error('Erro ao alterar status:', error);
     }
