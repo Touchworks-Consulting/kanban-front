@@ -5,11 +5,18 @@ import { LoadingSpinner } from '../components/LoadingSpinner';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
 import { Label } from '../components/ui/label';
+import { PhoneInput } from '../components/forms/PhoneInput';
 
 export function RegisterPage() {
   const navigate = useNavigate();
   const { register, isAuthenticated, isLoading } = useAuthStore();
-  const [form, setForm] = useState({ name: '', email: '', password: '', accountName: '' });
+  const [form, setForm] = useState({
+    name: '',
+    email: '',
+    password: '',
+    accountName: '',
+    phone: ''
+  });
   const [error, setError] = useState<string | null>(null);
 
   if (isAuthenticated) return <Navigate to="/kanban" replace />;
@@ -21,7 +28,7 @@ export function RegisterPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
-    if (!form.email || !form.password || !form.name) return;
+    if (!form.email || !form.password || !form.name || !form.phone) return;
     try {
       console.log('📝 RegisterPage: Chamando função de registro');
       await register(form);
@@ -97,6 +104,13 @@ export function RegisterPage() {
               autoComplete="new-password"
             />
           </div>
+          <PhoneInput
+            id="phone"
+            value={form.phone}
+            onChange={(value) => setForm(f => ({ ...f, phone: value }))}
+            required
+            disabled={isLoading}
+          />
           <div className="grid gap-2">
             <Label htmlFor="accountName">Nome da Conta</Label>
             <Input

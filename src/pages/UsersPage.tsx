@@ -2,8 +2,10 @@ import { useEffect, useState } from 'react';
 import { userService } from '../services';
 import { usePlanLimits } from '../components/PlanLimitsAlert';
 import { LoadingSpinner } from '../components/LoadingSpinner';
-import { Eye, EyeOff, Copy, RefreshCw, Check } from 'lucide-react';
+import { Eye, EyeOff, Copy, RefreshCw, Check, Key } from 'lucide-react';
 import { useAuthStore } from '../stores/auth';
+import { ResetUserPasswordModal } from '../components/users/ResetUserPasswordModal';
+import { PhoneInput } from '../components/forms/PhoneInput';
 import {
   Select,
   SelectContent,
@@ -12,18 +14,22 @@ import {
   SelectValue
 } from '../components/ui/select';
 
-interface UserRow { id: string; name: string; email: string; role?: string; is_active?: boolean; account_id?: string; user_id?: string; }
+interface UserRow { id: string; name: string; email: string; phone?: string; role?: string; is_active?: boolean; account_id?: string; user_id?: string; }
 
 export function UsersPage() {
   const [users, setUsers] = useState<UserRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [form, setForm] = useState({ name: '', email: '', password: '', role: 'member' });
+  const [form, setForm] = useState({ name: '', email: '', password: '', phone: '', role: 'member' });
   const [creating, setCreating] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [showCredentials, setShowCredentials] = useState(false);
   const [createdCredentials, setCreatedCredentials] = useState<{ name: string; email: string; password: string } | null>(null);
   const [copyFeedback, setCopyFeedback] = useState<{ type: 'password' | 'credentials' | null }>({ type: null });
+  const [resetPasswordModal, setResetPasswordModal] = useState<{ isOpen: boolean; user: UserRow | null }>({
+    isOpen: false,
+    user: null
+  });
   const { checkUserLimit } = usePlanLimits();
   const { account } = useAuthStore();
 
@@ -91,6 +97,13 @@ export function UsersPage() {
   setCreating(true);
   setError(null);
 
+    // Validar se telefone foi preenchido
+    if (!form.phone) {
+      setError('Telefone é obrigatório');
+      setCreating(false);
+      return;
+    }
+
     try {
       // Verificar limite antes de criar usuário
       const limitCheck = await checkUserLimit(1);
@@ -129,7 +142,7 @@ export function UsersPage() {
       setCreatedCredentials(credentialsToSave);
       setShowCredentials(true);
 
-      setForm({ name: '', email: '', password: '', role: 'member' });
+      setForm({ name: '', email: '', password: '', phone: '', role: 'member' });
       await load();
     } catch (e: any) {
       console.log('Erro ao criar usuário:', e);
@@ -147,6 +160,23 @@ export function UsersPage() {
       setError(e.message || 'Erro ao atualizar');
     }
   };
+
+  const handleResetPassword = (user: UserRow) => {
+    setResetPasswordModal({
+      isOpen: true,
+      user
+    });
+  };
+
+  const handleResetPasswordSuccess = () => {
+    setError(null);
+    // Optionally show success message
+    console.log('Senha redefinida com sucesso!');
+  };
+
+  // Verificar se o usuário atual tem permissão para gerenciar outros usuários
+  const { user: currentUser } = useAuthStore();
+  const canManageUsers = currentUser?.role && ['owner', 'admin'].includes(currentUser.role);
 
   return (
     <div className="space-y-8">
@@ -169,9 +199,10 @@ export function UsersPage() {
                   <tr className="text-left border-b border-border">
                     <th className="py-2 pr-2">Nome</th>
                     <th className="py-2 pr-2">Email</th>
+                    <th className="py-2 pr-2">Telefone</th>
                     <th className="py-2 pr-2">Perfil</th>
                     <th className="py-2 pr-2">Ativo</th>
-                    <th className="py-2 pr-2"></th>
+                    <th className="py-2 pr-2">Ações</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -179,12 +210,28 @@ export function UsersPage() {
                     <tr key={u.id || u.user_id} className="border-b border-border last:border-0">
                       <td className="py-2 pr-2">{u.name}</td>
                       <td className="py-2 pr-2">{u.email}</td>
+                      <td className="py-2 pr-2">{u.phone || '-'}</td>
                       <td className="py-2 pr-2 capitalize">{u.role || 'member'}</td>
                       <td className="py-2 pr-2">{u.is_active === false ? 'Não' : 'Sim'}</td>
-                      <td className="py-2 pr-2 text-right">
-                        <button onClick={() => toggleActive(u)} className="text-xs px-2 py-1 rounded bg-muted hover:bg-muted/80">
-                          {u.is_active === false ? 'Ativar' : 'Desativar'}
-                        </button>
+                      <td className="py-2 pr-2">
+                        <div className="flex items-center gap-2">
+                          {canManageUsers && (
+                            <button
+                              onClick={() => handleResetPassword(u)}
+                              className="text-xs px-2 py-1 rounded bg-amber-100 hover:bg-amber-200 text-amber-800 dark:bg-amber-900/50 dark:hover:bg-amber-900 dark:text-amber-200 flex items-center gap-1"
+                              title="Redefinir senha"
+                            >
+                              <Key className="w-3 h-3" />
+                              Reset
+                            </button>
+                          )}
+                          <button
+                            onClick={() => toggleActive(u)}
+                            className="text-xs px-2 py-1 rounded bg-muted hover:bg-muted/80"
+                          >
+                            {u.is_active === false ? 'Ativar' : 'Desativar'}
+                          </button>
+                        </div>
                       </td>
                     </tr>
                   ))}
@@ -204,6 +251,13 @@ export function UsersPage() {
                 <div>
                   <label className="block text-xs font-medium text-foreground">Email</label>
                   <input type="email" className="mt-1 w-full border border-border bg-background text-foreground rounded px-2 py-1 text-sm focus:ring-2 focus:ring-primary focus:border-transparent" value={form.email} onChange={e => setForm(f => ({ ...f, email: e.target.value }))} required />
+                </div>
+                <div>
+                  <PhoneInput
+                    value={form.phone}
+                    onChange={(value) => setForm(f => ({ ...f, phone: value }))}
+                    required
+                  />
                 </div>
                 <div>
                   <label className="block text-xs font-medium text-foreground">Senha</label>
@@ -315,6 +369,20 @@ export function UsersPage() {
             </p>
           </div>
         </div>
+      )}
+
+      {/* Modal de Reset de Senha */}
+      {resetPasswordModal.user && (
+        <ResetUserPasswordModal
+          isOpen={resetPasswordModal.isOpen}
+          onClose={() => setResetPasswordModal({ isOpen: false, user: null })}
+          onSuccess={handleResetPasswordSuccess}
+          user={{
+            id: resetPasswordModal.user.id || resetPasswordModal.user.user_id || '',
+            name: resetPasswordModal.user.name,
+            email: resetPasswordModal.user.email
+          }}
+        />
       )}
     </div>
   );
