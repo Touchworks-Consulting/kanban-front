@@ -1,4 +1,4 @@
-export const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000';
+export const API_BASE_URL = import.meta.env.VITE_API_URL || import.meta.env.VITE_API_BASE_URL || 'http://localhost:3001';
 
 export const API_ENDPOINTS = {
   // Auth endpoints
@@ -7,19 +7,19 @@ export const API_ENDPOINTS = {
   REFRESH: '/api/auth/refresh',
   LOGOUT: '/api/auth/logout',
   PROFILE: '/api/auth/verify',
-  
+
   // Lead endpoints
   LEADS: '/api/leads',
   LEAD_BY_ID: (id: number | string) => `/api/leads/${id}`,
   LEAD_MOVE: (id: number | string) => `/api/leads/${id}/move`,
   LEAD_SEARCH: '/api/leads/search',
   LEAD_EXPORT: '/api/leads/export',
-  
-  // Kanban endpoints  
+
+  // Kanban endpoints
   KANBAN_COLUMNS: '/api/kanban/columns',
   KANBAN_COLUMN_BY_ID: (id: number | string) => `/api/kanban/columns/${id}`,
   KANBAN_BOARD: '/api/kanban/board',
-  
+
   // Dashboard endpoints
   DASHBOARD_STATS: '/api/dashboard/stats',
   DASHBOARD_CHARTS: '/api/dashboard/charts',

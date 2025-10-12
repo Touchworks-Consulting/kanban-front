@@ -26,8 +26,11 @@ import ErrorBoundary from './components/ErrorBoundary';
 import Sidebar from './components/layout/Sidebar';
 import Header from './components/layout/Header';
 import { FeedbackWidget } from './components/FeedbackWidget';
+import { ForgotPasswordPage } from './pages/ForgotPasswordPage';
+import { ResetPasswordPage } from './pages/ResetPasswordPage';
 import { Toaster } from './components/ui/sonner';
 import { activityReminderService } from './services/activityReminderService';
+import { PhoneVerificationProvider } from './components/PhoneVerificationProvider';
 
 // Componente para agrupar rotas que usam o layout principal
 const AppLayout = () => (
@@ -109,6 +112,8 @@ function App() {
               </ErrorBoundary>
             }
           />
+          <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+          <Route path="/reset-password" element={<ResetPasswordPage />} />
           <Route path="/terms" element={<TermsPage />} />
           <Route path="/privacy" element={<PrivacyPage />} />
           <Route path="/feedback-admin" element={<FeedbackAdminPage />} />
@@ -121,7 +126,9 @@ function App() {
             element={
               <ErrorBoundary>
                 <ProtectedRoute>
-                  <AppLayout />
+                  <PhoneVerificationProvider>
+                    <AppLayout />
+                  </PhoneVerificationProvider>
                 </ProtectedRoute>
               </ErrorBoundary>
             }
