@@ -34,6 +34,9 @@ export const EmbedLeadModalPage: React.FC = () => {
       }
 
       try {
+        // Armazenar API key temporariamente para uso global no iframe
+        sessionStorage.setItem('embed_api_key', apiKey);
+        
         // Validar acesso ao lead com a API key
         const response = await axios.get(
           `/api/embed/lead-modal/${leadId}`,
@@ -62,6 +65,11 @@ export const EmbedLeadModalPage: React.FC = () => {
     };
 
     validateAccess();
+    
+    // Cleanup: remover API key quando o componente for desmontado
+    return () => {
+      sessionStorage.removeItem('embed_api_key');
+    };
   }, [leadId, apiKey]);
 
   if (isLoading) {

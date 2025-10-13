@@ -36,6 +36,14 @@ class ApiService {
             return config;
           }
 
+          // Verificar se existe API key no sessionStorage (modo iframe embed)
+          const embedApiKey = sessionStorage.getItem('embed_api_key');
+          if (embedApiKey) {
+            console.log('🔑 Usando embed_api_key do sessionStorage');
+            config.headers['x-api-key'] = embedApiKey;
+            return config;
+          }
+
           // Ler diretamente do Zustand store (mais confiável)
           const authState = useAuthStore.getState();
           let token = authState.token;
