@@ -1,9 +1,9 @@
 import { apiService } from './api';
 import { API_ENDPOINTS } from '../constants';
 
-export interface UserDto { id: string; name: string; email: string; role?: string; is_active?: boolean; account_id?: string; }
-export interface CreateUserInput { name: string; email: string; password: string; role?: 'admin' | 'member'; account_id?: string; }
-export interface UpdateUserInput { name?: string; password?: string; role?: 'admin' | 'member'; is_active?: boolean; }
+export interface UserDto { id: string; name: string; email: string; phone?: string; role?: string; is_active?: boolean; account_id?: string; }
+export interface CreateUserInput { name: string; email: string; password: string; phone: string; role?: 'admin' | 'member'; account_id?: string; }
+export interface UpdateUserInput { name?: string; password?: string; phone?: string; role?: 'admin' | 'member'; is_active?: boolean; }
 
 interface ListResponse { users: UserDto[] }
 interface SingleResponse { user: UserDto }
@@ -23,6 +23,10 @@ export const userService = {
   },
   remove: async (id: string): Promise<any> => {
     const res = await apiService.delete<any>(API_ENDPOINTS.USER_BY_ID(id));
+    return res.data;
+  },
+  resetPassword: async (id: string, newPassword: string): Promise<any> => {
+    const res = await apiService.put<any>(`${API_ENDPOINTS.USER_BY_ID(id)}/reset-password`, { newPassword });
     return res.data;
   }
 };

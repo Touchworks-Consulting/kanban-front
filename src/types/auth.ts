@@ -4,6 +4,8 @@ export interface UserAccount {
   user_id?: string;      // id do usuário
   name: string;
   email: string;
+  phone?: string;        // telefone do usuário
+  phone_verified?: boolean;  // se o telefone foi verificado via OTP
   role?: 'owner' | 'admin' | 'member';
 }
 

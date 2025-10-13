@@ -6,6 +6,7 @@ import type { LoginCredentials, RegisterData, UserAccount } from '../types';
 interface AuthState {
   // State
   account: UserAccount | null;
+  user: UserAccount | null;  // alias para compatibilidade
   token: string | null;
   isAuthenticated: boolean;
   isLoading: boolean;
@@ -18,6 +19,7 @@ interface AuthState {
   refreshAuth: () => Promise<void>;
   clearError: () => void;
   setLoading: (loading: boolean) => void;
+  updateUserData: (userData: Partial<UserAccount>) => void;
 }
 
 export const useAuthStore = create<AuthState>()(
@@ -25,6 +27,7 @@ export const useAuthStore = create<AuthState>()(
     (set, get) => ({
       // Initial state
       account: null,
+      user: null,
       token: null,
       isAuthenticated: false,
       isLoading: false,
@@ -41,6 +44,7 @@ export const useAuthStore = create<AuthState>()(
           if (token && user) {
             set({
               account: user,
+              user: user,  // alias para compatibilidade
               token: token,
               isAuthenticated: true,
               isLoading: false,
@@ -82,6 +86,7 @@ export const useAuthStore = create<AuthState>()(
             error: errorMessage,
             isAuthenticated: false,
             account: null,
+            user: null,
             token: null,
           });
           throw new Error(errorMessage);
@@ -103,6 +108,7 @@ export const useAuthStore = create<AuthState>()(
             console.log('🏪 AuthStore: Atualizando estado do store com dados de autenticação');
             set({
               account: user,
+              user: user,  // alias para compatibilidade
               token,
               isAuthenticated: true,
               isLoading: false,
@@ -145,6 +151,8 @@ export const useAuthStore = create<AuthState>()(
             isLoading: false,
             error: errorMessage,
             isAuthenticated: false,
+            account: null,
+            user: null,
           });
           throw new Error(errorMessage);
         }
@@ -160,6 +168,7 @@ export const useAuthStore = create<AuthState>()(
         } finally {
           set({
             account: null,
+            user: null,
             token: null,
             isAuthenticated: false,
             isLoading: false,
@@ -179,6 +188,7 @@ export const useAuthStore = create<AuthState>()(
             set({
               token: newToken,
               account,
+              user: account,  // alias para compatibilidade
               isAuthenticated: true,
             });
           } catch (error) {
@@ -189,13 +199,28 @@ export const useAuthStore = create<AuthState>()(
       },
 
       clearError: () => set({ error: null }),
-      
+
       setLoading: (loading: boolean) => set({ isLoading: loading }),
+
+      updateUserData: (userData: Partial<UserAccount>) => {
+        const { account } = get();
+        if (account) {
+          const updatedAccount = { ...account, ...userData };
+          set({
+            account: updatedAccount,
+            user: updatedAccount  // alias para compatibilidade
+          });
+
+          // Sincronizar com localStorage
+          localStorage.setItem('crm_account_data', JSON.stringify(updatedAccount));
+        }
+      },
     }),
     {
       name: 'auth-storage',
       partialize: (state) => ({
         account: state.account,
+        user: state.user,
         token: state.token,
         isAuthenticated: state.isAuthenticated,
       }),
@@ -228,6 +253,7 @@ export const initializeAuth = () => {
     console.log('✅ Valid auth data found in localStorage, setting authenticated state');
     useAuthStore.setState({
       account,
+      user: account,  // alias para compatibilidade
       token,
       isAuthenticated: true,
       isLoading: false,
@@ -239,6 +265,7 @@ export const initializeAuth = () => {
     authService.clearAuthData();
     useAuthStore.setState({
       account: null,
+      user: null,
       token: null,
       isAuthenticated: false,
       isLoading: false,
