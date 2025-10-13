@@ -30,6 +30,12 @@ class ApiService {
     this.api.interceptors.request.use(
       (config) => {
         try {
+          // Se a requisição tem x-api-key, é modo embed - não adicionar token JWT
+          if (config.headers && config.headers['x-api-key']) {
+            console.log('🔑 Modo embed detectado - usando x-api-key');
+            return config;
+          }
+
           // Ler diretamente do Zustand store (mais confiável)
           const authState = useAuthStore.getState();
           let token = authState.token;

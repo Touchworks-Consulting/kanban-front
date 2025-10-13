@@ -1,0 +1,2468 @@
+{
+  "Account": {
+    "columns": [
+      {
+        "column_name": "id",
+        "data_type": "uuid",
+        "character_maximum_length": null,
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "column_name": "name",
+        "data_type": "character varying",
+        "character_maximum_length": 255,
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "column_name": "email",
+        "data_type": "character varying",
+        "character_maximum_length": 255,
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "column_name": "api_key",
+        "data_type": "character varying",
+        "character_maximum_length": 255,
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "column_name": "password",
+        "data_type": "character varying",
+        "character_maximum_length": 255,
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "column_name": "is_active",
+        "data_type": "boolean",
+        "character_maximum_length": null,
+        "is_nullable": "YES",
+        "column_default": "true"
+      },
+      {
+        "column_name": "settings",
+        "data_type": "jsonb",
+        "character_maximum_length": null,
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "column_name": "created_at",
+        "data_type": "timestamp with time zone",
+        "character_maximum_length": null,
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "column_name": "updated_at",
+        "data_type": "timestamp with time zone",
+        "character_maximum_length": null,
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "column_name": "display_name",
+        "data_type": "character varying",
+        "character_maximum_length": 255,
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "column_name": "description",
+        "data_type": "text",
+        "character_maximum_length": null,
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "column_name": "avatar_url",
+        "data_type": "character varying",
+        "character_maximum_length": 255,
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "column_name": "plan",
+        "data_type": "character varying",
+        "character_maximum_length": 50,
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "column_name": "custom_statuses",
+        "data_type": "jsonb",
+        "character_maximum_length": null,
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "column_name": "custom_loss_reasons",
+        "data_type": "jsonb",
+        "character_maximum_length": null,
+        "is_nullable": "YES",
+        "column_default": null
+      }
+    ],
+    "indexes": [
+      {
+        "indexname": "Account_pkey",
+        "indexdef": "CREATE UNIQUE INDEX \"Account_pkey\" ON public.\"Account\" USING btree (id)"
+      }
+    ],
+    "constraints": [
+      {
+        "constraint_name": "Account_pkey",
+        "constraint_type": "p"
+      }
+    ]
+  },
+  "Automation": {
+    "columns": [
+      {
+        "column_name": "updated_at",
+        "data_type": "timestamp with time zone",
+        "character_maximum_length": null,
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "column_name": "account_id",
+        "data_type": "uuid",
+        "character_maximum_length": null,
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "column_name": "created_at",
+        "data_type": "timestamp with time zone",
+        "character_maximum_length": null,
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "column_name": "id",
+        "data_type": "uuid",
+        "character_maximum_length": null,
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "column_name": "trigger_type",
+        "data_type": "character varying",
+        "character_maximum_length": 50,
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "column_name": "trigger_conditions",
+        "data_type": "jsonb",
+        "character_maximum_length": null,
+        "is_nullable": "YES",
+        "column_default": "'{}'::json"
+      },
+      {
+        "column_name": "actions",
+        "data_type": "jsonb",
+        "character_maximum_length": null,
+        "is_nullable": "YES",
+        "column_default": "'[]'::json"
+      },
+      {
+        "column_name": "is_active",
+        "data_type": "boolean",
+        "character_maximum_length": null,
+        "is_nullable": "YES",
+        "column_default": "true"
+      },
+      {
+        "column_name": "priority",
+        "data_type": "integer",
+        "character_maximum_length": null,
+        "is_nullable": "YES",
+        "column_default": "0"
+      },
+      {
+        "column_name": "execution_count",
+        "data_type": "integer",
+        "character_maximum_length": null,
+        "is_nullable": "YES",
+        "column_default": "0"
+      },
+      {
+        "column_name": "last_executed_at",
+        "data_type": "timestamp with time zone",
+        "character_maximum_length": null,
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "column_name": "delay_minutes",
+        "data_type": "integer",
+        "character_maximum_length": null,
+        "is_nullable": "YES",
+        "column_default": "0"
+      },
+      {
+        "column_name": "name",
+        "data_type": "character varying",
+        "character_maximum_length": 255,
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "column_name": "description",
+        "data_type": "text",
+        "character_maximum_length": null,
+        "is_nullable": "YES",
+        "column_default": null
+      }
+    ],
+    "indexes": [
+      {
+        "indexname": "Automation_pkey",
+        "indexdef": "CREATE UNIQUE INDEX \"Automation_pkey\" ON public.\"Automation\" USING btree (id)"
+      }
+    ],
+    "constraints": [
+      {
+        "constraint_name": "Automation_pkey",
+        "constraint_type": "p"
+      }
+    ]
+  },
+  "AutomationExecution": {
+    "columns": [
+      {
+        "column_name": "id",
+        "data_type": "uuid",
+        "character_maximum_length": null,
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "column_name": "automation_id",
+        "data_type": "uuid",
+        "character_maximum_length": null,
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "column_name": "lead_id",
+        "data_type": "uuid",
+        "character_maximum_length": null,
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "column_name": "trigger_data",
+        "data_type": "jsonb",
+        "character_maximum_length": null,
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "column_name": "scheduled_for",
+        "data_type": "timestamp with time zone",
+        "character_maximum_length": null,
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "column_name": "executed_at",
+        "data_type": "timestamp with time zone",
+        "character_maximum_length": null,
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "column_name": "status",
+        "data_type": "character varying",
+        "character_maximum_length": 50,
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "column_name": "actions_completed",
+        "data_type": "integer",
+        "character_maximum_length": null,
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "column_name": "actions_total",
+        "data_type": "integer",
+        "character_maximum_length": null,
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "column_name": "error_message",
+        "data_type": "text",
+        "character_maximum_length": null,
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "column_name": "execution_result",
+        "data_type": "jsonb",
+        "character_maximum_length": null,
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "column_name": "created_at",
+        "data_type": "timestamp with time zone",
+        "character_maximum_length": null,
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "column_name": "updated_at",
+        "data_type": "timestamp with time zone",
+        "character_maximum_length": null,
+        "is_nullable": "NO",
+        "column_default": null
+      }
+    ],
+    "indexes": [
+      {
+        "indexname": "AutomationExecution_pkey",
+        "indexdef": "CREATE UNIQUE INDEX \"AutomationExecution_pkey\" ON public.\"AutomationExecution\" USING btree (id)"
+      }
+    ],
+    "constraints": [
+      {
+        "constraint_name": "AutomationExecution_pkey",
+        "constraint_type": "p"
+      }
+    ]
+  },
+  "CronJob": {
+    "columns": [
+      {
+        "column_name": "updated_at",
+        "data_type": "timestamp with time zone",
+        "character_maximum_length": null,
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "column_name": "account_id",
+        "data_type": "uuid",
+        "character_maximum_length": null,
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "column_name": "max_retries",
+        "data_type": "integer",
+        "character_maximum_length": null,
+        "is_nullable": "YES",
+        "column_default": "3"
+      },
+      {
+        "column_name": "retry_count",
+        "data_type": "integer",
+        "character_maximum_length": null,
+        "is_nullable": "YES",
+        "column_default": "0"
+      },
+      {
+        "column_name": "created_at",
+        "data_type": "timestamp with time zone",
+        "character_maximum_length": null,
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "column_name": "id",
+        "data_type": "uuid",
+        "character_maximum_length": null,
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "column_name": "type",
+        "data_type": "character varying",
+        "character_maximum_length": 50,
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "column_name": "is_active",
+        "data_type": "boolean",
+        "character_maximum_length": null,
+        "is_nullable": "YES",
+        "column_default": "true"
+      },
+      {
+        "column_name": "conditions",
+        "data_type": "jsonb",
+        "character_maximum_length": null,
+        "is_nullable": "YES",
+        "column_default": "'{}'::json"
+      },
+      {
+        "column_name": "actions",
+        "data_type": "jsonb",
+        "character_maximum_length": null,
+        "is_nullable": "YES",
+        "column_default": "'{}'::json"
+      },
+      {
+        "column_name": "last_run_at",
+        "data_type": "timestamp with time zone",
+        "character_maximum_length": null,
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "column_name": "next_run_at",
+        "data_type": "timestamp with time zone",
+        "character_maximum_length": null,
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "column_name": "run_count",
+        "data_type": "integer",
+        "character_maximum_length": null,
+        "is_nullable": "YES",
+        "column_default": "0"
+      },
+      {
+        "column_name": "success_count",
+        "data_type": "integer",
+        "character_maximum_length": null,
+        "is_nullable": "YES",
+        "column_default": "0"
+      },
+      {
+        "column_name": "error_count",
+        "data_type": "integer",
+        "character_maximum_length": null,
+        "is_nullable": "YES",
+        "column_default": "0"
+      },
+      {
+        "column_name": "timeout_seconds",
+        "data_type": "integer",
+        "character_maximum_length": null,
+        "is_nullable": "YES",
+        "column_default": "300"
+      },
+      {
+        "column_name": "name",
+        "data_type": "character varying",
+        "character_maximum_length": 255,
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "column_name": "description",
+        "data_type": "text",
+        "character_maximum_length": null,
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "column_name": "last_error",
+        "data_type": "text",
+        "character_maximum_length": null,
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "column_name": "cron_expression",
+        "data_type": "character varying",
+        "character_maximum_length": 255,
+        "is_nullable": "NO",
+        "column_default": null
+      }
+    ],
+    "indexes": [
+      {
+        "indexname": "CronJob_pkey",
+        "indexdef": "CREATE UNIQUE INDEX \"CronJob_pkey\" ON public.\"CronJob\" USING btree (id)"
+      }
+    ],
+    "constraints": [
+      {
+        "constraint_name": "CronJob_pkey",
+        "constraint_type": "p"
+      }
+    ]
+  },
+  "CronJobExecution": {
+    "columns": [
+      {
+        "column_name": "id",
+        "data_type": "uuid",
+        "character_maximum_length": null,
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "column_name": "cron_job_id",
+        "data_type": "uuid",
+        "character_maximum_length": null,
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "column_name": "started_at",
+        "data_type": "timestamp with time zone",
+        "character_maximum_length": null,
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "column_name": "finished_at",
+        "data_type": "timestamp with time zone",
+        "character_maximum_length": null,
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "column_name": "status",
+        "data_type": "character varying",
+        "character_maximum_length": 50,
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "column_name": "duration_ms",
+        "data_type": "integer",
+        "character_maximum_length": null,
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "column_name": "processed_items",
+        "data_type": "integer",
+        "character_maximum_length": null,
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "column_name": "affected_items",
+        "data_type": "integer",
+        "character_maximum_length": null,
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "column_name": "error_message",
+        "data_type": "text",
+        "character_maximum_length": null,
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "column_name": "output_data",
+        "data_type": "jsonb",
+        "character_maximum_length": null,
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "column_name": "metadata",
+        "data_type": "jsonb",
+        "character_maximum_length": null,
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "column_name": "created_at",
+        "data_type": "timestamp with time zone",
+        "character_maximum_length": null,
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "column_name": "updated_at",
+        "data_type": "timestamp with time zone",
+        "character_maximum_length": null,
+        "is_nullable": "NO",
+        "column_default": null
+      }
+    ],
+    "indexes": [
+      {
+        "indexname": "CronJobExecution_pkey",
+        "indexdef": "CREATE UNIQUE INDEX \"CronJobExecution_pkey\" ON public.\"CronJobExecution\" USING btree (id)"
+      }
+    ],
+    "constraints": [
+      {
+        "constraint_name": "CronJobExecution_pkey",
+        "constraint_type": "p"
+      }
+    ]
+  },
+  "KanbanColumn": {
+    "columns": [
+      {
+        "column_name": "id",
+        "data_type": "uuid",
+        "character_maximum_length": null,
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "column_name": "account_id",
+        "data_type": "uuid",
+        "character_maximum_length": null,
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "column_name": "created_at",
+        "data_type": "timestamp with time zone",
+        "character_maximum_length": null,
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "column_name": "updated_at",
+        "data_type": "timestamp with time zone",
+        "character_maximum_length": null,
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "column_name": "position",
+        "data_type": "integer",
+        "character_maximum_length": null,
+        "is_nullable": "NO",
+        "column_default": "0"
+      },
+      {
+        "column_name": "is_system",
+        "data_type": "boolean",
+        "character_maximum_length": null,
+        "is_nullable": "YES",
+        "column_default": "false"
+      },
+      {
+        "column_name": "is_active",
+        "data_type": "boolean",
+        "character_maximum_length": null,
+        "is_nullable": "YES",
+        "column_default": "true"
+      },
+      {
+        "column_name": "name",
+        "data_type": "character varying",
+        "character_maximum_length": 255,
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "column_name": "color",
+        "data_type": "character varying",
+        "character_maximum_length": 255,
+        "is_nullable": "YES",
+        "column_default": "'#6b7280'::character varying"
+      }
+    ],
+    "indexes": [
+      {
+        "indexname": "KanbanColumn_pkey",
+        "indexdef": "CREATE UNIQUE INDEX \"KanbanColumn_pkey\" ON public.\"KanbanColumn\" USING btree (id)"
+      }
+    ],
+    "constraints": [
+      {
+        "constraint_name": "KanbanColumn_pkey",
+        "constraint_type": "p"
+      }
+    ]
+  },
+  "Lead": {
+    "columns": [
+      {
+        "column_name": "id",
+        "data_type": "uuid",
+        "character_maximum_length": null,
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "column_name": "account_id",
+        "data_type": "uuid",
+        "character_maximum_length": null,
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "column_name": "name",
+        "data_type": "character varying",
+        "character_maximum_length": 255,
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "column_name": "phone",
+        "data_type": "character varying",
+        "character_maximum_length": 255,
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "column_name": "email",
+        "data_type": "character varying",
+        "character_maximum_length": 255,
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "column_name": "platform",
+        "data_type": "character varying",
+        "character_maximum_length": 255,
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "column_name": "campaign",
+        "data_type": "character varying",
+        "character_maximum_length": 255,
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "column_name": "source_url",
+        "data_type": "text",
+        "character_maximum_length": null,
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "column_name": "message",
+        "data_type": "text",
+        "character_maximum_length": null,
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "column_name": "status",
+        "data_type": "character varying",
+        "character_maximum_length": 50,
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "column_name": "column_id",
+        "data_type": "uuid",
+        "character_maximum_length": null,
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "column_name": "position",
+        "data_type": "integer",
+        "character_maximum_length": null,
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "column_name": "won_reason",
+        "data_type": "character varying",
+        "character_maximum_length": 255,
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "column_name": "lost_reason",
+        "data_type": "character varying",
+        "character_maximum_length": 255,
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "column_name": "value",
+        "data_type": "numeric",
+        "character_maximum_length": null,
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "column_name": "notes",
+        "data_type": "text",
+        "character_maximum_length": null,
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "column_name": "metadata",
+        "data_type": "jsonb",
+        "character_maximum_length": null,
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "column_name": "created_at",
+        "data_type": "timestamp with time zone",
+        "character_maximum_length": null,
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "column_name": "updated_at",
+        "data_type": "timestamp with time zone",
+        "character_maximum_length": null,
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "column_name": "channel",
+        "data_type": "character varying",
+        "character_maximum_length": 255,
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "column_name": "won_at",
+        "data_type": "timestamp with time zone",
+        "character_maximum_length": null,
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "column_name": "lost_at",
+        "data_type": "timestamp with time zone",
+        "character_maximum_length": null,
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "column_name": "assigned_to_user_id",
+        "data_type": "uuid",
+        "character_maximum_length": null,
+        "is_nullable": "YES",
+        "column_default": null
+      }
+    ],
+    "indexes": [
+      {
+        "indexname": "Lead_pkey",
+        "indexdef": "CREATE UNIQUE INDEX \"Lead_pkey\" ON public.\"Lead\" USING btree (id)"
+      }
+    ],
+    "constraints": [
+      {
+        "constraint_name": "Lead_pkey",
+        "constraint_type": "p"
+      }
+    ]
+  },
+  "LeadTag": {
+    "columns": [
+      {
+        "column_name": "lead_id",
+        "data_type": "uuid",
+        "character_maximum_length": null,
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "column_name": "tag_id",
+        "data_type": "uuid",
+        "character_maximum_length": null,
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "column_name": "created_at",
+        "data_type": "timestamp with time zone",
+        "character_maximum_length": null,
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "column_name": "updated_at",
+        "data_type": "timestamp with time zone",
+        "character_maximum_length": null,
+        "is_nullable": "NO",
+        "column_default": null
+      }
+    ],
+    "indexes": [
+      {
+        "indexname": "LeadTag_pkey",
+        "indexdef": "CREATE UNIQUE INDEX \"LeadTag_pkey\" ON public.\"LeadTag\" USING btree (tag_id, lead_id)"
+      }
+    ],
+    "constraints": [
+      {
+        "constraint_name": "LeadTag_pkey",
+        "constraint_type": "p"
+      }
+    ]
+  },
+  "Notification": {
+    "columns": [
+      {
+        "column_name": "id",
+        "data_type": "uuid",
+        "character_maximum_length": null,
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "column_name": "account_id",
+        "data_type": "uuid",
+        "character_maximum_length": null,
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "column_name": "user_id",
+        "data_type": "uuid",
+        "character_maximum_length": null,
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "column_name": "type",
+        "data_type": "character varying",
+        "character_maximum_length": 50,
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "column_name": "title",
+        "data_type": "character varying",
+        "character_maximum_length": 255,
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "column_name": "message",
+        "data_type": "text",
+        "character_maximum_length": null,
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "column_name": "action_url",
+        "data_type": "character varying",
+        "character_maximum_length": 255,
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "column_name": "action_label",
+        "data_type": "character varying",
+        "character_maximum_length": 255,
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "column_name": "is_read",
+        "data_type": "boolean",
+        "character_maximum_length": null,
+        "is_nullable": "YES",
+        "column_default": "false"
+      },
+      {
+        "column_name": "is_dismissed",
+        "data_type": "boolean",
+        "character_maximum_length": null,
+        "is_nullable": "YES",
+        "column_default": "false"
+      },
+      {
+        "column_name": "priority",
+        "data_type": "character varying",
+        "character_maximum_length": 50,
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "column_name": "metadata",
+        "data_type": "jsonb",
+        "character_maximum_length": null,
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "column_name": "expires_at",
+        "data_type": "timestamp with time zone",
+        "character_maximum_length": null,
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "column_name": "created_at",
+        "data_type": "timestamp with time zone",
+        "character_maximum_length": null,
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "column_name": "updated_at",
+        "data_type": "timestamp with time zone",
+        "character_maximum_length": null,
+        "is_nullable": "NO",
+        "column_default": null
+      }
+    ],
+    "indexes": [
+      {
+        "indexname": "Notification_pkey",
+        "indexdef": "CREATE UNIQUE INDEX \"Notification_pkey\" ON public.\"Notification\" USING btree (id)"
+      }
+    ],
+    "constraints": [
+      {
+        "constraint_name": "Notification_pkey",
+        "constraint_type": "p"
+      }
+    ]
+  },
+  "PlatformConfig": {
+    "columns": [
+      {
+        "column_name": "id",
+        "data_type": "uuid",
+        "character_maximum_length": null,
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "column_name": "account_id",
+        "data_type": "uuid",
+        "character_maximum_length": null,
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "column_name": "is_active",
+        "data_type": "boolean",
+        "character_maximum_length": null,
+        "is_nullable": "YES",
+        "column_default": "true"
+      },
+      {
+        "column_name": "created_at",
+        "data_type": "timestamp with time zone",
+        "character_maximum_length": null,
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "column_name": "updated_at",
+        "data_type": "timestamp with time zone",
+        "character_maximum_length": null,
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "column_name": "phrase",
+        "data_type": "character varying",
+        "character_maximum_length": 255,
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "column_name": "campaign",
+        "data_type": "character varying",
+        "character_maximum_length": 255,
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "column_name": "platform",
+        "data_type": "character varying",
+        "character_maximum_length": 255,
+        "is_nullable": "NO",
+        "column_default": null
+      }
+    ],
+    "indexes": [
+      {
+        "indexname": "PlatformConfig_pkey",
+        "indexdef": "CREATE UNIQUE INDEX \"PlatformConfig_pkey\" ON public.\"PlatformConfig\" USING btree (id)"
+      }
+    ],
+    "constraints": [
+      {
+        "constraint_name": "PlatformConfig_pkey",
+        "constraint_type": "p"
+      }
+    ]
+  },
+  "SequelizeMeta": {
+    "columns": [
+      {
+        "column_name": "name",
+        "data_type": "character varying",
+        "character_maximum_length": 255,
+        "is_nullable": "NO",
+        "column_default": null
+      }
+    ],
+    "indexes": [
+      {
+        "indexname": "SequelizeMeta_pkey",
+        "indexdef": "CREATE UNIQUE INDEX \"SequelizeMeta_pkey\" ON public.\"SequelizeMeta\" USING btree (name)"
+      }
+    ],
+    "constraints": [
+      {
+        "constraint_name": "SequelizeMeta_pkey",
+        "constraint_type": "p"
+      }
+    ]
+  },
+  "Tag": {
+    "columns": [
+      {
+        "column_name": "account_id",
+        "data_type": "uuid",
+        "character_maximum_length": null,
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "column_name": "created_at",
+        "data_type": "timestamp with time zone",
+        "character_maximum_length": null,
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "column_name": "updated_at",
+        "data_type": "timestamp with time zone",
+        "character_maximum_length": null,
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "column_name": "id",
+        "data_type": "uuid",
+        "character_maximum_length": null,
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "column_name": "color",
+        "data_type": "character varying",
+        "character_maximum_length": 255,
+        "is_nullable": "YES",
+        "column_default": "'#3b82f6'::character varying"
+      },
+      {
+        "column_name": "name",
+        "data_type": "character varying",
+        "character_maximum_length": 255,
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "column_name": "description",
+        "data_type": "text",
+        "character_maximum_length": null,
+        "is_nullable": "YES",
+        "column_default": null
+      }
+    ],
+    "indexes": [
+      {
+        "indexname": "Tag_pkey",
+        "indexdef": "CREATE UNIQUE INDEX \"Tag_pkey\" ON public.\"Tag\" USING btree (id)"
+      }
+    ],
+    "constraints": [
+      {
+        "constraint_name": "Tag_pkey",
+        "constraint_type": "p"
+      }
+    ]
+  },
+  "accounts": {
+    "columns": [
+      {
+        "column_name": "id",
+        "data_type": "uuid",
+        "character_maximum_length": null,
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "column_name": "name",
+        "data_type": "character varying",
+        "character_maximum_length": 255,
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "column_name": "email",
+        "data_type": "character varying",
+        "character_maximum_length": 255,
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "column_name": "api_key",
+        "data_type": "character varying",
+        "character_maximum_length": 255,
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "column_name": "password",
+        "data_type": "character varying",
+        "character_maximum_length": 255,
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "column_name": "is_active",
+        "data_type": "boolean",
+        "character_maximum_length": null,
+        "is_nullable": "YES",
+        "column_default": "true"
+      },
+      {
+        "column_name": "settings",
+        "data_type": "jsonb",
+        "character_maximum_length": null,
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "column_name": "created_at",
+        "data_type": "timestamp with time zone",
+        "character_maximum_length": null,
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "column_name": "updated_at",
+        "data_type": "timestamp with time zone",
+        "character_maximum_length": null,
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "column_name": "display_name",
+        "data_type": "character varying",
+        "character_maximum_length": 255,
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "column_name": "description",
+        "data_type": "text",
+        "character_maximum_length": null,
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "column_name": "avatar_url",
+        "data_type": "character varying",
+        "character_maximum_length": 255,
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "column_name": "plan",
+        "data_type": "character varying",
+        "character_maximum_length": 50,
+        "is_nullable": "YES",
+        "column_default": null
+      }
+    ],
+    "indexes": [
+      {
+        "indexname": "accounts_pkey",
+        "indexdef": "CREATE UNIQUE INDEX accounts_pkey ON public.accounts USING btree (id)"
+      }
+    ],
+    "constraints": [
+      {
+        "constraint_name": "accounts_pkey",
+        "constraint_type": "p"
+      }
+    ]
+  },
+  "campaigns": {
+    "columns": [
+      {
+        "column_name": "updated_at",
+        "data_type": "timestamp with time zone",
+        "character_maximum_length": null,
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "column_name": "account_id",
+        "data_type": "uuid",
+        "character_maximum_length": null,
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "column_name": "total_cost",
+        "data_type": "numeric",
+        "character_maximum_length": null,
+        "is_nullable": "YES",
+        "column_default": "0"
+      },
+      {
+        "column_name": "cost_per_lead",
+        "data_type": "numeric",
+        "character_maximum_length": null,
+        "is_nullable": "YES",
+        "column_default": "0"
+      },
+      {
+        "column_name": "created_at",
+        "data_type": "timestamp with time zone",
+        "character_maximum_length": null,
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "column_name": "id",
+        "data_type": "uuid",
+        "character_maximum_length": null,
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "column_name": "budget",
+        "data_type": "numeric",
+        "character_maximum_length": null,
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "column_name": "target_audience",
+        "data_type": "jsonb",
+        "character_maximum_length": null,
+        "is_nullable": "YES",
+        "column_default": "'{}'::json"
+      },
+      {
+        "column_name": "campaign_settings",
+        "data_type": "jsonb",
+        "character_maximum_length": null,
+        "is_nullable": "YES",
+        "column_default": "'{}'::json"
+      },
+      {
+        "column_name": "start_date",
+        "data_type": "timestamp with time zone",
+        "character_maximum_length": null,
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "column_name": "end_date",
+        "data_type": "timestamp with time zone",
+        "character_maximum_length": null,
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "column_name": "is_active",
+        "data_type": "boolean",
+        "character_maximum_length": null,
+        "is_nullable": "YES",
+        "column_default": "true"
+      },
+      {
+        "column_name": "total_leads",
+        "data_type": "integer",
+        "character_maximum_length": null,
+        "is_nullable": "YES",
+        "column_default": "0"
+      },
+      {
+        "column_name": "name",
+        "data_type": "character varying",
+        "character_maximum_length": 255,
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "column_name": "platform",
+        "data_type": "character varying",
+        "character_maximum_length": 255,
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "column_name": "channel",
+        "data_type": "character varying",
+        "character_maximum_length": 255,
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "column_name": "description",
+        "data_type": "text",
+        "character_maximum_length": null,
+        "is_nullable": "YES",
+        "column_default": null
+      }
+    ],
+    "indexes": [
+      {
+        "indexname": "campaigns_pkey",
+        "indexdef": "CREATE UNIQUE INDEX campaigns_pkey ON public.campaigns USING btree (id)"
+      }
+    ],
+    "constraints": [
+      {
+        "constraint_name": "campaigns_pkey",
+        "constraint_type": "p"
+      }
+    ]
+  },
+  "feedback_votes": {
+    "columns": [
+      {
+        "column_name": "id",
+        "data_type": "uuid",
+        "character_maximum_length": null,
+        "is_nullable": "NO",
+        "column_default": "gen_random_uuid()"
+      },
+      {
+        "column_name": "feedback_id",
+        "data_type": "uuid",
+        "character_maximum_length": null,
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "column_name": "user_id",
+        "data_type": "uuid",
+        "character_maximum_length": null,
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "column_name": "ip_address",
+        "data_type": "character varying",
+        "character_maximum_length": 255,
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "column_name": "user_agent",
+        "data_type": "text",
+        "character_maximum_length": null,
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "column_name": "created_at",
+        "data_type": "timestamp with time zone",
+        "character_maximum_length": null,
+        "is_nullable": "YES",
+        "column_default": "now()"
+      },
+      {
+        "column_name": "updated_at",
+        "data_type": "timestamp with time zone",
+        "character_maximum_length": null,
+        "is_nullable": "YES",
+        "column_default": "now()"
+      }
+    ],
+    "indexes": [
+      {
+        "indexname": "feedback_votes_pkey",
+        "indexdef": "CREATE UNIQUE INDEX feedback_votes_pkey ON public.feedback_votes USING btree (id)"
+      },
+      {
+        "indexname": "unique_feedback_user_vote",
+        "indexdef": "CREATE UNIQUE INDEX unique_feedback_user_vote ON public.feedback_votes USING btree (feedback_id, user_id) WHERE (user_id IS NOT NULL)"
+      },
+      {
+        "indexname": "unique_feedback_ip_vote",
+        "indexdef": "CREATE UNIQUE INDEX unique_feedback_ip_vote ON public.feedback_votes USING btree (feedback_id, ip_address) WHERE ((user_id IS NULL) AND (ip_address IS NOT NULL))"
+      }
+    ],
+    "constraints": [
+      {
+        "constraint_name": "feedback_votes_pkey",
+        "constraint_type": "p"
+      },
+      {
+        "constraint_name": "feedback_votes_feedback_id_fkey",
+        "constraint_type": "f"
+      },
+      {
+        "constraint_name": "feedback_votes_user_id_fkey",
+        "constraint_type": "f"
+      }
+    ]
+  },
+  "feedbacks": {
+    "columns": [
+      {
+        "column_name": "id",
+        "data_type": "uuid",
+        "character_maximum_length": null,
+        "is_nullable": "NO",
+        "column_default": "gen_random_uuid()"
+      },
+      {
+        "column_name": "user_id",
+        "data_type": "uuid",
+        "character_maximum_length": null,
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "column_name": "account_id",
+        "data_type": "uuid",
+        "character_maximum_length": null,
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "column_name": "browser_info",
+        "data_type": "jsonb",
+        "character_maximum_length": null,
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "column_name": "created_at",
+        "data_type": "timestamp with time zone",
+        "character_maximum_length": null,
+        "is_nullable": "YES",
+        "column_default": "now()"
+      },
+      {
+        "column_name": "updated_at",
+        "data_type": "timestamp with time zone",
+        "character_maximum_length": null,
+        "is_nullable": "YES",
+        "column_default": "now()"
+      },
+      {
+        "column_name": "priority",
+        "data_type": "character varying",
+        "character_maximum_length": 50,
+        "is_nullable": "YES",
+        "column_default": "'medium'::character varying"
+      },
+      {
+        "column_name": "account_name",
+        "data_type": "character varying",
+        "character_maximum_length": 255,
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "column_name": "user_agent",
+        "data_type": "text",
+        "character_maximum_length": null,
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "column_name": "ip_address",
+        "data_type": "character varying",
+        "character_maximum_length": 255,
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "column_name": "screen_resolution",
+        "data_type": "character varying",
+        "character_maximum_length": 50,
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "column_name": "admin_notes",
+        "data_type": "text",
+        "character_maximum_length": null,
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "column_name": "current_page",
+        "data_type": "character varying",
+        "character_maximum_length": 500,
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "column_name": "type",
+        "data_type": "character varying",
+        "character_maximum_length": 50,
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "column_name": "message",
+        "data_type": "text",
+        "character_maximum_length": null,
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "column_name": "status",
+        "data_type": "character varying",
+        "character_maximum_length": 50,
+        "is_nullable": "YES",
+        "column_default": "'new'::character varying"
+      },
+      {
+        "column_name": "user_name",
+        "data_type": "character varying",
+        "character_maximum_length": 255,
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "column_name": "user_email",
+        "data_type": "character varying",
+        "character_maximum_length": 255,
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "column_name": "votes",
+        "data_type": "integer",
+        "character_maximum_length": null,
+        "is_nullable": "NO",
+        "column_default": "0"
+      }
+    ],
+    "indexes": [
+      {
+        "indexname": "feedbacks_pkey",
+        "indexdef": "CREATE UNIQUE INDEX feedbacks_pkey ON public.feedbacks USING btree (id)"
+      }
+    ],
+    "constraints": [
+      {
+        "constraint_name": "feedbacks_pkey",
+        "constraint_type": "p"
+      }
+    ]
+  },
+  "lead_activities": {
+    "columns": [
+      {
+        "column_name": "id",
+        "data_type": "uuid",
+        "character_maximum_length": null,
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "column_name": "account_id",
+        "data_type": "uuid",
+        "character_maximum_length": null,
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "column_name": "lead_id",
+        "data_type": "uuid",
+        "character_maximum_length": null,
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "column_name": "user_id",
+        "data_type": "uuid",
+        "character_maximum_length": null,
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "column_name": "activity_type",
+        "data_type": "character varying",
+        "character_maximum_length": 50,
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "column_name": "title",
+        "data_type": "character varying",
+        "character_maximum_length": 255,
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "column_name": "description",
+        "data_type": "text",
+        "character_maximum_length": null,
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "column_name": "duration_minutes",
+        "data_type": "integer",
+        "character_maximum_length": null,
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "column_name": "status",
+        "data_type": "character varying",
+        "character_maximum_length": 50,
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "column_name": "scheduled_for",
+        "data_type": "timestamp with time zone",
+        "character_maximum_length": null,
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "column_name": "completed_at",
+        "data_type": "timestamp with time zone",
+        "character_maximum_length": null,
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "column_name": "metadata",
+        "data_type": "jsonb",
+        "character_maximum_length": null,
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "column_name": "created_at",
+        "data_type": "timestamp with time zone",
+        "character_maximum_length": null,
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "column_name": "updated_at",
+        "data_type": "timestamp with time zone",
+        "character_maximum_length": null,
+        "is_nullable": "NO",
+        "column_default": null
+      }
+    ],
+    "indexes": [
+      {
+        "indexname": "lead_activities_pkey",
+        "indexdef": "CREATE UNIQUE INDEX lead_activities_pkey ON public.lead_activities USING btree (id)"
+      }
+    ],
+    "constraints": [
+      {
+        "constraint_name": "lead_activities_pkey",
+        "constraint_type": "p"
+      }
+    ]
+  },
+  "lead_histories": {
+    "columns": [
+      {
+        "column_name": "id",
+        "data_type": "uuid",
+        "character_maximum_length": null,
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "column_name": "lead_id",
+        "data_type": "uuid",
+        "character_maximum_length": null,
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "column_name": "account_id",
+        "data_type": "uuid",
+        "character_maximum_length": null,
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "column_name": "from_column_id",
+        "data_type": "uuid",
+        "character_maximum_length": null,
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "column_name": "to_column_id",
+        "data_type": "uuid",
+        "character_maximum_length": null,
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "column_name": "moved_at",
+        "data_type": "timestamp with time zone",
+        "character_maximum_length": null,
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "column_name": "action_type",
+        "data_type": "character varying",
+        "character_maximum_length": 50,
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "column_name": "metadata",
+        "data_type": "jsonb",
+        "character_maximum_length": null,
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "column_name": "created_at",
+        "data_type": "timestamp with time zone",
+        "character_maximum_length": null,
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "column_name": "updated_at",
+        "data_type": "timestamp with time zone",
+        "character_maximum_length": null,
+        "is_nullable": "NO",
+        "column_default": null
+      }
+    ],
+    "indexes": [
+      {
+        "indexname": "lead_histories_pkey",
+        "indexdef": "CREATE UNIQUE INDEX lead_histories_pkey ON public.lead_histories USING btree (id)"
+      }
+    ],
+    "constraints": [
+      {
+        "constraint_name": "lead_histories_pkey",
+        "constraint_type": "p"
+      }
+    ]
+  },
+  "plans": {
+    "columns": [
+      {
+        "column_name": "updated_at",
+        "data_type": "timestamp with time zone",
+        "character_maximum_length": null,
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "column_name": "trial_days",
+        "data_type": "integer",
+        "character_maximum_length": null,
+        "is_nullable": "YES",
+        "column_default": "0"
+      },
+      {
+        "column_name": "sort_order",
+        "data_type": "integer",
+        "character_maximum_length": null,
+        "is_nullable": "YES",
+        "column_default": "0"
+      },
+      {
+        "column_name": "created_at",
+        "data_type": "timestamp with time zone",
+        "character_maximum_length": null,
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "column_name": "id",
+        "data_type": "uuid",
+        "character_maximum_length": null,
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "column_name": "price",
+        "data_type": "numeric",
+        "character_maximum_length": null,
+        "is_nullable": "NO",
+        "column_default": "0"
+      },
+      {
+        "column_name": "max_users",
+        "data_type": "integer",
+        "character_maximum_length": null,
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "column_name": "max_leads",
+        "data_type": "integer",
+        "character_maximum_length": null,
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "column_name": "features",
+        "data_type": "jsonb",
+        "character_maximum_length": null,
+        "is_nullable": "NO",
+        "column_default": "'[]'::jsonb"
+      },
+      {
+        "column_name": "is_active",
+        "data_type": "boolean",
+        "character_maximum_length": null,
+        "is_nullable": "YES",
+        "column_default": "true"
+      },
+      {
+        "column_name": "is_default",
+        "data_type": "boolean",
+        "character_maximum_length": null,
+        "is_nullable": "YES",
+        "column_default": "false"
+      },
+      {
+        "column_name": "name",
+        "data_type": "character varying",
+        "character_maximum_length": 255,
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "column_name": "slug",
+        "data_type": "character varying",
+        "character_maximum_length": 255,
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "column_name": "description",
+        "data_type": "text",
+        "character_maximum_length": null,
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "column_name": "stripe_price_id",
+        "data_type": "character varying",
+        "character_maximum_length": 255,
+        "is_nullable": "YES",
+        "column_default": null
+      }
+    ],
+    "indexes": [
+      {
+        "indexname": "plans_pkey",
+        "indexdef": "CREATE UNIQUE INDEX plans_pkey ON public.plans USING btree (id)"
+      }
+    ],
+    "constraints": [
+      {
+        "constraint_name": "plans_pkey",
+        "constraint_type": "p"
+      }
+    ]
+  },
+  "trigger_phrases": {
+    "columns": [
+      {
+        "column_name": "id",
+        "data_type": "uuid",
+        "character_maximum_length": null,
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "column_name": "account_id",
+        "data_type": "uuid",
+        "character_maximum_length": null,
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "column_name": "campaign_id",
+        "data_type": "uuid",
+        "character_maximum_length": null,
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "column_name": "phrase",
+        "data_type": "character varying",
+        "character_maximum_length": 255,
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "column_name": "priority",
+        "data_type": "integer",
+        "character_maximum_length": null,
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "column_name": "match_type",
+        "data_type": "character varying",
+        "character_maximum_length": 50,
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "column_name": "case_sensitive",
+        "data_type": "boolean",
+        "character_maximum_length": null,
+        "is_nullable": "YES",
+        "column_default": "false"
+      },
+      {
+        "column_name": "min_confidence",
+        "data_type": "numeric",
+        "character_maximum_length": null,
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "column_name": "is_active",
+        "data_type": "boolean",
+        "character_maximum_length": null,
+        "is_nullable": "YES",
+        "column_default": "true"
+      },
+      {
+        "column_name": "total_matches",
+        "data_type": "integer",
+        "character_maximum_length": null,
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "column_name": "last_matched_at",
+        "data_type": "timestamp with time zone",
+        "character_maximum_length": null,
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "column_name": "created_by",
+        "data_type": "uuid",
+        "character_maximum_length": null,
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "column_name": "notes",
+        "data_type": "text",
+        "character_maximum_length": null,
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "column_name": "created_at",
+        "data_type": "timestamp with time zone",
+        "character_maximum_length": null,
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "column_name": "updated_at",
+        "data_type": "timestamp with time zone",
+        "character_maximum_length": null,
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "column_name": "creative_code",
+        "data_type": "character varying",
+        "character_maximum_length": 255,
+        "is_nullable": "YES",
+        "column_default": null
+      }
+    ],
+    "indexes": [
+      {
+        "indexname": "trigger_phrases_pkey",
+        "indexdef": "CREATE UNIQUE INDEX trigger_phrases_pkey ON public.trigger_phrases USING btree (id)"
+      }
+    ],
+    "constraints": [
+      {
+        "constraint_name": "trigger_phrases_pkey",
+        "constraint_type": "p"
+      }
+    ]
+  },
+  "user_accounts": {
+    "columns": [
+      {
+        "column_name": "id",
+        "data_type": "uuid",
+        "character_maximum_length": null,
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "column_name": "user_id",
+        "data_type": "uuid",
+        "character_maximum_length": null,
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "column_name": "account_id",
+        "data_type": "uuid",
+        "character_maximum_length": null,
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "column_name": "role",
+        "data_type": "character varying",
+        "character_maximum_length": 50,
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "column_name": "is_active",
+        "data_type": "boolean",
+        "character_maximum_length": null,
+        "is_nullable": "YES",
+        "column_default": "true"
+      },
+      {
+        "column_name": "permissions",
+        "data_type": "jsonb",
+        "character_maximum_length": null,
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "column_name": "created_at",
+        "data_type": "timestamp with time zone",
+        "character_maximum_length": null,
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "column_name": "updated_at",
+        "data_type": "timestamp with time zone",
+        "character_maximum_length": null,
+        "is_nullable": "NO",
+        "column_default": null
+      }
+    ],
+    "indexes": [
+      {
+        "indexname": "user_accounts_pkey",
+        "indexdef": "CREATE UNIQUE INDEX user_accounts_pkey ON public.user_accounts USING btree (id)"
+      }
+    ],
+    "constraints": [
+      {
+        "constraint_name": "user_accounts_pkey",
+        "constraint_type": "p"
+      }
+    ]
+  },
+  "users": {
+    "columns": [
+      {
+        "column_name": "id",
+        "data_type": "uuid",
+        "character_maximum_length": null,
+        "is_nullable": "NO",
+        "column_default": "gen_random_uuid()"
+      },
+      {
+        "column_name": "account_id",
+        "data_type": "uuid",
+        "character_maximum_length": null,
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "column_name": "name",
+        "data_type": "character varying",
+        "character_maximum_length": 255,
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "column_name": "email",
+        "data_type": "character varying",
+        "character_maximum_length": 255,
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "column_name": "password",
+        "data_type": "character varying",
+        "character_maximum_length": 255,
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "column_name": "role",
+        "data_type": "character varying",
+        "character_maximum_length": 50,
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "column_name": "is_active",
+        "data_type": "boolean",
+        "character_maximum_length": null,
+        "is_nullable": "YES",
+        "column_default": "true"
+      },
+      {
+        "column_name": "last_login_at",
+        "data_type": "timestamp with time zone",
+        "character_maximum_length": null,
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "column_name": "created_at",
+        "data_type": "timestamp with time zone",
+        "character_maximum_length": null,
+        "is_nullable": "NO",
+        "column_default": "now()"
+      },
+      {
+        "column_name": "updated_at",
+        "data_type": "timestamp with time zone",
+        "character_maximum_length": null,
+        "is_nullable": "NO",
+        "column_default": "now()"
+      },
+      {
+        "column_name": "current_account_id",
+        "data_type": "uuid",
+        "character_maximum_length": null,
+        "is_nullable": "YES",
+        "column_default": null
+      }
+    ],
+    "indexes": [
+      {
+        "indexname": "users_pkey",
+        "indexdef": "CREATE UNIQUE INDEX users_pkey ON public.users USING btree (id)"
+      },
+      {
+        "indexname": "users_email_key",
+        "indexdef": "CREATE UNIQUE INDEX users_email_key ON public.users USING btree (email)"
+      }
+    ],
+    "constraints": [
+      {
+        "constraint_name": "users_pkey",
+        "constraint_type": "p"
+      },
+      {
+        "constraint_name": "users_email_key",
+        "constraint_type": "u"
+      }
+    ]
+  },
+  "webhook_logs": {
+    "columns": [
+      {
+        "column_name": "updated_at",
+        "data_type": "timestamp with time zone",
+        "character_maximum_length": null,
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "column_name": "account_id",
+        "data_type": "uuid",
+        "character_maximum_length": null,
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "column_name": "processed",
+        "data_type": "boolean",
+        "character_maximum_length": null,
+        "is_nullable": "YES",
+        "column_default": "false"
+      },
+      {
+        "column_name": "lead_created",
+        "data_type": "boolean",
+        "character_maximum_length": null,
+        "is_nullable": "YES",
+        "column_default": "false"
+      },
+      {
+        "column_name": "created_at",
+        "data_type": "timestamp with time zone",
+        "character_maximum_length": null,
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "column_name": "id",
+        "data_type": "uuid",
+        "character_maximum_length": null,
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "column_name": "payload",
+        "data_type": "jsonb",
+        "character_maximum_length": null,
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "column_name": "phone_id",
+        "data_type": "character varying",
+        "character_maximum_length": 255,
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "column_name": "event_type",
+        "data_type": "character varying",
+        "character_maximum_length": 255,
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "column_name": "campaign_matched",
+        "data_type": "character varying",
+        "character_maximum_length": 255,
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "column_name": "error",
+        "data_type": "text",
+        "character_maximum_length": null,
+        "is_nullable": "YES",
+        "column_default": null
+      }
+    ],
+    "indexes": [
+      {
+        "indexname": "webhook_logs_pkey",
+        "indexdef": "CREATE UNIQUE INDEX webhook_logs_pkey ON public.webhook_logs USING btree (id)"
+      }
+    ],
+    "constraints": [
+      {
+        "constraint_name": "webhook_logs_pkey",
+        "constraint_type": "p"
+      }
+    ]
+  },
+  "whatsapp_accounts": {
+    "columns": [
+      {
+        "column_name": "id",
+        "data_type": "uuid",
+        "character_maximum_length": null,
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "column_name": "account_id",
+        "data_type": "uuid",
+        "character_maximum_length": null,
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "column_name": "is_active",
+        "data_type": "boolean",
+        "character_maximum_length": null,
+        "is_nullable": "YES",
+        "column_default": "true"
+      },
+      {
+        "column_name": "created_at",
+        "data_type": "timestamp with time zone",
+        "character_maximum_length": null,
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "column_name": "updated_at",
+        "data_type": "timestamp with time zone",
+        "character_maximum_length": null,
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "column_name": "webhook_url",
+        "data_type": "character varying",
+        "character_maximum_length": 255,
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "column_name": "verify_token",
+        "data_type": "character varying",
+        "character_maximum_length": 255,
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "column_name": "access_token",
+        "data_type": "character varying",
+        "character_maximum_length": 255,
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "column_name": "phone_id",
+        "data_type": "character varying",
+        "character_maximum_length": 255,
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "column_name": "account_name",
+        "data_type": "character varying",
+        "character_maximum_length": 255,
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "column_name": "phone_number",
+        "data_type": "character varying",
+        "character_maximum_length": 255,
+        "is_nullable": "NO",
+        "column_default": null
+      }
+    ],
+    "indexes": [
+      {
+        "indexname": "whatsapp_accounts_pkey",
+        "indexdef": "CREATE UNIQUE INDEX whatsapp_accounts_pkey ON public.whatsapp_accounts USING btree (id)"
+      }
+    ],
+    "constraints": [
+      {
+        "constraint_name": "whatsapp_accounts_pkey",
+        "constraint_type": "p"
+      }
+    ]
+  }
+}
