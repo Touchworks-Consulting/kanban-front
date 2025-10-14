@@ -16,6 +16,7 @@ export interface Lead {
   value?: number;
   notes?: string;
   metadata?: Record<string, any>;
+  is_customer?: boolean; // Marca se o lead já é cliente - excluir de relatórios
   account_id: string;
   assigned_to_user_id?: string;
   assignedUser?: User;
