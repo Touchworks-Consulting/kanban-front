@@ -96,9 +96,11 @@ export const useBulkActivityCounts = (leadIds: string[]) => {
   const [countsMap, setCountsMap] = useState<Map<string, ActivityCounts>>(new Map());
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const leadIdsStringRef = useRef<string>('');
+  const fetchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
-  const fetchBulkCounts = useCallback(async () => {
-    if (!leadIds.length) {
+  const fetchBulkCounts = useCallback(async (ids: string[]) => {
+    if (!ids.length) {
       setCountsMap(new Map());
       return;
     }
@@ -107,7 +109,7 @@ export const useBulkActivityCounts = (leadIds: string[]) => {
     setError(null);
 
     try {
-      const response = await activityService.getBulkLeadActivityCounts(leadIds);
+      const response = await activityService.getBulkLeadActivityCounts(ids);
 
       const newMap = new Map<string, ActivityCounts>();
       response.lead_counts.forEach((item: LeadActivityCounts) => {
@@ -122,11 +124,35 @@ export const useBulkActivityCounts = (leadIds: string[]) => {
     } finally {
       setLoading(false);
     }
-  }, [leadIds]);
+  }, []);
 
   useEffect(() => {
-    fetchBulkCounts();
-  }, [fetchBulkCounts]);
+    // Convert leadIds to string to avoid reference comparison
+    const leadIdsString = JSON.stringify([...leadIds].sort());
+
+    // Skip if leadIds haven't changed
+    if (leadIdsString === leadIdsStringRef.current) {
+      return;
+    }
+
+    leadIdsStringRef.current = leadIdsString;
+
+    // Clear any pending timeout
+    if (fetchTimeoutRef.current) {
+      clearTimeout(fetchTimeoutRef.current);
+    }
+
+    // Debounce bulk fetch by 300ms to allow multiple leads to batch together
+    fetchTimeoutRef.current = setTimeout(() => {
+      fetchBulkCounts(leadIds);
+    }, 300);
+
+    return () => {
+      if (fetchTimeoutRef.current) {
+        clearTimeout(fetchTimeoutRef.current);
+      }
+    };
+  }, [leadIds, fetchBulkCounts]);
 
   // Função helper para obter contagens de um lead específico
   const getLeadCounts = useCallback((leadId: string): ActivityCounts | null => {
