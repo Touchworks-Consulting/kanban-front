@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Badge } from '../ui/badge';
 import { Button } from '../ui/button';
 import { ScrollArea } from '../ui/scroll-area';
@@ -32,6 +32,13 @@ import { cn } from '../../lib/utils';
 import type { Lead, KanbanColumn } from '../../types/kanban';
 import { formatDate, formatCurrency, formatDistanceToNow } from '../../utils/helpers';
 import { useCustomStatuses } from '../../hooks/useCustomStatuses';
+import { apiService } from '../../services/api';
+
+interface Campaign {
+  id: string;
+  name: string;
+  is_active: boolean;
+}
 
 interface LeadDataSidebarProps {
   lead: Lead;
@@ -53,6 +60,8 @@ const LeadDataSidebarComponent: React.FC<LeadDataSidebarProps> = ({
   const { statuses, loading: statusesLoading } = useCustomStatuses();
   const [editingField, setEditingField] = useState<string | null>(null);
   const [editValue, setEditValue] = useState<string>('');
+  const [campaigns, setCampaigns] = useState<Campaign[]>([]);
+  const [campaignsLoading, setCampaignsLoading] = useState(false);
   const [collapsedSections, setCollapsedSections] = useState<Record<string, boolean>>({
     details: false,
     contact: false,
@@ -62,6 +71,24 @@ const LeadDataSidebarComponent: React.FC<LeadDataSidebarProps> = ({
     notes: true,
     messages: true
   });
+
+  // Fetch campaigns when component mounts
+  useEffect(() => {
+    const fetchCampaigns = async () => {
+      setCampaignsLoading(true);
+      try {
+        const response = await apiService.get<{ campaigns: Campaign[] }>('/api/campaigns');
+        setCampaigns(response.data.campaigns || []);
+      } catch (error) {
+        console.error('Error fetching campaigns:', error);
+        setCampaigns([]);
+      } finally {
+        setCampaignsLoading(false);
+      }
+    };
+
+    fetchCampaigns();
+  }, []);
   const getPlatformColor = (platform?: string) => {
     const colors = {
       facebook: '#1877F2',
@@ -131,6 +158,16 @@ const LeadDataSidebarComponent: React.FC<LeadDataSidebarProps> = ({
       await onUpdateLead({ status: newStatus });
     } catch (error) {
       console.error('Erro ao alterar status:', error);
+    }
+  };
+
+  const handleCampaignChange = async (newCampaign: string) => {
+    if (!onUpdateLead) return;
+
+    try {
+      await onUpdateLead({ campaign: newCampaign });
+    } catch (error) {
+      console.error('Erro ao alterar campanha:', error);
     }
   };
 
@@ -557,14 +594,35 @@ const LeadDataSidebarComponent: React.FC<LeadDataSidebarProps> = ({
               <div className="flex items-center gap-3 pl-6">
                 <TrendingUp className="w-3 h-3 text-muted-foreground" />
                 <div className="flex-1">
-                  <EditableField
-                    field="campaign"
+                  <Select
                     value={lead.campaign || ''}
+                    onValueChange={handleCampaignChange}
+                    disabled={campaignsLoading}
                   >
-                    <div className="text-xs font-medium text-foreground">
-                      {lead.campaign || 'Clique para definir campanha...'}
-                    </div>
-                  </EditableField>
+                    <SelectTrigger className="h-6 text-xs border-none shadow-none p-1 hover:bg-muted/50">
+                      <SelectValue placeholder="Selecionar campanha" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {campaignsLoading ? (
+                        <SelectItem value="loading" disabled>
+                          Carregando campanhas...
+                        </SelectItem>
+                      ) : (
+                        <>
+                          <SelectItem value="Orgânico">Orgânico</SelectItem>
+                          <SelectItem value="Não identificada">Não identificada</SelectItem>
+                          {campaigns
+                            .filter(campaign => campaign.is_active)
+                            .map(campaign => (
+                              <SelectItem key={campaign.id} value={campaign.name}>
+                                <span className="text-xs">{campaign.name}</span>
+                              </SelectItem>
+                            ))
+                          }
+                        </>
+                      )}
+                    </SelectContent>
+                  </Select>
                 </div>
               </div>
             </CollapsibleContent>
