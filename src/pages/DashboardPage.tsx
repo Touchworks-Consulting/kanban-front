@@ -33,6 +33,7 @@ import { PlanLimitsAlert } from '../components/PlanLimitsAlert';
 import { SalesRankingTable } from '../components/dashboard/SalesRankingTable';
 import { SalesPerformanceChart } from '../components/dashboard/SalesPerformanceChart';
 import { ActivityConversionScatter } from '../components/dashboard/ActivityConversionScatter';
+import { LeadModal } from '../components/kanban/LeadModal';
 // Interface para dados consolidados do dashboard
 interface ConsolidatedDashboardData {
   totalLeads: number;
@@ -110,7 +111,7 @@ export function DashboardPage() {
   const [salesRankingData, setSalesRankingData] = useState<any[]>([]);
   const [salesPerformanceData, setSalesPerformanceData] = useState<any[]>([]);
   const [activityConversionData, setActivityConversionData] = useState<any[]>([]);
-  
+
   // Estados para dados adicionais
   const [campaignStats, setCampaignStats] = useState({
     active: 0,
@@ -125,6 +126,9 @@ export function DashboardPage() {
   const [error, setError] = useState<string | null>(null);
   const [refreshing, setRefreshing] = useState(false);
   const [datePickerKey, setDatePickerKey] = useState(0); // Para forçar re-render e abertura automática
+
+  // Estado para modal de lead
+  const [selectedLeadId, setSelectedLeadId] = useState<string | null>(null);
 
   // Estado dos filtros - seguindo padrão do kanban
   const [filters, setFilters] = useState<SimpleFilters>({
@@ -589,8 +593,7 @@ export function DashboardPage() {
             threshold={stagnantLeads.threshold}
             className="h-full"
             onLeadClick={(leadId) => {
-              console.log('Clicou no lead:', leadId);
-              // Aqui você pode navegar para o lead ou abrir um modal
+              setSelectedLeadId(leadId);
             }}
           />
         </div>
@@ -803,6 +806,19 @@ export function DashboardPage() {
           <ActivityConversionScatter data={activityConversionData} loading={isLoading} />
         </div>
       </div>
+
+      {/* Lead Modal */}
+      {selectedLeadId && (
+        <LeadModal
+          leadId={selectedLeadId}
+          isOpen={!!selectedLeadId}
+          onClose={() => setSelectedLeadId(null)}
+          onUpdate={async () => {
+            // Recarregar dados do dashboard após atualização
+            await fetchDashboardData();
+          }}
+        />
+      )}
     </div>
   );
 }
