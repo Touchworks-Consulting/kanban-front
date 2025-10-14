@@ -198,6 +198,20 @@ export const LeadModal: React.FC<LeadModalProps> = ({
     }
   };
 
+  // Handle delete lead
+  const handleDeleteLead = async () => {
+    if (!lead || !onDelete) return;
+
+    try {
+      await onDelete(lead.id);
+      handleClose();
+    } catch (error) {
+      console.error('Erro ao excluir lead:', error);
+      setError('lead', 'Erro ao excluir lead');
+      throw error;
+    }
+  };
+
   if (!isOpen) return null;
 
   // Use granular loading states
@@ -219,6 +233,7 @@ export const LeadModal: React.FC<LeadModalProps> = ({
       platform: lead.platform,
       notes: lead.notes,
       message: lead.message,
+      is_customer: lead.is_customer,
       assigned_to_user_id: lead.assigned_to_user_id,
       column_id: lead.column_id,
       createdAt: lead.createdAt,
@@ -236,6 +251,7 @@ export const LeadModal: React.FC<LeadModalProps> = ({
     lead?.platform,
     lead?.notes,
     lead?.message,
+    lead?.is_customer,
     lead?.assigned_to_user_id,
     lead?.column_id,
     lead?.createdAt,
@@ -350,6 +366,7 @@ export const LeadModal: React.FC<LeadModalProps> = ({
                 lead={leadForSidebar}
                 columns={columns}
                 onUpdateLead={handleUpdateLead}
+                onDeleteLead={handleDeleteLead}
                 users={users}
                 onAssigneeChange={handleAssigneeChange}
                 className="w-72 flex-shrink-0"

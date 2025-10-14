@@ -5,6 +5,17 @@ import { ScrollArea } from '../ui/scroll-area';
 import { Input } from '../ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '../ui/collapsible';
+import { Switch } from '../ui/switch';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '../ui/alert-dialog';
 import { ValidatedInput } from '../forms/ValidatedInput';
 import type { ValidationResult } from '../forms/validators/index';
 import {
@@ -26,7 +37,9 @@ import {
   X,
   ChevronDown,
   ChevronRight,
-  MessageSquare
+  MessageSquare,
+  Trash2,
+  UserCheck
 } from 'lucide-react';
 import { cn } from '../../lib/utils';
 import type { Lead, KanbanColumn } from '../../types/kanban';
@@ -45,6 +58,7 @@ interface LeadDataSidebarProps {
   columns: KanbanColumn[];
   className?: string;
   onUpdateLead?: (updates: Partial<Lead>) => Promise<void>;
+  onDeleteLead?: () => Promise<void>;
   users?: Array<{ id: string; name: string; email: string; role?: string; is_active: boolean }>;
   onAssigneeChange?: (userId: string) => Promise<void>;
 }
@@ -54,6 +68,7 @@ const LeadDataSidebarComponent: React.FC<LeadDataSidebarProps> = ({
   columns,
   className,
   onUpdateLead,
+  onDeleteLead,
   users = [],
   onAssigneeChange
 }) => {
@@ -62,6 +77,7 @@ const LeadDataSidebarComponent: React.FC<LeadDataSidebarProps> = ({
   const [editValue, setEditValue] = useState<string>('');
   const [campaigns, setCampaigns] = useState<Campaign[]>([]);
   const [campaignsLoading, setCampaignsLoading] = useState(false);
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [collapsedSections, setCollapsedSections] = useState<Record<string, boolean>>({
     details: false,
     contact: false,
@@ -168,6 +184,27 @@ const LeadDataSidebarComponent: React.FC<LeadDataSidebarProps> = ({
       await onUpdateLead({ campaign: newCampaign });
     } catch (error) {
       console.error('Erro ao alterar campanha:', error);
+    }
+  };
+
+  const handleCustomerToggle = async (isCustomer: boolean) => {
+    if (!onUpdateLead) return;
+
+    try {
+      await onUpdateLead({ is_customer: isCustomer } as Partial<Lead>);
+    } catch (error) {
+      console.error('Erro ao alterar status de cliente:', error);
+    }
+  };
+
+  const handleDeleteConfirm = async () => {
+    if (!onDeleteLead) return;
+
+    try {
+      await onDeleteLead();
+      setShowDeleteDialog(false);
+    } catch (error) {
+      console.error('Erro ao excluir lead:', error);
     }
   };
 
@@ -279,6 +316,35 @@ const LeadDataSidebarComponent: React.FC<LeadDataSidebarProps> = ({
     <div className={cn('bg-muted/30 border-r flex flex-col min-h-0', className)}>
       <ScrollArea className="flex-1 overflow-auto">
         <div className="p-3 space-y-4">
+          {/* Seção de Ações - Customer Toggle & Delete */}
+          <div className="space-y-3 pb-3 border-b border-muted">
+            {/* Customer Toggle */}
+            <div className="flex items-center justify-between p-2 rounded-lg bg-muted/50">
+              <div className="flex items-center gap-2">
+                <UserCheck className="w-4 h-4 text-muted-foreground" />
+                <div>
+                  <div className="text-xs font-medium text-foreground">Marcar como Cliente</div>
+                  <div className="text-xs text-muted-foreground">Excluir de relatórios e conversões</div>
+                </div>
+              </div>
+              <Switch
+                checked={lead.is_customer || false}
+                onCheckedChange={handleCustomerToggle}
+              />
+            </div>
+
+            {/* Delete Button */}
+            <Button
+              variant="destructive"
+              size="sm"
+              className="w-full"
+              onClick={() => setShowDeleteDialog(true)}
+            >
+              <Trash2 className="w-4 h-4 mr-2" />
+              Excluir Lead
+            </Button>
+          </div>
+
           {/* Seção de Valor e Detalhes */}
           <Collapsible
             open={!collapsedSections.details}
@@ -693,6 +759,27 @@ const LeadDataSidebarComponent: React.FC<LeadDataSidebarProps> = ({
           </Collapsible>
         </div>
       </ScrollArea>
+
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Tem certeza?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Esta ação não pode ser desfeita. O lead "{lead.name}" será permanentemente excluído do sistema.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDeleteConfirm}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Excluir
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };
