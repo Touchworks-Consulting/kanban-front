@@ -110,20 +110,20 @@ export const dashboardService = {
   },
 
   // Métricas específicas
-  async getMetrics(params?: {
+  async getMetrics(filters?: {
     start_date?: string;
     end_date?: string;
   }): Promise<{ metrics: DashboardMetrics }> {
-    const response = await api.get('/api/dashboard/metrics', { params });
+    const response = await api.get('/api/dashboard/metrics', { params: filters });
     return response.data;
   },
 
   // Funil de conversão
-  async getConversionFunnel(params?: {
+  async getConversionFunnel(filters?: {
     start_date?: string;
     end_date?: string;
   }): Promise<{ funnel: ConversionFunnel[] }> {
-    const response = await api.get('/api/dashboard/funnel', { params });
+    const response = await api.get('/api/dashboard/funnel', { params: filters });
     return response.data;
   },
 

@@ -130,9 +130,9 @@ export function DashboardPage() {
   // Estado para modal de lead
   const [selectedLeadId, setSelectedLeadId] = useState<string | null>(null);
 
-  // Estado dos filtros - seguindo padrão do kanban
+  // Estado dos filtros - padrão: mês atual
   const [filters, setFilters] = useState<SimpleFilters>({
-    period: "7"
+    period: "month"
   });
 
   // Handler para mudanças de filtro com auto-abertura do calendário
@@ -159,6 +159,15 @@ export function DashboardPage() {
       if (appliedFilters.period !== 'custom') {
         // Converter período em datas
         const now = new Date();
+        
+        // Função para formatar data como YYYY-MM-DD no timezone local
+        const formatLocalDate = (date: Date) => {
+          const year = date.getFullYear();
+          const month = String(date.getMonth() + 1).padStart(2, '0');
+          const day = String(date.getDate()).padStart(2, '0');
+          return `${year}-${month}-${day}`;
+        };
+        
         let startDate: Date;
         
         switch (appliedFilters.period) {
@@ -169,18 +178,21 @@ export function DashboardPage() {
             startDate = new Date(now.getTime() - (7 * 24 * 60 * 60 * 1000));
             break;
           case 'month':
-            startDate = new Date(now.getTime() - (30 * 24 * 60 * 60 * 1000));
+            // Primeiro dia do mês atual até hoje
+            startDate = new Date(now.getFullYear(), now.getMonth(), 1);
             break;
           default:
             startDate = new Date(now.getTime() - (7 * 24 * 60 * 60 * 1000)); // default para 7 dias
         }
         
-        filterParams.start_date = startDate.toISOString().split('T')[0];
-        filterParams.end_date = now.toISOString().split('T')[0];
+        filterParams.start_date = formatLocalDate(startDate);
+        filterParams.end_date = formatLocalDate(now);
       } else if (appliedFilters.dateRange) {
         filterParams.start_date = appliedFilters.dateRange.start;
         filterParams.end_date = appliedFilters.dateRange.end;
       }
+
+      console.log('Parâmetros de filtro preparados:', filterParams);
 
       // Fazer chamadas paralelas para todos os dados incluindo as novas métricas de estágio e ranking de vendedores
       const [
@@ -197,15 +209,15 @@ export function DashboardPage() {
       ] = await Promise.all([
         dashboardService.getMetrics(filterParams),
         dashboardService.getConversionTimeByCampaign(filterParams),
-        dashboardService.getTimeline({ timeframe: 'week' }),
+        dashboardService.getTimeline({ ...filterParams, timeframe: 'week' }),
         dashboardService.getConversionFunnel(filterParams),
         dashboardService.getStageTimingMetrics(filterParams),
         dashboardService.getDetailedStageMetrics(filterParams),
         dashboardService.getStagnantLeads({ days_threshold: 7 }),
         // Novas chamadas para ranking de vendedores
-        dashboardService.getSalesRanking(filterParams).catch(err => ({ data: [] })),
-        dashboardService.getSalesPerformanceChart(filterParams).catch(err => ({ data: [] })),
-        dashboardService.getActivityConversionScatter(filterParams).catch(err => ({ data: [] }))
+        dashboardService.getSalesRanking(filterParams).catch(() => ({ data: [] })),
+        dashboardService.getSalesPerformanceChart(filterParams).catch(() => ({ data: [] })),
+        dashboardService.getActivityConversionScatter(filterParams).catch(() => ({ data: [] }))
       ]);
 
       // Buscar dados adicionais (sem filtros de data)
@@ -256,6 +268,14 @@ export function DashboardPage() {
         leadsByStatus: metricsResponse.metrics.leadsByStatus
       };
 
+      console.log('📊 Dados recebidos do backend:', {
+        totalLeads: consolidatedData.totalLeads,
+        wonLeads: consolidatedData.wonLeads,
+        conversionRate: consolidatedData.conversionRate,
+        totalRevenue: consolidatedData.totalRevenue,
+        filtrosAplicados: filterParams
+      });
+
       setDashboardData(consolidatedData);
       setConversionMetrics(conversionResponse.conversionMetrics);
 
@@ -296,14 +316,15 @@ export function DashboardPage() {
 
   // Carregar dados na inicialização
   useEffect(() => {
-    fetchDashboardData();
+    fetchDashboardData(filters);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // Reagir à mudança de conta
   useEffect(() => {
     const handleAccountChange = (event: CustomEvent) => {
       console.log('👂 DashboardPage: Detectada mudança de conta, recarregando dados...', event.detail);
-      fetchDashboardData();
+      fetchDashboardData(filters);
     };
 
     window.addEventListener('accountChanged', handleAccountChange as EventListener);
@@ -311,17 +332,19 @@ export function DashboardPage() {
     return () => {
       window.removeEventListener('accountChanged', handleAccountChange as EventListener);
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // Recarregar dados quando filtros mudarem
   useEffect(() => {
     console.log('Filtros mudaram:', filters);
-    fetchDashboardData();
+    fetchDashboardData(filters);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [filters]);
 
   const handleRefresh = async () => {
     setRefreshing(true);
-    await fetchDashboardData();
+    await fetchDashboardData(filters);
     setRefreshing(false);
   };
 
@@ -462,7 +485,7 @@ export function DashboardPage() {
               <SelectContent>
                 <SelectItem value="today">Hoje</SelectItem>
                 <SelectItem value="7">Últimos 7 dias</SelectItem>
-                <SelectItem value="month">Último mês</SelectItem>
+                <SelectItem value="month">Mês atual</SelectItem>
                 <SelectItem value="custom">Personalizado</SelectItem>
               </SelectContent>
             </Select>
@@ -815,7 +838,7 @@ export function DashboardPage() {
           onClose={() => setSelectedLeadId(null)}
           onUpdate={async () => {
             // Recarregar dados do dashboard após atualização
-            await fetchDashboardData();
+            await fetchDashboardData(filters);
           }}
         />
       )}

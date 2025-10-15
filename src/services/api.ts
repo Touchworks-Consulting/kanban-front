@@ -30,6 +30,12 @@ class ApiService {
     this.api.interceptors.request.use(
       (config) => {
         try {
+          // 🔍 LOG: Ver todas as requisições e seus parâmetros
+          if (config.url?.includes('/dashboard/')) {
+            console.log('📡 API Request:', config.url);
+            console.log('📡 Config completo:', JSON.stringify(config.params, null, 2));
+          }
+
           // Ler diretamente do Zustand store (mais confiável)
           const authState = useAuthStore.getState();
           let token = authState.token;
@@ -148,24 +154,24 @@ class ApiService {
     console.log('🧹 Cleared all auth data from localStorage');
   }
 
-  async get<T>(url: string, params?: Record<string, unknown>): Promise<AxiosResponse<T>> {
-    return this.api.get<T>(url, { params });
+  async get<T>(url: string, config?: Record<string, unknown>): Promise<AxiosResponse<T>> {
+    return this.api.get<T>(url, config);
   }
 
-  async post<T>(url: string, data?: unknown): Promise<AxiosResponse<T>> {
-    return this.api.post<T>(url, data);
+  async post<T>(url: string, data?: unknown, config?: Record<string, unknown>): Promise<AxiosResponse<T>> {
+    return this.api.post<T>(url, data, config);
   }
 
-  async put<T>(url: string, data?: unknown): Promise<AxiosResponse<T>> {
-    return this.api.put<T>(url, data);
+  async put<T>(url: string, data?: unknown, config?: Record<string, unknown>): Promise<AxiosResponse<T>> {
+    return this.api.put<T>(url, data, config);
   }
 
-  async patch<T>(url: string, data?: unknown): Promise<AxiosResponse<T>> {
-    return this.api.patch<T>(url, data);
+  async patch<T>(url: string, data?: unknown, config?: Record<string, unknown>): Promise<AxiosResponse<T>> {
+    return this.api.patch<T>(url, data, config);
   }
 
-  async delete<T>(url: string): Promise<AxiosResponse<T>> {
-    return this.api.delete<T>(url);
+  async delete<T>(url: string, config?: Record<string, unknown>): Promise<AxiosResponse<T>> {
+    return this.api.delete<T>(url, config);
   }
 
   // Helper method to get raw axios instance
