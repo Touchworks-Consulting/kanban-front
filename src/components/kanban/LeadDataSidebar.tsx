@@ -198,13 +198,20 @@ const LeadDataSidebarComponent: React.FC<LeadDataSidebarProps> = ({
   };
 
   const handleDeleteConfirm = async () => {
-    if (!onDeleteLead) return;
+    console.log('🗑️ [LeadDataSidebar] handleDeleteConfirm chamado', { hasOnDeleteLead: !!onDeleteLead, leadId: lead.id });
+
+    if (!onDeleteLead) {
+      console.warn('⚠️ [LeadDataSidebar] onDeleteLead não disponível');
+      return;
+    }
 
     try {
+      console.log('🗑️ [LeadDataSidebar] Chamando onDeleteLead...');
       await onDeleteLead();
+      console.log('✅ [LeadDataSidebar] onDeleteLead executado com sucesso');
       setShowDeleteDialog(false);
     } catch (error) {
-      console.error('Erro ao excluir lead:', error);
+      console.error('❌ [LeadDataSidebar] Erro ao excluir lead:', error);
     }
   };
 
@@ -338,7 +345,10 @@ const LeadDataSidebarComponent: React.FC<LeadDataSidebarProps> = ({
               variant="destructive"
               size="sm"
               className="w-full"
-              onClick={() => setShowDeleteDialog(true)}
+              onClick={() => {
+                console.log('🗑️ [LeadDataSidebar] Botão Excluir clicado');
+                setShowDeleteDialog(true);
+              }}
             >
               <Trash2 className="w-4 h-4 mr-2" />
               Excluir Lead
@@ -770,9 +780,14 @@ const LeadDataSidebarComponent: React.FC<LeadDataSidebarProps> = ({
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogCancel onClick={() => console.log('🗑️ [LeadDataSidebar] Dialog cancelado')}>
+              Cancelar
+            </AlertDialogCancel>
             <AlertDialogAction
-              onClick={handleDeleteConfirm}
+              onClick={() => {
+                console.log('🗑️ [LeadDataSidebar] Dialog confirmado - chamando handleDeleteConfirm');
+                handleDeleteConfirm();
+              }}
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
               Excluir
