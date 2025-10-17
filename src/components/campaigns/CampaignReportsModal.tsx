@@ -106,8 +106,24 @@ export const CampaignReportsModal: React.FC<CampaignReportsModalProps> = ({
           setEffectivePhrases(phrasesData);
 
           // 📊 Buscar dados dos gráficos
+          console.log('🔍 [Frontend] Buscando dados dos gráficos...', {
+            campaignId: campaign.id,
+            campaignName: campaign.name,
+            dateRange: dateRangeNumber
+          });
+
           const chartsData = await campaignsService.getCampaignChartData(campaign.id, dateRangeNumber);
+
+          console.log('📊 [Frontend] Dados dos gráficos recebidos:', {
+            chartsData,
+            daily_data_length: chartsData?.daily_data?.length,
+            hourly_data_length: chartsData?.hourly_data?.length,
+            total_leads: chartsData?.total_leads
+          });
+
           setChartData(chartsData);
+
+          console.log('✅ [Frontend] chartData state atualizado');
           
           // Usar dados reais para as métricas principais
           setReportData({
