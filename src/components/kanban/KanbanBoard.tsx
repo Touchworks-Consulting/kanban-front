@@ -374,9 +374,20 @@ export const KanbanBoard: React.FC = () => {
   };
 
   const handleDeleteLead = async (leadId: string) => {
-    await deleteLead(leadId);
-    setShowEditLeadModal(false);
-    setSelectedLeadForEdit(null);
+    console.log('🗑️ [KanbanBoard] handleDeleteLead chamado', { leadId });
+    try {
+      await deleteLead(leadId);
+      console.log('✅ [KanbanBoard] deleteLead executado com sucesso');
+      setShowEditLeadModal(false);
+      setSelectedLeadForEdit(null);
+      // Fechar o modal de lead se estava aberto
+      if (selectedLeadForModal === leadId) {
+        setSelectedLeadForModal(null);
+      }
+    } catch (error) {
+      console.error('❌ [KanbanBoard] Erro ao deletar lead:', error);
+      throw error;
+    }
   };
 
   const handleAddColumn = () => {
@@ -624,6 +635,7 @@ export const KanbanBoard: React.FC = () => {
             // Mantém a ordenação atual
             await fetchBoard(filters.sortBy);
           }}
+          onDelete={handleDeleteLead}
         />
       )}
     </div>

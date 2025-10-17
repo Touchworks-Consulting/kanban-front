@@ -200,13 +200,20 @@ export const LeadModal: React.FC<LeadModalProps> = ({
 
   // Handle delete lead
   const handleDeleteLead = async () => {
-    if (!lead || !onDelete) return;
+    console.log('🗑️ handleDeleteLead chamado', { lead: lead?.id, hasOnDelete: !!onDelete });
+
+    if (!lead || !onDelete) {
+      console.warn('⚠️ handleDeleteLead: lead ou onDelete não disponível', { lead: !!lead, onDelete: !!onDelete });
+      return;
+    }
 
     try {
+      console.log('🗑️ Chamando onDelete para lead:', lead.id);
       await onDelete(lead.id);
+      console.log('✅ Lead excluído com sucesso');
       handleClose();
     } catch (error) {
-      console.error('Erro ao excluir lead:', error);
+      console.error('❌ Erro ao excluir lead:', error);
       setError('lead', 'Erro ao excluir lead');
       throw error;
     }
