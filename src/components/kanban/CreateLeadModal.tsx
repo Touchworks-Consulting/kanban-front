@@ -19,6 +19,8 @@ interface CreateLeadModalProps {
   onSubmit: (data: CreateLeadDto) => Promise<void>;
   columnId?: string;
   columnName?: string;
+  initialPhone?: string; // Telefone pré-preenchido (para embed)
+  initialEmail?: string; // Email pré-preenchido (para embed)
 }
 
 const platforms = [
@@ -39,12 +41,14 @@ export const CreateLeadModal: React.FC<CreateLeadModalProps> = ({
   onSubmit,
   columnId,
   columnName,
+  initialPhone,
+  initialEmail,
 }) => {
   const { getInitialStatus } = useCustomStatuses();
   const [formData, setFormData] = useState<CreateLeadDto>({
     name: '',
-    phone: '',
-    email: '',
+    phone: initialPhone || '',
+    email: initialEmail || '',
     message: '',
     platform: 'WhatsApp',
     channel: 'WhatsApp',
@@ -57,6 +61,17 @@ export const CreateLeadModal: React.FC<CreateLeadModalProps> = ({
   const [loading, setLoading] = useState(false);
   const [campaigns, setCampaigns] = useState<Campaign[]>([]);
   const [users, setUsers] = useState<UserDto[]>([]);
+
+  // Atualizar telefone e email quando props mudarem
+  useEffect(() => {
+    if (initialPhone || initialEmail) {
+      setFormData(prev => ({
+        ...prev,
+        phone: initialPhone || prev.phone,
+        email: initialEmail || prev.email,
+      }));
+    }
+  }, [initialPhone, initialEmail]);
 
   // Buscar campanhas e usuários quando o modal abrir
   useEffect(() => {
