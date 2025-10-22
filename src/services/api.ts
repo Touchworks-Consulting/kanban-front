@@ -36,34 +36,50 @@ class ApiService {
             console.log('📡 Config completo:', JSON.stringify(config.params, null, 2));
           }
 
-          // Ler diretamente do Zustand store (mais confiável)
-          const authState = useAuthStore.getState();
-          let token = authState.token;
-          let accountData = authState.account;
+          // 🔑 Detectar se está em contexto de iframe embed (API key mode)
+          const urlParams = new URLSearchParams(window.location.search);
+          const apiKey = urlParams.get('api_key') || localStorage.getItem('embed_api_key');
 
-          // Fallback para localStorage legado se Zustand não tiver dados
-          if (!token) {
-            token = localStorage.getItem(STORAGE_KEYS.AUTH_TOKEN);
-            const accountJson = localStorage.getItem(STORAGE_KEYS.ACCOUNT_DATA);
-            if (accountJson) {
-              try {
-                accountData = JSON.parse(accountJson);
-              } catch (e) {
-                console.log('❌ Erro ao fazer parse do account data:', e);
+          if (apiKey) {
+            // Modo embed: usar x-api-key
+            console.log('🔑 API Service: Modo embed detectado, usando x-api-key');
+            config.headers['x-api-key'] = apiKey;
+
+            // Salvar api_key no localStorage para futuras requisições
+            if (!localStorage.getItem('embed_api_key')) {
+              localStorage.setItem('embed_api_key', apiKey);
+            }
+          } else {
+            // Modo normal: usar JWT
+            // Ler diretamente do Zustand store (mais confiável)
+            const authState = useAuthStore.getState();
+            let token = authState.token;
+            let accountData = authState.account;
+
+            // Fallback para localStorage legado se Zustand não tiver dados
+            if (!token) {
+              token = localStorage.getItem(STORAGE_KEYS.AUTH_TOKEN);
+              const accountJson = localStorage.getItem(STORAGE_KEYS.ACCOUNT_DATA);
+              if (accountJson) {
+                try {
+                  accountData = JSON.parse(accountJson);
+                } catch (e) {
+                  console.log('❌ Erro ao fazer parse do account data:', e);
+                }
               }
             }
-          }
 
-          if (token) {
-            config.headers.Authorization = `Bearer ${token}`;
-          } else {
-            console.log('❌ No token found in localStorage');
-          }
+            if (token) {
+              config.headers.Authorization = `Bearer ${token}`;
+            } else {
+              console.log('❌ No token found in localStorage');
+            }
 
-          if (accountData && accountData.id) {
-            config.headers['X-Tenant-ID'] = accountData.id;
-          } else {
-            console.log('❌ No account ID found in accountData');
+            if (accountData && accountData.id) {
+              config.headers['X-Tenant-ID'] = accountData.id;
+            } else {
+              console.log('❌ No account ID found in accountData');
+            }
           }
         } catch (error) {
           console.error('Erro ao processar dados do localStorage:', error);
@@ -149,6 +165,7 @@ class ApiService {
     localStorage.removeItem(STORAGE_KEYS.AUTH_TOKEN);
     localStorage.removeItem(STORAGE_KEYS.USER_DATA);
     localStorage.removeItem(STORAGE_KEYS.ACCOUNT_DATA);
+    localStorage.removeItem('embed_api_key'); // Limpar também a API key do embed
     // Também limpa o Zustand persist
     localStorage.removeItem('auth-storage');
     console.log('🧹 Cleared all auth data from localStorage');
