@@ -1,12 +1,28 @@
-import React, { useState, useEffect } from 'react';
-import { X, Save, Phone, Mail, User, DollarSign, MessageSquare, Trash2, Users } from 'lucide-react';
-import { Button } from '../ui/button';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
-import { apiService } from '../../services/api';
-import { userService, type UserDto } from '../../services/users';
-import { useCustomStatuses } from '../../hooks/useCustomStatuses';
-import { LossReasonDialog } from './LossReasonDialog';
-import type { Lead, UpdateLeadDto } from '../../types';
+import React, { useState, useEffect } from "react";
+import {
+  X,
+  Save,
+  Phone,
+  Mail,
+  User,
+  DollarSign,
+  MessageSquare,
+  Trash2,
+  Users,
+} from "lucide-react";
+import { Button } from "../ui/button";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "../ui/select";
+import { apiService } from "../../services/api";
+import { userService, type UserDto } from "../../services/users";
+import { useCustomStatuses } from "../../hooks/useCustomStatuses";
+import { LossReasonDialog } from "./LossReasonDialog";
+import type { Lead, UpdateLeadDto } from "../../types";
 
 interface Campaign {
   id: string;
@@ -20,18 +36,19 @@ interface EditLeadModalProps {
   onSubmit: (id: string, data: UpdateLeadDto) => Promise<void>;
   onDelete?: (id: string) => Promise<void>;
   lead: Lead | null;
+  isEmbed?: boolean; // Se true, remove o fundo escuro
 }
 
 const platforms = [
-  'WhatsApp',
-  'Facebook',
-  'Instagram', 
-  'Google Ads',
-  'LinkedIn',
-  'Website',
-  'Telefone',
-  'Referência',
-  'Outros'
+  "WhatsApp",
+  "Facebook",
+  "Instagram",
+  "Google Ads",
+  "LinkedIn",
+  "Website",
+  "Telefone",
+  "Referência",
+  "Outros",
 ];
 
 export const EditLeadModal: React.FC<EditLeadModalProps> = ({
@@ -40,20 +57,25 @@ export const EditLeadModal: React.FC<EditLeadModalProps> = ({
   onSubmit,
   onDelete,
   lead,
+  isEmbed = false,
 }) => {
-  const { statuses, lossReasons, loading: statusesLoading } = useCustomStatuses();
+  const {
+    statuses,
+    lossReasons,
+    loading: statusesLoading,
+  } = useCustomStatuses();
   const [formData, setFormData] = useState<UpdateLeadDto>({
-    name: '',
-    phone: '',
-    email: '',
-    message: '',
-    platform: 'WhatsApp',
-    channel: 'WhatsApp',
-    campaign: '',
+    name: "",
+    phone: "",
+    email: "",
+    message: "",
+    platform: "WhatsApp",
+    channel: "WhatsApp",
+    campaign: "",
     value: 0,
-    notes: '',
-    status: 'new',
-    assigned_to_user_id: '',
+    notes: "",
+    status: "new",
+    assigned_to_user_id: undefined,
   });
   const [loading, setLoading] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
@@ -74,14 +96,14 @@ export const EditLeadModal: React.FC<EditLeadModalProps> = ({
 
       try {
         const [campaignsResponse, usersResponse] = await Promise.all([
-          apiService.get<{ campaigns: Campaign[] }>('/api/campaigns'),
-          userService.list()
+          apiService.get<{ campaigns: Campaign[] }>("/api/campaigns"),
+          userService.list(),
         ]);
 
         setCampaigns(campaignsResponse.data.campaigns || []);
         setUsers(usersResponse || []);
       } catch (error) {
-        console.error('Error fetching data:', error);
+        console.error("Error fetching data:", error);
       }
     };
 
@@ -91,17 +113,17 @@ export const EditLeadModal: React.FC<EditLeadModalProps> = ({
   useEffect(() => {
     if (lead && isOpen) {
       setFormData({
-        name: lead.name || '',
-        phone: lead.phone || '',
-        email: lead.email || '',
-        message: lead.message || '',
-        platform: lead.platform || 'WhatsApp',
-        channel: lead.channel || 'WhatsApp',
-        campaign: lead.campaign || '',
+        name: lead.name || "",
+        phone: lead.phone || "",
+        email: lead.email || "",
+        message: lead.message || "",
+        platform: lead.platform || "WhatsApp",
+        channel: lead.channel || "WhatsApp",
+        campaign: lead.campaign || "",
         value: lead.value || 0,
-        notes: lead.notes || '',
-        status: lead.status || 'new',
-        assigned_to_user_id: lead.assigned_to_user_id || '',
+        notes: lead.notes || "",
+        status: lead.status || "new",
+        assigned_to_user_id: lead.assigned_to_user_id || "",
       });
     }
   }, [lead, isOpen]);
@@ -115,7 +137,7 @@ export const EditLeadModal: React.FC<EditLeadModalProps> = ({
       await onSubmit(lead.id, formData);
       onClose();
     } catch (error) {
-      console.error('Error updating lead:', error);
+      console.error("Error updating lead:", error);
     } finally {
       setLoading(false);
     }
@@ -130,7 +152,7 @@ export const EditLeadModal: React.FC<EditLeadModalProps> = ({
       setShowDeleteConfirm(false);
       onClose();
     } catch (error) {
-      console.error('Error deleting lead:', error);
+      console.error("Error deleting lead:", error);
     } finally {
       setLoading(false);
     }
@@ -148,30 +170,33 @@ export const EditLeadModal: React.FC<EditLeadModalProps> = ({
     const currentStatus = formData.status;
 
     // Check if the new status is a lost status
-    const lostStatus = statuses.find(s => s.value === newStatus && s.is_lost);
+    const lostStatus = statuses.find((s) => s.value === newStatus && s.is_lost);
 
     if (lostStatus && currentStatus !== newStatus) {
       // Store the pending change and show dialog
       setPendingStatusChange({
         newStatus,
-        previousStatus: currentStatus
+        previousStatus: currentStatus || "",
       });
       setShowLossReasonDialog(true);
     } else {
       // Direct status change for non-lost statuses
-      setFormData(prev => ({ ...prev, status: newStatus }));
+      setFormData((prev) => ({ ...prev, status: newStatus }));
     }
   };
 
   // Handle loss reason confirmation
-  const handleLossReasonConfirm = async (reason: string, customReason?: string) => {
+  const handleLossReasonConfirm = async (
+    reason: string,
+    customReason?: string
+  ) => {
     if (!pendingStatusChange) return;
 
     // Apply the status change with loss reason
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
       status: pendingStatusChange.newStatus,
-      lost_reason: reason
+      lost_reason: reason,
     }));
 
     // Clear pending state and close dialog
@@ -189,7 +214,11 @@ export const EditLeadModal: React.FC<EditLeadModalProps> = ({
   if (!isOpen || !lead) return null;
 
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+    <div
+      className={`fixed inset-0 ${
+        isEmbed ? "bg-transparent" : "bg-black/50"
+      } flex items-center justify-center z-50 p-4`}
+    >
       <div className="bg-background rounded-lg w-full max-w-2xl max-h-[90vh] overflow-y-auto">
         <div className="p-6 border-b">
           <div className="flex items-center justify-between">
@@ -198,7 +227,7 @@ export const EditLeadModal: React.FC<EditLeadModalProps> = ({
                 Editar Lead
               </h3>
               <p className="text-sm text-muted-foreground mt-1">
-                Criado em {new Date(lead.createdAt).toLocaleDateString('pt-BR')}
+                Criado em {new Date(lead.createdAt).toLocaleDateString("pt-BR")}
               </p>
             </div>
             <div className="flex items-center gap-2">
@@ -235,7 +264,9 @@ export const EditLeadModal: React.FC<EditLeadModalProps> = ({
               <input
                 type="text"
                 value={formData.name}
-                onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
+                onChange={(e) =>
+                  setFormData((prev) => ({ ...prev, name: e.target.value }))
+                }
                 className="w-full px-3 py-2 border border-input bg-background rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
                 placeholder="Nome do lead"
                 required
@@ -261,7 +292,7 @@ export const EditLeadModal: React.FC<EditLeadModalProps> = ({
                       Carregando status...
                     </SelectItem>
                   ) : (
-                    statuses.map(status => (
+                    statuses.map((status) => (
                       <SelectItem key={status.value} value={status.value}>
                         <div className="flex items-center gap-2">
                           <div
@@ -270,13 +301,19 @@ export const EditLeadModal: React.FC<EditLeadModalProps> = ({
                           />
                           <span>{status.label}</span>
                           {status.is_initial && (
-                            <span className="text-xs bg-blue-100 text-blue-800 px-1 rounded">Inicial</span>
+                            <span className="text-xs bg-blue-100 text-blue-800 px-1 rounded">
+                              Inicial
+                            </span>
                           )}
                           {status.is_won && (
-                            <span className="text-xs bg-green-100 text-green-800 px-1 rounded">Ganho</span>
+                            <span className="text-xs bg-green-100 text-green-800 px-1 rounded">
+                              Ganho
+                            </span>
                           )}
                           {status.is_lost && (
-                            <span className="text-xs bg-red-100 text-red-800 px-1 rounded">Perdido</span>
+                            <span className="text-xs bg-red-100 text-red-800 px-1 rounded">
+                              Perdido
+                            </span>
                           )}
                         </div>
                       </SelectItem>
@@ -292,11 +329,13 @@ export const EditLeadModal: React.FC<EditLeadModalProps> = ({
                 Vendedor Responsável
               </label>
               <Select
-                value={formData.assigned_to_user_id || ''}
-                onValueChange={(value) => setFormData(prev => ({
-                  ...prev,
-                  assigned_to_user_id: value === 'none' ? '' : value
-                }))}
+                value={formData.assigned_to_user_id || ""}
+                onValueChange={(value) =>
+                  setFormData((prev) => ({
+                    ...prev,
+                    assigned_to_user_id: value === "none" ? undefined : value,
+                  }))
+                }
                 disabled={loading}
               >
                 <SelectTrigger className="w-full">
@@ -305,12 +344,14 @@ export const EditLeadModal: React.FC<EditLeadModalProps> = ({
                 <SelectContent>
                   <SelectItem value="none">Não atribuído</SelectItem>
                   {users
-                    .filter(user => user.is_active)
-                    .map(user => (
+                    .filter((user) => user.is_active)
+                    .map((user) => (
                       <SelectItem key={user.id} value={user.id}>
                         <div className="flex items-center gap-2">
                           <span>{user.name}</span>
-                          <span className="text-xs text-muted-foreground">({user.email})</span>
+                          <span className="text-xs text-muted-foreground">
+                            ({user.email})
+                          </span>
                           {user.role && (
                             <span className="text-xs bg-muted px-1 rounded">
                               {user.role}
@@ -318,8 +359,7 @@ export const EditLeadModal: React.FC<EditLeadModalProps> = ({
                           )}
                         </div>
                       </SelectItem>
-                    ))
-                  }
+                    ))}
                 </SelectContent>
               </Select>
             </div>
@@ -332,7 +372,9 @@ export const EditLeadModal: React.FC<EditLeadModalProps> = ({
               <input
                 type="tel"
                 value={formData.phone}
-                onChange={(e) => setFormData(prev => ({ ...prev, phone: e.target.value }))}
+                onChange={(e) =>
+                  setFormData((prev) => ({ ...prev, phone: e.target.value }))
+                }
                 className="w-full px-3 py-2 border border-input bg-background rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
                 placeholder="(11) 99999-9999"
                 disabled={loading}
@@ -347,7 +389,9 @@ export const EditLeadModal: React.FC<EditLeadModalProps> = ({
               <input
                 type="email"
                 value={formData.email}
-                onChange={(e) => setFormData(prev => ({ ...prev, email: e.target.value }))}
+                onChange={(e) =>
+                  setFormData((prev) => ({ ...prev, email: e.target.value }))
+                }
                 className="w-full px-3 py-2 border border-input bg-background rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
                 placeholder="email@exemplo.com"
                 disabled={loading}
@@ -366,7 +410,7 @@ export const EditLeadModal: React.FC<EditLeadModalProps> = ({
                   const rawValue = e.target.value;
                   let numValue = 0;
 
-                  if (rawValue && rawValue !== '') {
+                  if (rawValue && rawValue !== "") {
                     numValue = Number(rawValue);
                     // Validar se é um número válido
                     if (isNaN(numValue) || numValue < 0) {
@@ -374,7 +418,7 @@ export const EditLeadModal: React.FC<EditLeadModalProps> = ({
                     }
                   }
 
-                  setFormData(prev => ({ ...prev, value: numValue }));
+                  setFormData((prev) => ({ ...prev, value: numValue }));
                 }}
                 className="w-full px-3 py-2 border border-input bg-background rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
                 placeholder="0"
@@ -390,18 +434,20 @@ export const EditLeadModal: React.FC<EditLeadModalProps> = ({
               </label>
               <Select
                 value={formData.platform}
-                onValueChange={(value) => setFormData(prev => ({ 
-                  ...prev, 
-                  platform: value,
-                  channel: value 
-                }))}
+                onValueChange={(value) =>
+                  setFormData((prev) => ({
+                    ...prev,
+                    platform: value,
+                    channel: value,
+                  }))
+                }
                 disabled={loading}
               >
                 <SelectTrigger className="w-full">
                   <SelectValue placeholder="Selecionar plataforma" />
                 </SelectTrigger>
                 <SelectContent>
-                  {platforms.map(platform => (
+                  {platforms.map((platform) => (
                     <SelectItem key={platform} value={platform}>
                       {platform}
                     </SelectItem>
@@ -417,7 +463,9 @@ export const EditLeadModal: React.FC<EditLeadModalProps> = ({
             </label>
             <Select
               value={formData.campaign}
-              onValueChange={(value) => setFormData(prev => ({ ...prev, campaign: value }))}
+              onValueChange={(value) =>
+                setFormData((prev) => ({ ...prev, campaign: value }))
+              }
               disabled={loading}
             >
               <SelectTrigger className="w-full">
@@ -425,15 +473,16 @@ export const EditLeadModal: React.FC<EditLeadModalProps> = ({
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="Orgânico">Orgânico</SelectItem>
-                <SelectItem value="Não identificada">Não identificada</SelectItem>
+                <SelectItem value="Não identificada">
+                  Não identificada
+                </SelectItem>
                 {campaigns
-                  .filter(campaign => campaign.is_active)
-                  .map(campaign => (
+                  .filter((campaign) => campaign.is_active)
+                  .map((campaign) => (
                     <SelectItem key={campaign.id} value={campaign.name}>
                       {campaign.name}
                     </SelectItem>
-                  ))
-                }
+                  ))}
               </SelectContent>
             </Select>
           </div>
@@ -445,7 +494,9 @@ export const EditLeadModal: React.FC<EditLeadModalProps> = ({
             </label>
             <textarea
               value={formData.message}
-              onChange={(e) => setFormData(prev => ({ ...prev, message: e.target.value }))}
+              onChange={(e) =>
+                setFormData((prev) => ({ ...prev, message: e.target.value }))
+              }
               className="w-full px-3 py-2 border border-input bg-background rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
               rows={3}
               placeholder="Primeira mensagem ou interesse do lead..."
@@ -459,7 +510,9 @@ export const EditLeadModal: React.FC<EditLeadModalProps> = ({
             </label>
             <textarea
               value={formData.notes}
-              onChange={(e) => setFormData(prev => ({ ...prev, notes: e.target.value }))}
+              onChange={(e) =>
+                setFormData((prev) => ({ ...prev, notes: e.target.value }))
+              }
               className="w-full px-3 py-2 border border-input bg-background rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
               rows={2}
               placeholder="Observações adicionais..."
@@ -476,13 +529,10 @@ export const EditLeadModal: React.FC<EditLeadModalProps> = ({
             >
               Cancelar
             </Button>
-            
-            <Button
-              type="submit"
-              disabled={!formData.name?.trim() || loading}
-            >
+
+            <Button type="submit" disabled={!formData.name?.trim() || loading}>
               <Save className="w-4 h-4 mr-2" />
-              {loading ? 'Salvando...' : 'Salvar Alterações'}
+              {loading ? "Salvando..." : "Salvar Alterações"}
             </Button>
           </div>
         </form>
@@ -495,7 +545,8 @@ export const EditLeadModal: React.FC<EditLeadModalProps> = ({
                 Confirmar Exclusão
               </h4>
               <p className="text-muted-foreground mb-4">
-                Tem certeza que deseja excluir o lead "{lead.name}"? Esta ação não pode ser desfeita.
+                Tem certeza que deseja excluir o lead "{lead.name}"? Esta ação
+                não pode ser desfeita.
               </p>
               <div className="flex items-center justify-end gap-3">
                 <Button
@@ -511,7 +562,7 @@ export const EditLeadModal: React.FC<EditLeadModalProps> = ({
                   disabled={loading}
                 >
                   <Trash2 className="w-4 h-4 mr-2" />
-                  {loading ? 'Excluindo...' : 'Excluir'}
+                  {loading ? "Excluindo..." : "Excluir"}
                 </Button>
               </div>
             </div>
