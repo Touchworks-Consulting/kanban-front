@@ -2,10 +2,17 @@ import { useEffect, useState } from 'react';
 import { userService } from '../services';
 import { usePlanLimits } from '../components/PlanLimitsAlert';
 import { LoadingSpinner } from '../components/LoadingSpinner';
-import { Eye, EyeOff, Copy, RefreshCw, Check, Key } from 'lucide-react';
+import { Eye, EyeOff, Copy, RefreshCw, Check, Key, MoreVertical } from 'lucide-react';
 import { useAuthStore } from '../stores/auth';
 import { ResetUserPasswordModal } from '../components/users/ResetUserPasswordModal';
+import { ChangeRoleModal } from '../components/users/ChangeRoleModal';
 import { PhoneInput } from '../components/forms/PhoneInput';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '../components/ui/dropdown-menu';
 import {
   Select,
   SelectContent,
@@ -27,6 +34,10 @@ export function UsersPage() {
   const [createdCredentials, setCreatedCredentials] = useState<{ name: string; email: string; password: string } | null>(null);
   const [copyFeedback, setCopyFeedback] = useState<{ type: 'password' | 'credentials' | null }>({ type: null });
   const [resetPasswordModal, setResetPasswordModal] = useState<{ isOpen: boolean; user: UserRow | null }>({
+    isOpen: false,
+    user: null
+  });
+  const [changeRoleModal, setChangeRoleModal] = useState<{ isOpen: boolean; user: UserRow | null }>({
     isOpen: false,
     user: null
   });
@@ -174,9 +185,23 @@ export function UsersPage() {
     console.log('Senha redefinida com sucesso!');
   };
 
+  const handleChangeRole = (user: UserRow) => {
+    setChangeRoleModal({
+      isOpen: true,
+      user
+    });
+  };
+
+  const handleChangeRoleSuccess = async () => {
+    setError(null);
+    console.log('Role alterado com sucesso!');
+    await load(); // Recarregar lista de usuários
+  };
+
   // Verificar se o usuário atual tem permissão para gerenciar outros usuários
   const { user: currentUser } = useAuthStore();
   const canManageUsers = currentUser?.role && ['owner', 'admin'].includes(currentUser.role);
+  const isOwner = currentUser?.role === 'owner';
 
   return (
     <div className="space-y-8">
@@ -231,6 +256,23 @@ export function UsersPage() {
                           >
                             {u.is_active === false ? 'Ativar' : 'Desativar'}
                           </button>
+                          {isOwner && currentUser.id !== (u.id || u.user_id) && (
+                            <DropdownMenu>
+                              <DropdownMenuTrigger asChild>
+                                <button
+                                  className="text-xs px-2 py-1 rounded bg-muted hover:bg-muted/80"
+                                  title="Mais ações"
+                                >
+                                  <MoreVertical className="w-3 h-3" />
+                                </button>
+                              </DropdownMenuTrigger>
+                              <DropdownMenuContent align="end">
+                                <DropdownMenuItem onClick={() => handleChangeRole(u)}>
+                                  Alterar Papel
+                                </DropdownMenuItem>
+                              </DropdownMenuContent>
+                            </DropdownMenu>
+                          )}
                         </div>
                       </td>
                     </tr>
@@ -381,6 +423,21 @@ export function UsersPage() {
             id: resetPasswordModal.user.id || resetPasswordModal.user.user_id || '',
             name: resetPasswordModal.user.name,
             email: resetPasswordModal.user.email
+          }}
+        />
+      )}
+
+      {/* Modal de Alteração de Papel */}
+      {changeRoleModal.user && (
+        <ChangeRoleModal
+          isOpen={changeRoleModal.isOpen}
+          onClose={() => setChangeRoleModal({ isOpen: false, user: null })}
+          onSuccess={handleChangeRoleSuccess}
+          user={{
+            id: changeRoleModal.user.id || changeRoleModal.user.user_id || '',
+            name: changeRoleModal.user.name,
+            email: changeRoleModal.user.email,
+            role: changeRoleModal.user.role
           }}
         />
       )}

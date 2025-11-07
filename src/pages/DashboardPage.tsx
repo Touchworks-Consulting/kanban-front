@@ -15,7 +15,7 @@ import {
   Phone,
   
 } from 'lucide-react';
-import { dashboardService, campaignsService, whatsappService, type ConversionTimeMetric, type StageTimingMetric, type DetailedStageMetric, type StagnantLead } from '../services';
+import { dashboardService, campaignsService, whatsappService, performanceService, type ConversionTimeMetric, type StageTimingMetric, type DetailedStageMetric, type StagnantLead, type MQLData, type LossReasonsData, type StatusDistributionData } from '../services';
 import { useCustomStatuses } from '../hooks/useCustomStatuses';
 import { DashboardSkeleton } from '../components/dashboard/DashboardSkeletons';
 import { Button } from '../components/ui/button';
@@ -34,6 +34,9 @@ import { SalesRankingTable } from '../components/dashboard/SalesRankingTable';
 import { SalesPerformanceChart } from '../components/dashboard/SalesPerformanceChart';
 import { ActivityConversionScatter } from '../components/dashboard/ActivityConversionScatter';
 import { LeadModal } from '../components/kanban/LeadModal';
+import { PerformanceSection } from '../components/dashboard/PerformanceSection';
+import { MQLMetricCard } from '../components/dashboard/MQLMetricCard';
+import { LossReasonsReport } from '../components/dashboard/LossReasonsReport';
 // Interface para dados consolidados do dashboard
 interface ConsolidatedDashboardData {
   totalLeads: number;
@@ -111,6 +114,11 @@ export function DashboardPage() {
   const [salesRankingData, setSalesRankingData] = useState<any[]>([]);
   const [salesPerformanceData, setSalesPerformanceData] = useState<any[]>([]);
   const [activityConversionData, setActivityConversionData] = useState<any[]>([]);
+
+  // Estados para métricas de performance
+  const [mqlData, setMqlData] = useState<MQLData | null>(null);
+  const [lossReasonsData, setLossReasonsData] = useState<LossReasonsData | null>(null);
+  const [statusDistributionData, setStatusDistributionData] = useState<StatusDistributionData | null>(null);
 
   // Estados para dados adicionais
   const [campaignStats, setCampaignStats] = useState({
@@ -205,7 +213,10 @@ export function DashboardPage() {
         stagnantLeadsResponse,
         salesRankingResponse,
         salesPerformanceResponse,
-        activityConversionResponse
+        activityConversionResponse,
+        mqlResponse,
+        lossReasonsResponse,
+        statusDistributionResponse
       ] = await Promise.all([
         dashboardService.getMetrics(filterParams),
         dashboardService.getConversionTimeByCampaign(filterParams),
@@ -217,7 +228,11 @@ export function DashboardPage() {
         // Novas chamadas para ranking de vendedores
         dashboardService.getSalesRanking(filterParams).catch(() => ({ data: [] })),
         dashboardService.getSalesPerformanceChart(filterParams).catch(() => ({ data: [] })),
-        dashboardService.getActivityConversionScatter(filterParams).catch(() => ({ data: [] }))
+        dashboardService.getActivityConversionScatter(filterParams).catch(() => ({ data: [] })),
+        // Novas chamadas para métricas de performance
+        performanceService.getMQLPercentage(filterParams).catch(() => null),
+        performanceService.getLossReasons(filterParams).catch(() => null),
+        performanceService.getStatusDistribution(filterParams).catch(() => null)
       ]);
 
       // Buscar dados adicionais (sem filtros de data)
@@ -306,6 +321,11 @@ export function DashboardPage() {
       setSalesRankingData(salesRankingResponse.data || []);
       setSalesPerformanceData(salesPerformanceResponse.data || []);
       setActivityConversionData(activityConversionResponse.data || []);
+
+      // Definir dados de métricas de performance
+      setMqlData(mqlResponse);
+      setLossReasonsData(lossReasonsResponse);
+      setStatusDistributionData(statusDistributionResponse);
     } catch (err) {
       console.error('Erro ao carregar dados do dashboard:', err);
       setError('Erro ao carregar dados do dashboard');
@@ -711,7 +731,7 @@ export function DashboardPage() {
         </div>
       </div>
 
-      {/* Seção Conversão por Campanha + Nuvem de Palavras - Largura total */}
+      {/* Seção Conversão por Campanha + MQL - Largura total */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-6">
         {/* Tabela de Conversão por Campanha */}
         <div className="bg-card rounded-lg border p-4">
@@ -755,17 +775,9 @@ export function DashboardPage() {
           )}
         </div>
 
-        {/* Nuvem de Palavras/Frases Mais Utilizadas */}
+        {/* Card MQL */}
         <div className="bg-card rounded-lg border p-4">
-          <div className="flex items-center gap-2 mb-3">
-            <MessageSquare className="w-4 h-4 text-primary" />
-            <h3 className="text-base font-semibold">Frases Mais Utilizadas</h3>
-          </div>
-          <div className="text-center py-6 text-muted-foreground">
-            <MessageSquare className="w-6 h-6 mx-auto mb-2 opacity-50" />
-            <p className="text-sm">Nuvem de palavras será implementada</p>
-            <p className="text-xs mt-1">Dados disponíveis no banco</p>
-          </div>
+          <MQLMetricCard data={mqlData} isLoading={isLoading} />
         </div>
       </div>
 
@@ -800,6 +812,16 @@ export function DashboardPage() {
         </div>
       </div>
 
+      {/* Nova seção: Análise de Performance */}
+      <div className="mb-6">
+        <PerformanceSection
+          mqlData={mqlData}
+          lossReasonsData={lossReasonsData}
+          statusDistributionData={statusDistributionData}
+          isLoading={isLoading}
+        />
+      </div>
+
       {/* Nova seção: Ranking de Vendedores */}
       <div className="mb-6">
         <div className="bg-card rounded-lg border p-4">
@@ -814,19 +836,6 @@ export function DashboardPage() {
           </div>
 
           <SalesRankingTable data={salesRankingData} loading={isLoading} />
-        </div>
-      </div>
-
-      {/* Seção: Gráficos de Performance de Vendas */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-6">
-        {/* Gráfico de Performance de Vendas */}
-        <div className="bg-card rounded-lg border p-4">
-          <SalesPerformanceChart data={salesPerformanceData} loading={isLoading} />
-        </div>
-
-        {/* Gráfico de Dispersão: Atividades vs Conversão */}
-        <div className="bg-card rounded-lg border p-4">
-          <ActivityConversionScatter data={activityConversionData} loading={isLoading} />
         </div>
       </div>
 

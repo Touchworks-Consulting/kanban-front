@@ -113,6 +113,14 @@ const getTotalValue = () => {
           <span className="text-xs text-muted-foreground bg-muted px-2 py-1 rounded-full flex-shrink-0">
             {leads.length}
           </span>
+          {column.is_mql && (
+            <span
+              className="text-xs font-medium text-green-700 dark:text-green-400 bg-green-100 dark:bg-green-950 px-2 py-1 rounded-full flex-shrink-0 flex items-center gap-1"
+              title="Marketing Qualified Lead - Esta coluna é contabilizada no cálculo de MQL"
+            >
+              📊 MQL
+            </span>
+          )}
         </div>
 
         <div className="flex items-center gap-1">
