@@ -30,6 +30,7 @@ export const EditColumnModal: React.FC<EditColumnModalProps> = ({
   const [formData, setFormData] = useState<UpdateColumnDto>({
     name: '',
     color: predefinedColors[0],
+    is_mql: false,
   });
   const [loading, setLoading] = useState(false);
 
@@ -39,6 +40,7 @@ export const EditColumnModal: React.FC<EditColumnModalProps> = ({
       setFormData({
         name: column.name,
         color: column.color || predefinedColors[0],
+        is_mql: column.is_mql || false,
       });
     }
   }, [column]);
@@ -63,6 +65,7 @@ export const EditColumnModal: React.FC<EditColumnModalProps> = ({
       setFormData({
         name: column.name,
         color: column.color || predefinedColors[0],
+        is_mql: column.is_mql || false,
       });
     }
     onClose();
@@ -125,6 +128,25 @@ export const EditColumnModal: React.FC<EditColumnModalProps> = ({
                 />
               ))}
             </div>
+          </div>
+
+          <div className="flex items-center space-x-2 p-3 border border-border rounded-md bg-muted/20">
+            <input
+              type="checkbox"
+              id="is_mql"
+              checked={formData.is_mql || false}
+              onChange={(e) => setFormData(prev => ({ ...prev, is_mql: e.target.checked }))}
+              className="w-4 h-4 text-primary border-gray-300 rounded focus:ring-primary"
+              disabled={loading}
+            />
+            <label htmlFor="is_mql" className="text-sm font-medium text-foreground cursor-pointer flex-1">
+              <div className="flex items-center gap-2">
+                <span>📊 Marcar como MQL</span>
+              </div>
+              <p className="text-xs text-muted-foreground mt-0.5">
+                Marketing Qualified Lead - Leads nesta coluna serão contabilizados no cálculo de MQL
+              </p>
+            </label>
           </div>
 
           <div className="flex items-center justify-between pt-4">

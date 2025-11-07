@@ -28,6 +28,10 @@ export const userService = {
   resetPassword: async (id: string, newPassword: string): Promise<any> => {
     const res = await apiService.put<any>(`${API_ENDPOINTS.USER_BY_ID(id)}/reset-password`, { newPassword });
     return res.data;
+  },
+  changeRole: async (id: string, role: 'member' | 'admin' | 'owner'): Promise<UserDto> => {
+    const res = await apiService.patch<SingleResponse>(`${API_ENDPOINTS.USER_BY_ID(id)}/role`, { role });
+    return (res.data as any).user;
   }
 };
 

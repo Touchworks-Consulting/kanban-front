@@ -35,6 +35,7 @@ export interface KanbanColumn {
   color: string;
   is_system: boolean;
   is_active: boolean;
+  is_mql?: boolean;
   account_id: string;
   leads?: Lead[];
   createdAt: string;
@@ -93,6 +94,7 @@ export interface CreateColumnDto {
 
 export interface UpdateColumnDto extends Partial<CreateColumnDto> {
   position?: number;
+  is_mql?: boolean;
 }
 
 export interface MoveLeadDto {
