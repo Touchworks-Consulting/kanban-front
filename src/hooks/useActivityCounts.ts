@@ -17,7 +17,7 @@ export const useLeadActivityCounts = (leadId: string) => {
   const isMounted = useRef(true);
 
   const fetchCounts = useCallback(async () => {
-    if (!leadId) return;
+    if (!leadId || leadId.trim() === '') return;
 
     // Verificar cache primeiro
     const cached = activityCountsCache.get(leadId);
