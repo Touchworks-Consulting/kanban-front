@@ -1,11 +1,26 @@
-import React, { useState, useEffect } from 'react';
-import { X, Save, Phone, Mail, User, DollarSign, MessageSquare, Users } from 'lucide-react';
-import { Button } from '../ui/button';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
-import { apiService } from '../../services/api';
-import { userService, type UserDto } from '../../services/users';
-import { useCustomStatuses } from '../../hooks/useCustomStatuses';
-import type { CreateLeadDto } from '../../types';
+import React, { useState, useEffect } from "react";
+import {
+  X,
+  Save,
+  Phone,
+  Mail,
+  User,
+  DollarSign,
+  MessageSquare,
+  Users,
+} from "lucide-react";
+import { Button } from "../ui/button";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "../ui/select";
+import { apiService } from "../../services/api";
+import { userService, type UserDto } from "../../services/users";
+import { useCustomStatuses } from "../../hooks/useCustomStatuses";
+import type { CreateLeadDto } from "../../types";
 
 interface Campaign {
   id: string;
@@ -21,18 +36,19 @@ interface CreateLeadModalProps {
   columnName?: string;
   initialPhone?: string; // Telefone pré-preenchido (para embed)
   initialEmail?: string; // Email pré-preenchido (para embed)
+  isEmbed?: boolean; // Se true, remove o fundo escuro
 }
 
 const platforms = [
-  'WhatsApp',
-  'Facebook',
-  'Instagram', 
-  'Google Ads',
-  'LinkedIn',
-  'Website',
-  'Telefone',
-  'Referência',
-  'Outros'
+  "WhatsApp",
+  "Facebook",
+  "Instagram",
+  "Google Ads",
+  "LinkedIn",
+  "Website",
+  "Telefone",
+  "Referência",
+  "Outros",
 ];
 
 export const CreateLeadModal: React.FC<CreateLeadModalProps> = ({
@@ -43,20 +59,21 @@ export const CreateLeadModal: React.FC<CreateLeadModalProps> = ({
   columnName,
   initialPhone,
   initialEmail,
+  isEmbed = false,
 }) => {
   const { getInitialStatus } = useCustomStatuses();
   const [formData, setFormData] = useState<CreateLeadDto>({
-    name: '',
-    phone: initialPhone || '',
-    email: initialEmail || '',
-    message: '',
-    platform: 'WhatsApp',
-    channel: 'WhatsApp',
-    campaign: '',
+    name: "",
+    phone: initialPhone || "",
+    email: initialEmail || "",
+    message: "",
+    platform: "WhatsApp",
+    channel: "WhatsApp",
+    campaign: "",
     value: 0,
-    notes: '',
-    assigned_to_user_id: '',
-    column_id: columnId || '',
+    notes: "",
+    assigned_to_user_id: undefined,
+    column_id: columnId || undefined,
   });
   const [loading, setLoading] = useState(false);
   const [campaigns, setCampaigns] = useState<Campaign[]>([]);
@@ -65,7 +82,7 @@ export const CreateLeadModal: React.FC<CreateLeadModalProps> = ({
   // Atualizar telefone e email quando props mudarem
   useEffect(() => {
     if (initialPhone || initialEmail) {
-      setFormData(prev => ({
+      setFormData((prev) => ({
         ...prev,
         phone: initialPhone || prev.phone,
         email: initialEmail || prev.email,
@@ -80,14 +97,14 @@ export const CreateLeadModal: React.FC<CreateLeadModalProps> = ({
 
       try {
         const [campaignsResponse, usersResponse] = await Promise.all([
-          apiService.get<{ campaigns: Campaign[] }>('/api/campaigns'),
-          userService.list()
+          apiService.get<{ campaigns: Campaign[] }>("/api/campaigns"),
+          userService.list(),
         ]);
 
         setCampaigns(campaignsResponse.data.campaigns || []);
         setUsers(usersResponse || []);
       } catch (error) {
-        console.error('Error fetching data:', error);
+        console.error("Error fetching data:", error);
       }
     };
 
@@ -96,7 +113,7 @@ export const CreateLeadModal: React.FC<CreateLeadModalProps> = ({
 
   React.useEffect(() => {
     if (columnId) {
-      setFormData(prev => ({ ...prev, column_id: columnId }));
+      setFormData((prev) => ({ ...prev, column_id: columnId }));
     }
   }, [columnId]);
 
@@ -110,25 +127,25 @@ export const CreateLeadModal: React.FC<CreateLeadModalProps> = ({
       const initialStatus = getInitialStatus();
       const leadData = {
         ...formData,
-        status: initialStatus?.value || 'new' // fallback to 'new' if no initial status found
+        status: initialStatus?.value || "new", // fallback to 'new' if no initial status found
       };
 
       await onSubmit(leadData);
       setFormData({
-        name: '',
-        phone: '',
-        email: '',
-        message: '',
-        platform: 'WhatsApp',
-        channel: 'WhatsApp', 
-        campaign: '',
+        name: "",
+        phone: "",
+        email: "",
+        message: "",
+        platform: "WhatsApp",
+        channel: "WhatsApp",
+        campaign: "",
         value: 0,
-        notes: '',
-        column_id: columnId || '',
+        notes: "",
+        column_id: columnId || undefined,
       });
       onClose();
     } catch (error) {
-      console.error('Error creating lead:', error);
+      console.error("Error creating lead:", error);
     } finally {
       setLoading(false);
     }
@@ -136,16 +153,16 @@ export const CreateLeadModal: React.FC<CreateLeadModalProps> = ({
 
   const handleClose = () => {
     setFormData({
-      name: '',
-      phone: '',
-      email: '',
-      message: '',
-      platform: 'WhatsApp',
-      channel: 'WhatsApp',
-      campaign: '',
+      name: "",
+      phone: "",
+      email: "",
+      message: "",
+      platform: "WhatsApp",
+      channel: "WhatsApp",
+      campaign: "",
       value: 0,
-      notes: '',
-      column_id: columnId || '',
+      notes: "",
+      column_id: columnId || undefined,
     });
     onClose();
   };
@@ -153,7 +170,11 @@ export const CreateLeadModal: React.FC<CreateLeadModalProps> = ({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+    <div
+      className={`fixed inset-0 ${
+        isEmbed ? "bg-transparent" : "bg-black/50"
+      } flex items-center justify-center z-50 p-4`}
+    >
       <div className="bg-background rounded-lg w-full max-w-2xl max-h-[90vh] overflow-y-auto">
         <div className="p-6 border-b">
           <div className="flex items-center justify-between">
@@ -188,7 +209,9 @@ export const CreateLeadModal: React.FC<CreateLeadModalProps> = ({
               <input
                 type="text"
                 value={formData.name}
-                onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
+                onChange={(e) =>
+                  setFormData((prev) => ({ ...prev, name: e.target.value }))
+                }
                 className="w-full px-3 py-2 border border-input bg-background rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
                 placeholder="Nome do lead"
                 required
@@ -204,7 +227,9 @@ export const CreateLeadModal: React.FC<CreateLeadModalProps> = ({
               <input
                 type="tel"
                 value={formData.phone}
-                onChange={(e) => setFormData(prev => ({ ...prev, phone: e.target.value }))}
+                onChange={(e) =>
+                  setFormData((prev) => ({ ...prev, phone: e.target.value }))
+                }
                 className="w-full px-3 py-2 border border-input bg-background rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
                 placeholder="(11) 99999-9999"
                 disabled={loading}
@@ -219,7 +244,9 @@ export const CreateLeadModal: React.FC<CreateLeadModalProps> = ({
               <input
                 type="email"
                 value={formData.email}
-                onChange={(e) => setFormData(prev => ({ ...prev, email: e.target.value }))}
+                onChange={(e) =>
+                  setFormData((prev) => ({ ...prev, email: e.target.value }))
+                }
                 className="w-full px-3 py-2 border border-input bg-background rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
                 placeholder="email@exemplo.com"
                 disabled={loading}
@@ -238,7 +265,7 @@ export const CreateLeadModal: React.FC<CreateLeadModalProps> = ({
                   const rawValue = e.target.value;
                   let numValue = 0;
 
-                  if (rawValue && rawValue !== '') {
+                  if (rawValue && rawValue !== "") {
                     numValue = Number(rawValue);
                     // Validar se é um número válido
                     if (isNaN(numValue) || numValue < 0) {
@@ -246,7 +273,7 @@ export const CreateLeadModal: React.FC<CreateLeadModalProps> = ({
                     }
                   }
 
-                  setFormData(prev => ({ ...prev, value: numValue }));
+                  setFormData((prev) => ({ ...prev, value: numValue }));
                 }}
                 className="w-full px-3 py-2 border border-input bg-background rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
                 placeholder="0"
@@ -263,11 +290,13 @@ export const CreateLeadModal: React.FC<CreateLeadModalProps> = ({
               Vendedor Responsável
             </label>
             <Select
-              value={formData.assigned_to_user_id || ''}
-              onValueChange={(value) => setFormData(prev => ({
-                ...prev,
-                assigned_to_user_id: value === 'none' ? '' : value
-              }))}
+              value={formData.assigned_to_user_id || ""}
+              onValueChange={(value) =>
+                setFormData((prev) => ({
+                  ...prev,
+                  assigned_to_user_id: value === "none" ? undefined : value,
+                }))
+              }
               disabled={loading}
             >
               <SelectTrigger className="w-full">
@@ -276,12 +305,14 @@ export const CreateLeadModal: React.FC<CreateLeadModalProps> = ({
               <SelectContent>
                 <SelectItem value="none">Não atribuído</SelectItem>
                 {users
-                  .filter(user => user.is_active)
-                  .map(user => (
+                  .filter((user) => user.is_active)
+                  .map((user) => (
                     <SelectItem key={user.id} value={user.id}>
                       <div className="flex items-center gap-2">
                         <span>{user.name}</span>
-                        <span className="text-xs text-muted-foreground">({user.email})</span>
+                        <span className="text-xs text-muted-foreground">
+                          ({user.email})
+                        </span>
                         {user.role && (
                           <span className="text-xs bg-muted px-1 rounded">
                             {user.role}
@@ -289,8 +320,7 @@ export const CreateLeadModal: React.FC<CreateLeadModalProps> = ({
                         )}
                       </div>
                     </SelectItem>
-                  ))
-                }
+                  ))}
               </SelectContent>
             </Select>
           </div>
@@ -300,20 +330,22 @@ export const CreateLeadModal: React.FC<CreateLeadModalProps> = ({
               <label className="block text-sm font-medium text-foreground mb-2">
                 Plataforma
               </label>
-              <Select 
+              <Select
                 value={formData.platform}
-                onValueChange={(value) => setFormData(prev => ({ 
-                  ...prev, 
-                  platform: value,
-                  channel: value 
-                }))}
+                onValueChange={(value) =>
+                  setFormData((prev) => ({
+                    ...prev,
+                    platform: value,
+                    channel: value,
+                  }))
+                }
                 disabled={loading}
               >
                 <SelectTrigger className="w-full">
                   <SelectValue placeholder="Selecionar plataforma" />
                 </SelectTrigger>
                 <SelectContent>
-                  {platforms.map(platform => (
+                  {platforms.map((platform) => (
                     <SelectItem key={platform} value={platform}>
                       {platform}
                     </SelectItem>
@@ -328,7 +360,9 @@ export const CreateLeadModal: React.FC<CreateLeadModalProps> = ({
               </label>
               <Select
                 value={formData.campaign}
-                onValueChange={(value) => setFormData(prev => ({ ...prev, campaign: value }))}
+                onValueChange={(value) =>
+                  setFormData((prev) => ({ ...prev, campaign: value }))
+                }
                 disabled={loading}
               >
                 <SelectTrigger className="w-full">
@@ -336,15 +370,16 @@ export const CreateLeadModal: React.FC<CreateLeadModalProps> = ({
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="Orgânico">Orgânico</SelectItem>
-                  <SelectItem value="Não identificada">Não identificada</SelectItem>
+                  <SelectItem value="Não identificada">
+                    Não identificada
+                  </SelectItem>
                   {campaigns
-                    .filter(campaign => campaign.is_active)
-                    .map(campaign => (
+                    .filter((campaign) => campaign.is_active)
+                    .map((campaign) => (
                       <SelectItem key={campaign.id} value={campaign.name}>
                         {campaign.name}
                       </SelectItem>
-                    ))
-                  }
+                    ))}
                 </SelectContent>
               </Select>
             </div>
@@ -357,7 +392,9 @@ export const CreateLeadModal: React.FC<CreateLeadModalProps> = ({
             </label>
             <textarea
               value={formData.message}
-              onChange={(e) => setFormData(prev => ({ ...prev, message: e.target.value }))}
+              onChange={(e) =>
+                setFormData((prev) => ({ ...prev, message: e.target.value }))
+              }
               className="w-full px-3 py-2 border border-input bg-background rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
               rows={3}
               placeholder="Primeira mensagem ou interesse do lead..."
@@ -371,7 +408,9 @@ export const CreateLeadModal: React.FC<CreateLeadModalProps> = ({
             </label>
             <textarea
               value={formData.notes}
-              onChange={(e) => setFormData(prev => ({ ...prev, notes: e.target.value }))}
+              onChange={(e) =>
+                setFormData((prev) => ({ ...prev, notes: e.target.value }))
+              }
               className="w-full px-3 py-2 border border-input bg-background rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
               rows={2}
               placeholder="Observações adicionais..."
@@ -388,13 +427,10 @@ export const CreateLeadModal: React.FC<CreateLeadModalProps> = ({
             >
               Cancelar
             </Button>
-            
-            <Button
-              type="submit"
-              disabled={!formData.name.trim() || loading}
-            >
+
+            <Button type="submit" disabled={!formData.name.trim() || loading}>
               <Save className="w-4 h-4 mr-2" />
-              {loading ? 'Criando...' : 'Criar Lead'}
+              {loading ? "Criando..." : "Criar Lead"}
             </Button>
           </div>
         </form>

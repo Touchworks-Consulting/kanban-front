@@ -21,6 +21,7 @@ interface LeadModalProps {
   onClose: () => void;
   onUpdate?: () => void;
   onDelete?: (leadId: string) => Promise<void>;
+  isEmbed?: boolean; // Se true, remove o fundo escuro
 }
 
 export const LeadModal: React.FC<LeadModalProps> = ({
@@ -29,6 +30,7 @@ export const LeadModal: React.FC<LeadModalProps> = ({
   onClose,
   onUpdate,
   onDelete,
+  isEmbed = false,
 }) => {
   // Removido: Estado para comunicação com AgendaPanel - não mais necessário
 
@@ -304,7 +306,7 @@ export const LeadModal: React.FC<LeadModalProps> = ({
 
   return (
     <Dialog open={isOpen} onOpenChange={handleClose}>
-      <DialogContent className="max-w-7xl max-h-[95vh] overflow-hidden focus:outline-none border-0 p-0 [&>button]:!visible [&>button]:!opacity-100 [&>button]:!bg-background [&>button]:!text-foreground [&>button]:!border [&>button]:!border-border [&>button]:!shadow-sm [&>button]:!z-50 [&>button]:!top-2 [&>button]:!right-2 [&>button]:hover:!bg-muted">
+      <DialogContent isEmbed={isEmbed} className="max-w-7xl max-h-[95vh] overflow-hidden focus:outline-none border-0 p-0 [&>button]:!visible [&>button]:!opacity-100 [&>button]:!bg-background [&>button]:!text-foreground [&>button]:!border [&>button]:!border-border [&>button]:!shadow-sm [&>button]:!z-50 [&>button]:!top-2 [&>button]:!right-2 [&>button]:hover:!bg-muted">
         <div className="sr-only">
           <DialogTitle>{lead ? `Lead: ${lead.name}` : 'Detalhes do Lead'}</DialogTitle>
           <DialogDescription>

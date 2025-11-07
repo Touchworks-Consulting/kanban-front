@@ -14,12 +14,15 @@ const DialogClose = DialogPrimitive.Close
 
 const DialogOverlay = React.forwardRef<
   React.ElementRef<typeof DialogPrimitive.Overlay>,
-  React.ComponentPropsWithoutRef<typeof DialogPrimitive.Overlay>
->(({ className, ...props }, ref) => (
+  React.ComponentPropsWithoutRef<typeof DialogPrimitive.Overlay> & {
+    isEmbed?: boolean;
+  }
+>(({ className, isEmbed, ...props }, ref) => (
   <DialogPrimitive.Overlay
     ref={ref}
     className={cn(
-      "fixed inset-0 z-50 bg-black/80  data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0",
+      "fixed inset-0 z-50 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0",
+      isEmbed ? "bg-transparent" : "bg-black/80",
       className
     )}
     {...props}
@@ -31,10 +34,11 @@ const DialogContent = React.forwardRef<
   React.ElementRef<typeof DialogPrimitive.Content>,
   React.ComponentPropsWithoutRef<typeof DialogPrimitive.Content> & {
     hideCloseButton?: boolean;
+    isEmbed?: boolean;
   }
->(({ className, children, hideCloseButton, ...props }, ref) => (
+>(({ className, children, hideCloseButton, isEmbed, ...props }, ref) => (
   <DialogPortal>
-    <DialogOverlay />
+    <DialogOverlay isEmbed={isEmbed} />
     <DialogPrimitive.Content
       ref={ref}
       className={cn(
