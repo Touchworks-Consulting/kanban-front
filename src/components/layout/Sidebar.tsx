@@ -9,6 +9,7 @@ import {
   Settings,
   Users,
   ThumbsUp,
+  MessageSquare,
   PanelLeftClose,
   PanelRightClose,
 } from 'lucide-react';
@@ -20,6 +21,7 @@ type NavItem = {
   text: string;
   path: string;
   isNew?: boolean;
+  external?: boolean;
 };
 
 const navItems: NavItem[] = [
@@ -28,6 +30,7 @@ const navItems: NavItem[] = [
   { icon: Megaphone, text: 'Campanhas', path: '/campaigns' },
   { icon: Users, text: 'Usuários', path: '/users' },
   { icon: Settings, text: 'Configurações', path: '/settings' },
+  { icon: MessageSquare, text: 'Inbox', path: 'https://inbox.touchworks.com.br/', external: true },
   { icon: ThumbsUp, text: 'Feedbacks', path: '/feedbacks', isNew: true },
 ];
 
@@ -105,53 +108,60 @@ const Sidebar = () => {
       </div>
 
       <nav className="flex-1 px-3 py-4 space-y-2">
-        {navItems.map((item) => (
-          <motion.div
-            key={item.text}
-            whileHover={{ scale: 1.05 }}
-            transition={{ type: 'spring', stiffness: 400, damping: 10 }}
-          >
-            <Link
-              to={item.path}
-              className={`flex items-center p-3 rounded-md transition-colors group relative ${
-                location.pathname === item.path
-                  ? 'bg-muted text-foreground'
-                  : 'hover:bg-accent'
-              }`}
-              onMouseEnter={(e) => handleMouseEnter(e, item.text, item.isNew)}
-              onMouseLeave={handleMouseLeave}
+        {navItems.map((item) => {
+          const LinkComponent = item.external ? 'a' : Link;
+          const linkProps = item.external
+            ? { href: item.path, target: '_blank', rel: 'noopener noreferrer' }
+            : { to: item.path };
+
+          return (
+            <motion.div
+              key={item.text}
+              whileHover={{ scale: 1.05 }}
+              transition={{ type: 'spring', stiffness: 400, damping: 10 }}
             >
-              <div className="relative flex-shrink-0">
-                <item.icon className="h-5 w-5" />
-                {item.isNew && !isExpanded && (
-                  <div className="absolute -top-0.5 -right-0.5 px-1 py-0.5 bg-red-500 text-white text-[8px] font-medium rounded-full min-w-[16px] h-4 flex items-center justify-center">
-                    N
-                  </div>
-                )}
-              </div>
-              <AnimatePresence>
-                {isExpanded && (
-                  <motion.div
-                    initial={{ opacity: 0, width: 0 }}
-                    animate={{ opacity: 1, width: 'auto', marginLeft: '1rem' }}
-                    exit={{ opacity: 0, width: 0 }}
-                    transition={{ duration: 0.2 }}
-                    className="flex items-center justify-between overflow-hidden whitespace-nowrap flex-1"
-                  >
-                    <span className="text-sm font-medium">
-                      {item.text}
-                    </span>
-                    {item.isNew && (
-                      <span className="ml-2 px-2 py-0.5 text-xs bg-red-500 text-white rounded-full font-medium">
-                        Novo
+              <LinkComponent
+                {...linkProps}
+                className={`flex items-center p-3 rounded-md transition-colors group relative ${
+                  location.pathname === item.path
+                    ? 'bg-muted text-foreground'
+                    : 'hover:bg-accent'
+                }`}
+                onMouseEnter={(e) => handleMouseEnter(e, item.text, item.isNew)}
+                onMouseLeave={handleMouseLeave}
+              >
+                <div className="relative flex-shrink-0">
+                  <item.icon className="h-5 w-5" />
+                  {item.isNew && !isExpanded && (
+                    <div className="absolute -top-0.5 -right-0.5 px-1 py-0.5 bg-red-500 text-white text-[8px] font-medium rounded-full min-w-[16px] h-4 flex items-center justify-center">
+                      N
+                    </div>
+                  )}
+                </div>
+                <AnimatePresence>
+                  {isExpanded && (
+                    <motion.div
+                      initial={{ opacity: 0, width: 0 }}
+                      animate={{ opacity: 1, width: 'auto', marginLeft: '1rem' }}
+                      exit={{ opacity: 0, width: 0 }}
+                      transition={{ duration: 0.2 }}
+                      className="flex items-center justify-between overflow-hidden whitespace-nowrap flex-1"
+                    >
+                      <span className="text-sm font-medium">
+                        {item.text}
                       </span>
-                    )}
-                  </motion.div>
-                )}
-              </AnimatePresence>
-            </Link>
-          </motion.div>
-        ))}
+                      {item.isNew && (
+                        <span className="ml-2 px-2 py-0.5 text-xs bg-red-500 text-white rounded-full font-medium">
+                          Novo
+                        </span>
+                      )}
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </LinkComponent>
+            </motion.div>
+          );
+        })}
       </nav>
 
       <div className="px-3 py-4 border-t border-border">
