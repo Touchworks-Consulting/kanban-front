@@ -1,15 +1,15 @@
-import { api } from './api';
-import type { 
-  KanbanBoard, 
-  KanbanColumn, 
-  Lead, 
-  CreateLeadDto, 
-  UpdateLeadDto, 
-  CreateColumnDto, 
-  UpdateColumnDto, 
-  MoveLeadDto, 
-  ReorderColumnsDto 
-} from '../types';
+import { api } from "./api";
+import type {
+  KanbanBoard,
+  KanbanColumn,
+  Lead,
+  CreateLeadDto,
+  UpdateLeadDto,
+  CreateColumnDto,
+  UpdateColumnDto,
+  MoveLeadDto,
+  ReorderColumnsDto,
+} from "../types";
 
 export interface SearchFilters {
   search?: string;
@@ -27,27 +27,35 @@ export interface SearchFilters {
 export const kanbanService = {
   // Board
   async getBoard(sortBy?: string): Promise<{ board: KanbanBoard }> {
-    const url = sortBy ? `/api/kanban/board?sortBy=${sortBy}` : '/api/kanban/board';
+    const url = sortBy
+      ? `/api/kanban/board?sortBy=${sortBy}`
+      : "/api/kanban/board";
     const response = await api.get(url);
     return response.data as { board: KanbanBoard };
   },
 
   // Board with filters
-  async searchBoard(filters: SearchFilters, options?: { signal?: AbortSignal }): Promise<{ board: KanbanBoard }> {
+  async searchBoard(
+    filters: SearchFilters,
+    options?: { signal?: AbortSignal }
+  ): Promise<{ board: KanbanBoard }> {
     const params = new URLSearchParams();
-    
-    if (filters.search) params.append('search', filters.search);
-    if (filters.platform && filters.platform !== 'all') params.append('platform', filters.platform);
-    if (filters.period && filters.period !== 'all') params.append('period', filters.period);
+
+    if (filters.search) params.append("search", filters.search);
+    if (filters.platform && filters.platform !== "all")
+      params.append("platform", filters.platform);
+    if (filters.period && filters.period !== "all")
+      params.append("period", filters.period);
     if (filters.dateRange) {
-      params.append('dateStart', filters.dateRange.start);
-      params.append('dateEnd', filters.dateRange.end);
+      params.append("dateStart", filters.dateRange.start);
+      params.append("dateEnd", filters.dateRange.end);
     }
-    if (filters.valueRange && filters.valueRange !== 'all') params.append('valueRange', filters.valueRange);
+    if (filters.valueRange && filters.valueRange !== "all")
+      params.append("valueRange", filters.valueRange);
     if (filters.tags && filters.tags.length > 0) {
-      filters.tags.forEach(tag => params.append('tags', tag));
+      filters.tags.forEach((tag) => params.append("tags", tag));
     }
-    if (filters.sortBy) params.append('sortBy', filters.sortBy);
+    if (filters.sortBy) params.append("sortBy", filters.sortBy);
 
     const url = `/api/kanban/board?${params.toString()}`;
 
@@ -57,28 +65,33 @@ export const kanbanService = {
 
   // Columns
   async getColumns(): Promise<{ columns: KanbanColumn[] }> {
-    const response = await api.get('/api/kanban/columns');
+    const response = await api.get("/api/kanban/columns");
     return response.data as { columns: KanbanColumn[] };
   },
 
   async createColumn(data: CreateColumnDto): Promise<{ column: KanbanColumn }> {
-    const response = await api.post('/api/kanban/columns', data);
-    return response.data;
+    const response = await api.post("/api/kanban/columns", data);
+    return response.data as { column: KanbanColumn };
   },
 
-  async updateColumn(id: string, data: UpdateColumnDto): Promise<{ column: KanbanColumn }> {
+  async updateColumn(
+    id: string,
+    data: UpdateColumnDto
+  ): Promise<{ column: KanbanColumn }> {
     const response = await api.put(`/api/kanban/columns/${id}`, data);
-    return response.data;
+    return response.data as { column: KanbanColumn };
   },
 
   async deleteColumn(id: string): Promise<{ message: string }> {
     const response = await api.delete(`/api/kanban/columns/${id}`);
-    return response.data;
+    return response.data as { message: string };
   },
 
-  async reorderColumns(data: ReorderColumnsDto): Promise<{ columns: KanbanColumn[] }> {
-    const response = await api.patch('/api/kanban/columns/reorder', data);
-    return response.data;
+  async reorderColumns(
+    data: ReorderColumnsDto
+  ): Promise<{ columns: KanbanColumn[] }> {
+    const response = await api.patch("/api/kanban/columns/reorder", data);
+    return response.data as { columns: KanbanColumn[] };
   },
 
   // Leads
@@ -98,32 +111,40 @@ export const kanbanService = {
       pages: number;
     };
   }> {
-    const response = await api.get('/api/leads', { params });
-    return response.data;
+    const response = await api.get("/api/leads", { params });
+    return response.data as {
+      leads: Lead[];
+      pagination: {
+        total: number;
+        page: number;
+        limit: number;
+        pages: number;
+      };
+    };
   },
 
   async getLeadById(id: string): Promise<{ lead: Lead }> {
     const response = await api.get(`/api/leads/${id}`);
-    return response.data;
+    return response.data as { lead: Lead };
   },
 
   async createLead(data: CreateLeadDto): Promise<{ lead: Lead }> {
-    const response = await api.post('/api/leads', data);
-    return response.data;
+    const response = await api.post("/api/leads", data);
+    return response.data as { lead: Lead };
   },
 
   async updateLead(id: string, data: UpdateLeadDto): Promise<{ lead: Lead }> {
     const response = await api.put(`/api/leads/${id}`, data);
-    return response.data;
+    return response.data as { lead: Lead };
   },
 
   async deleteLead(id: string): Promise<{ message: string }> {
     const response = await api.delete(`/api/leads/${id}`);
-    return response.data;
+    return response.data as { message: string };
   },
 
   async moveLead(id: string, data: MoveLeadDto): Promise<{ lead: Lead }> {
     const response = await api.patch(`/api/leads/${id}/move`, data);
-    return response.data;
+    return response.data as { lead: Lead };
   },
 };

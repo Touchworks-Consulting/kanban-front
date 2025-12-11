@@ -1,9 +1,13 @@
-import { apiService } from './api';
-import { kanbanService } from './kanban';
-import { userService } from './users';
-import type { Lead, KanbanColumn, UpdateLeadDto } from '../types/kanban';
-import type { LeadModalData, CreateActivityRequest, LeadActivity } from '../types/leadModal';
-import type { UserDto } from './users';
+import { apiService } from "./api";
+import { kanbanService } from "./kanban";
+import { userService } from "./users";
+import type { Lead, KanbanColumn, UpdateLeadDto } from "../types/kanban";
+import type {
+  LeadModalData,
+  CreateActivityRequest,
+  LeadActivity,
+} from "../types/leadModal";
+import type { UserDto } from "./users";
 
 /**
  * Optimized Lead Service - Performs granular updates without full reloads
@@ -24,7 +28,7 @@ export class OptimizedLeadService {
     const [leadResponse, columnsResponse, usersResponse] = await Promise.all([
       kanbanService.getLeadById(leadId),
       kanbanService.getColumns(),
-      userService.list()
+      userService.list(),
     ]);
 
     // For now, return empty data - will be loaded separately
@@ -38,11 +42,11 @@ export class OptimizedLeadService {
           totalActivities: 0,
           pendingTasks: 0,
           totalContacts: 0,
-          totalFiles: 0
-        }
+          totalFiles: 0,
+        },
       },
       columns: columnsResponse.columns,
-      users: usersResponse || []
+      users: usersResponse || [],
     };
   }
 
@@ -53,12 +57,12 @@ export class OptimizedLeadService {
     try {
       // Use optimized endpoint with only assignee data
       const response = await apiService.patch(`/api/leads/${leadId}/assignee`, {
-        assigned_to_user_id: userId
+        assigned_to_user_id: userId || null,
       });
 
-      return response.data.lead;
+      return (response.data as { lead: Lead }).lead;
     } catch (error) {
-      console.error('Error updating assignee:', error);
+      console.error("Error updating assignee:", error);
       throw error;
     }
   }
@@ -68,21 +72,24 @@ export class OptimizedLeadService {
    */
   static async updateStatus(
     leadId: string,
-    status: 'won' | 'lost',
+    status: "won" | "lost",
     reason?: string
   ): Promise<Lead> {
     try {
       const payload: any = { status };
-      if (status === 'won' && reason) {
+      if (status === "won" && reason) {
         payload.won_reason = reason;
-      } else if (status === 'lost' && reason) {
+      } else if (status === "lost" && reason) {
         payload.lost_reason = reason;
       }
 
-      const response = await apiService.patch(`/api/leads/${leadId}/status`, payload);
-      return response.data.lead;
+      const response = await apiService.patch(
+        `/api/leads/${leadId}/status`,
+        payload
+      );
+      return (response.data as { lead: Lead }).lead;
     } catch (error) {
-      console.error('Error updating status:', error);
+      console.error("Error updating status:", error);
       throw error;
     }
   }
@@ -94,12 +101,12 @@ export class OptimizedLeadService {
     try {
       const response = await kanbanService.moveLead(leadId, {
         column_id: columnId,
-        position: 0
+        position: 0,
       });
 
       return response.lead;
     } catch (error) {
-      console.error('Error moving lead:', error);
+      console.error("Error moving lead:", error);
       throw error;
     }
   }
@@ -125,7 +132,7 @@ export class OptimizedLeadService {
         await this.updateLead(leadId, updates);
         this.debounceTimers.delete(debounceKey);
       } catch (error) {
-        console.error('Debounced update failed:', error);
+        console.error("Debounced update failed:", error);
         this.debounceTimers.delete(debounceKey);
         throw error;
       }
@@ -137,16 +144,19 @@ export class OptimizedLeadService {
   /**
    * Update lead - optimized to send only changed fields
    */
-  static async updateLead(leadId: string, updates: Partial<Lead>): Promise<Lead> {
+  static async updateLead(
+    leadId: string,
+    updates: Partial<Lead>
+  ): Promise<Lead> {
     try {
       // Clean up updates - remove undefined values and format properly
       const cleanUpdates: any = {};
 
       Object.entries(updates).forEach(([key, value]) => {
         if (value !== undefined) {
-          if (key === 'tags' && Array.isArray(value)) {
+          if (key === "tags" && Array.isArray(value)) {
             cleanUpdates[key] = value.map((tag: any) =>
-              typeof tag === 'string' ? tag : tag.name || tag.id || String(tag)
+              typeof tag === "string" ? tag : tag.name || tag.id || String(tag)
             );
           } else {
             cleanUpdates[key] = value;
@@ -157,7 +167,7 @@ export class OptimizedLeadService {
       const response = await kanbanService.updateLead(leadId, cleanUpdates);
       return response.lead;
     } catch (error) {
-      console.error('Error updating lead:', error);
+      console.error("Error updating lead:", error);
       throw error;
     }
   }
@@ -165,12 +175,18 @@ export class OptimizedLeadService {
   /**
    * Add activity without reloading timeline
    */
-  static async addActivity(leadId: string, activity: CreateActivityRequest): Promise<LeadActivity> {
+  static async addActivity(
+    leadId: string,
+    activity: CreateActivityRequest
+  ): Promise<LeadActivity> {
     try {
-      const response = await apiService.post(`/api/leads/${leadId}/activities`, activity);
-      return response.data.activity;
+      const response = await apiService.post(
+        `/api/leads/${leadId}/activities`,
+        activity
+      );
+      return (response.data as { activity: LeadActivity }).activity;
     } catch (error) {
-      console.error('Error adding activity:', error);
+      console.error("Error adding activity:", error);
       throw error;
     }
   }
@@ -178,14 +194,17 @@ export class OptimizedLeadService {
   /**
    * Load activities separately (lazy loading)
    */
-  static async loadActivities(leadId: string, page: number = 1): Promise<LeadActivity[]> {
+  static async loadActivities(
+    leadId: string,
+    page: number = 1
+  ): Promise<LeadActivity[]> {
     try {
       const response = await apiService.get(`/api/leads/${leadId}/activities`, {
-        params: { page, limit: 20 }
+        params: { page, limit: 20 },
       });
-      return response.data.activities || [];
+      return (response.data as { activities: LeadActivity[] }).activities || [];
     } catch (error) {
-      console.error('Error loading activities:', error);
+      console.error("Error loading activities:", error);
       return [];
     }
   }
@@ -196,9 +215,9 @@ export class OptimizedLeadService {
   static async loadContacts(leadId: string): Promise<any[]> {
     try {
       const response = await apiService.get(`/api/leads/${leadId}/contacts`);
-      return response.data.contacts || [];
+      return (response.data as { contacts: any[] }).contacts || [];
     } catch (error) {
-      console.error('Error loading contacts:', error);
+      console.error("Error loading contacts:", error);
       return [];
     }
   }
@@ -209,9 +228,9 @@ export class OptimizedLeadService {
   static async loadFiles(leadId: string): Promise<any[]> {
     try {
       const response = await apiService.get(`/api/leads/${leadId}/files`);
-      return response.data.files || [];
+      return (response.data as { files: any[] }).files || [];
     } catch (error) {
-      console.error('Error loading files:', error);
+      console.error("Error loading files:", error);
       return [];
     }
   }
@@ -234,15 +253,15 @@ export class OptimizedLeadService {
     try {
       const [leadResponse, activitiesResponse] = await Promise.all([
         kanbanService.getLeadById(leadId),
-        this.loadActivities(leadId)
+        this.loadActivities(leadId),
       ]);
 
       return {
         lead: leadResponse.lead,
-        activities: activitiesResponse
+        activities: activitiesResponse,
       };
     } catch (error) {
-      console.error('Error syncing from server:', error);
+      console.error("Error syncing from server:", error);
       throw error;
     }
   }

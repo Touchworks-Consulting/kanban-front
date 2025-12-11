@@ -1,15 +1,27 @@
-import React, { useState, useEffect } from 'react';
-import { createPortal } from 'react-dom';
-import { Badge } from '../ui/badge';
-import { Button } from '../ui/button';
-import { Input } from '../ui/input';
-import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuPortal } from '../ui/dropdown-menu';
-import { LossReasonDialog } from './LossReasonDialog';
-import { userService, type UserDto } from '../../services/users';
-import { leadModalService } from '../../services/leadModalService';
-import { toast } from 'sonner';
+import React, { useState, useEffect } from "react";
+import { createPortal } from "react-dom";
+import { Badge } from "../ui/badge";
+import { Button } from "../ui/button";
+import { Input } from "../ui/input";
+import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "../ui/select";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+  DropdownMenuPortal,
+} from "../ui/dropdown-menu";
+import { LossReasonDialog } from "./LossReasonDialog";
+import { userService, type UserDto } from "../../services/users";
+import { leadModalService } from "../../services/leadModalService";
+import { toast } from "sonner";
 import {
   CheckCircle,
   XCircle,
@@ -20,11 +32,11 @@ import {
   Edit3,
   Check,
   X,
-  Trash2
-} from 'lucide-react';
-import { cn } from '../../lib/utils';
-import type { Lead, KanbanColumn } from '../../types/kanban';
-import { formatCurrency, formatDistanceToNow } from '../../utils/helpers';
+  Trash2,
+} from "lucide-react";
+import { cn } from "../../lib/utils";
+import type { Lead, KanbanColumn } from "../../types/kanban";
+import { formatCurrency, formatDistanceToNow } from "../../utils/helpers";
 
 // Estilos CSS para pipeline com visual profissional
 const customStyles = `
@@ -62,9 +74,9 @@ const customStyles = `
 `;
 
 interface PipelineHeaderProps {
-  lead: Lead;
+  lead: Lead | null;
   columns: KanbanColumn[];
-  onStatusChange?: (status: 'won' | 'lost', reason?: string) => Promise<void>;
+  onStatusChange?: (status: "won" | "lost", reason?: string) => Promise<void>;
   onMoveToNext?: (nextColumnId: string) => Promise<void>;
   onUpdate?: () => void;
   onDelete?: (leadId: string) => Promise<void>;
@@ -82,8 +94,19 @@ const PipelineHeaderComponent: React.FC<PipelineHeaderProps> = ({
   onDelete,
   onAssigneeChange,
   users: externalUsers,
-  className
+  className,
 }) => {
+  if (!lead) {
+    return (
+      <div
+        className={cn("bg-background border-b sticky top-0 z-10", className)}
+      >
+        <div className="p-4 text-center text-muted-foreground">
+          Lead não encontrado.
+        </div>
+      </div>
+    );
+  }
   const [isLoading, setIsLoading] = useState(false);
   const [showLossReasonDialog, setShowLossReasonDialog] = useState(false);
   const [users, setUsers] = useState<UserDto[]>([]);
@@ -91,21 +114,27 @@ const PipelineHeaderComponent: React.FC<PipelineHeaderProps> = ({
 
   // Estado para edição inline
   const [editingField, setEditingField] = useState<string | null>(null);
-  const [editValue, setEditValue] = useState<string>('');
+  const [editValue, setEditValue] = useState<string>("");
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
   // Estado para tooltip portal
-  const [hoveredStage, setHoveredStage] = useState<{ column: KanbanColumn; rect: DOMRect } | null>(null);
+  const [hoveredStage, setHoveredStage] = useState<{
+    column: KanbanColumn;
+    rect: DOMRect;
+  } | null>(null);
 
-  const isWon = lead.status === 'won';
-  const isLost = lead.status === 'lost';
-  const isActive = lead.status !== 'won' && lead.status !== 'lost';
+  const isWon = lead.status === "won";
+  const isLost = lead.status === "lost";
+  const isActive = lead.status !== "won" && lead.status !== "lost";
 
   const sortedColumns = columns.sort((a, b) => a.position - b.position);
-  const currentColumnIndex = sortedColumns.findIndex(col => col.id === lead.column_id);
-  const progressPercentage = currentColumnIndex >= 0
-    ? ((currentColumnIndex + 1) / sortedColumns.length) * 100
-    : 0;
+  const currentColumnIndex = sortedColumns.findIndex(
+    (col) => col.id === lead.column_id
+  );
+  const progressPercentage =
+    currentColumnIndex >= 0
+      ? ((currentColumnIndex + 1) / sortedColumns.length) * 100
+      : 0;
 
   // Usar usuários externos ou carregar se não fornecidos
   useEffect(() => {
@@ -118,8 +147,8 @@ const PipelineHeaderComponent: React.FC<PipelineHeaderProps> = ({
           const usersList = await userService.list();
           setUsers(usersList);
         } catch (error) {
-          console.error('Erro ao carregar usuários:', error);
-          toast.error('Erro ao carregar lista de usuários');
+          console.error("Erro ao carregar usuários:", error);
+          toast.error("Erro ao carregar lista de usuários");
         } finally {
           setLoadingUsers(false);
         }
@@ -133,9 +162,9 @@ const PipelineHeaderComponent: React.FC<PipelineHeaderProps> = ({
     if (!onStatusChange) return;
     setIsLoading(true);
     try {
-      await onStatusChange('won');
+      await onStatusChange("won");
     } catch (error) {
-      console.error('Erro ao marcar como ganho:', error);
+      console.error("Erro ao marcar como ganho:", error);
     } finally {
       setIsLoading(false);
     }
@@ -149,9 +178,9 @@ const PipelineHeaderComponent: React.FC<PipelineHeaderProps> = ({
     if (!onStatusChange) return;
     setIsLoading(true);
     try {
-      await onStatusChange('lost', reason);
+      await onStatusChange("lost", reason);
     } catch (error) {
-      console.error('Erro ao marcar como perdido:', error);
+      console.error("Erro ao marcar como perdido:", error);
     } finally {
       setIsLoading(false);
     }
@@ -173,31 +202,35 @@ const PipelineHeaderComponent: React.FC<PipelineHeaderProps> = ({
 
         const updatePayload = {
           name: lead.name,
-          phone: lead.phone || '',
-          email: lead.email || '',
-          message: lead.message || '',
-          platform: lead.platform || 'WhatsApp',
-          channel: lead.channel || lead.platform || 'WhatsApp',
-          campaign: lead.campaign || 'Orgânico',
+          phone: lead.phone || "",
+          email: lead.email || "",
+          message: lead.message || "",
+          platform: lead.platform || "WhatsApp",
+          channel: lead.channel || lead.platform || "WhatsApp",
+          campaign: lead.campaign || "Orgânico",
           value: lead.value || 0,
-          notes: lead.notes || '',
+          notes: lead.notes || "",
           status: lead.status,
-          assigned_to_user_id: userId || ''
+          assigned_to_user_id: userId || "",
         };
 
         await leadModalService.updateLead(lead.id, updatePayload);
 
         if (userId) {
-          const selectedUser = users.find(u => u.id === userId);
-          toast.success(`Lead atribuído para ${selectedUser?.name || 'vendedor selecionado'}`);
+          const selectedUser = users.find((u) => u.id === userId);
+          toast.success(
+            `Lead atribuído para ${
+              selectedUser?.name || "vendedor selecionado"
+            }`
+          );
         } else {
-          toast.success('Responsável removido do lead');
+          toast.success("Responsável removido do lead");
         }
 
         onUpdate();
       } catch (error) {
-        console.error('Erro ao alterar responsável:', error);
-        toast.error('Erro ao alterar vendedor responsável');
+        console.error("Erro ao alterar responsável:", error);
+        toast.error("Erro ao alterar vendedor responsável");
       } finally {
         setIsLoading(false);
       }
@@ -212,7 +245,7 @@ const PipelineHeaderComponent: React.FC<PipelineHeaderProps> = ({
 
   const handleEditCancel = () => {
     setEditingField(null);
-    setEditValue('');
+    setEditValue("");
   };
 
   const handleEditSave = async (field: string) => {
@@ -223,28 +256,28 @@ const PipelineHeaderComponent: React.FC<PipelineHeaderProps> = ({
 
       const updatePayload = {
         name: lead.name,
-        phone: lead.phone || '',
-        email: lead.email || '',
-        message: lead.message || '',
-        platform: lead.platform || 'WhatsApp',
-        channel: lead.channel || lead.platform || 'WhatsApp',
-        campaign: lead.campaign || 'Orgânico',
-        value: field === 'value' ? parseFloat(editValue) || 0 : lead.value || 0,
-        notes: lead.notes || '',
+        phone: lead.phone || "",
+        email: lead.email || "",
+        message: lead.message || "",
+        platform: lead.platform || "WhatsApp",
+        channel: lead.channel || lead.platform || "WhatsApp",
+        campaign: lead.campaign || "Orgânico",
+        value: field === "value" ? parseFloat(editValue) || 0 : lead.value || 0,
+        notes: lead.notes || "",
         status: lead.status,
-        assigned_to_user_id: lead.assigned_to_user_id || '',
-        [field]: field === 'value' ? parseFloat(editValue) || 0 : editValue
+        assigned_to_user_id: lead.assigned_to_user_id || "",
+        [field]: field === "value" ? parseFloat(editValue) || 0 : editValue,
       };
 
       await leadModalService.updateLead(lead.id, updatePayload);
-      toast.success('Campo atualizado com sucesso');
+      toast.success("Campo atualizado com sucesso");
 
       setEditingField(null);
-      setEditValue('');
+      setEditValue("");
       onUpdate();
     } catch (error) {
-      console.error('Erro ao salvar campo:', error);
-      toast.error('Erro ao atualizar campo');
+      console.error("Erro ao salvar campo:", error);
+      toast.error("Erro ao atualizar campo");
     } finally {
       setIsLoading(false);
     }
@@ -257,10 +290,10 @@ const PipelineHeaderComponent: React.FC<PipelineHeaderProps> = ({
     try {
       setIsLoading(true);
       await onDelete(lead.id);
-      toast.success('Lead excluído com sucesso');
+      toast.success("Lead excluído com sucesso");
     } catch (error) {
-      console.error('Erro ao excluir lead:', error);
-      toast.error('Erro ao excluir lead');
+      console.error("Erro ao excluir lead:", error);
+      toast.error("Erro ao excluir lead");
     } finally {
       setIsLoading(false);
       setShowDeleteConfirm(false);
@@ -285,7 +318,10 @@ const PipelineHeaderComponent: React.FC<PipelineHeaderProps> = ({
       );
     }
     return (
-      <Badge variant="outline" className="border-blue-200 text-blue-600 font-medium">
+      <Badge
+        variant="outline"
+        className="border-blue-200 text-blue-600 font-medium"
+      >
         <Star className="w-3 h-3 mr-1" />
         Em progresso
       </Badge>
@@ -294,16 +330,16 @@ const PipelineHeaderComponent: React.FC<PipelineHeaderProps> = ({
 
   const getPipelineColor = (index: number) => {
     if (index <= currentColumnIndex) {
-      return columns[index]?.color || '#3b82f6';
+      return columns[index]?.color || "#3b82f6";
     }
-    return '#e5e7eb';
+    return "#e5e7eb";
   };
 
   // Handler para clique em etapa do pipeline
   const handleStageClick = async (columnId: string) => {
     if (!isActive || !onMoveToNext || isLoading) return;
 
-    const targetColumn = sortedColumns.find(col => col.id === columnId);
+    const targetColumn = sortedColumns.find((col) => col.id === columnId);
     if (!targetColumn) return;
 
     try {
@@ -311,15 +347,18 @@ const PipelineHeaderComponent: React.FC<PipelineHeaderProps> = ({
       await onMoveToNext(columnId);
       toast.success(`Lead movido para ${targetColumn.name}`);
     } catch (error) {
-      console.error('Erro ao mover lead:', error);
-      toast.error('Erro ao mover lead de coluna');
+      console.error("Erro ao mover lead:", error);
+      toast.error("Erro ao mover lead de coluna");
     } finally {
       setIsLoading(false);
     }
   };
 
   // Handler para hover de etapa
-  const handleStageMouseEnter = (column: KanbanColumn, event: React.MouseEvent<HTMLDivElement>) => {
+  const handleStageMouseEnter = (
+    column: KanbanColumn,
+    event: React.MouseEvent<HTMLDivElement>
+  ) => {
     const rect = event.currentTarget.getBoundingClientRect();
     setHoveredStage({ column, rect });
   };
@@ -333,7 +372,7 @@ const PipelineHeaderComponent: React.FC<PipelineHeaderProps> = ({
     field,
     value,
     children,
-    className: fieldClassName = ""
+    className: fieldClassName = "",
   }: {
     field: string;
     value: string;
@@ -351,8 +390,8 @@ const PipelineHeaderComponent: React.FC<PipelineHeaderProps> = ({
             className="h-6 text-sm border-primary"
             autoFocus
             onKeyDown={(e) => {
-              if (e.key === 'Enter') handleEditSave(field);
-              if (e.key === 'Escape') handleEditCancel();
+              if (e.key === "Enter") handleEditSave(field);
+              if (e.key === "Escape") handleEditCancel();
             }}
           />
           <Button
@@ -383,9 +422,7 @@ const PipelineHeaderComponent: React.FC<PipelineHeaderProps> = ({
         )}
         onClick={() => handleEditStart(field, value)}
       >
-        <span className="inline-flex items-center">
-          {children}
-        </span>
+        <span className="inline-flex items-center">{children}</span>
         <Edit3 className="h-3 w-3 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity ml-1 flex-shrink-0" />
       </div>
     );
@@ -396,21 +433,24 @@ const PipelineHeaderComponent: React.FC<PipelineHeaderProps> = ({
     if (!hoveredStage) return null;
 
     const { column, rect } = hoveredStage;
-    const currentColumnIndex = sortedColumns.findIndex(col => col.id === lead.column_id);
-    const hoveredIndex = sortedColumns.findIndex(col => col.id === column.id);
+    const currentColumnIndex = sortedColumns.findIndex(
+      (col) => col.id === lead.column_id
+    );
+    const hoveredIndex = sortedColumns.findIndex((col) => col.id === column.id);
     const isPassed = hoveredIndex < currentColumnIndex;
     const isCurrent = hoveredIndex === currentColumnIndex;
 
     // Calcular tempo na etapa
-    let stageTime = '';
+    let stageTime = "";
     if (isCurrent) {
-      stageTime = lead.timeInCurrentStage || formatDistanceToNow(lead.updatedAt);
+      stageTime =
+        lead.timeInCurrentStage || formatDistanceToNow(lead.updatedAt);
     } else if (isPassed && lead.stageTimelines?.[column.id]) {
       stageTime = lead.stageTimelines[column.id];
     } else if (isPassed) {
-      stageTime = '- dias';
+      stageTime = "- dias";
     } else {
-      stageTime = '0 dias';
+      stageTime = "0 dias";
     }
 
     return createPortal(
@@ -419,20 +459,22 @@ const PipelineHeaderComponent: React.FC<PipelineHeaderProps> = ({
         style={{
           left: `${rect.left + rect.width / 2}px`,
           top: `${rect.top - 10}px`,
-          transform: 'translate(-50%, -100%)',
+          transform: "translate(-50%, -100%)",
         }}
       >
         <div className="font-semibold mb-0.5">{column.name}</div>
         <div className="text-gray-300">Tempo: {stageTime}</div>
         {isActive && (
           <div className="text-gray-400 text-[10px] mt-1">
-            {hoveredIndex === currentColumnIndex ? '(Etapa atual)' : 'Clique para mover'}
+            {hoveredIndex === currentColumnIndex
+              ? "(Etapa atual)"
+              : "Clique para mover"}
           </div>
         )}
         {/* Seta do tooltip */}
         <div
           className="absolute left-1/2 transform -translate-x-1/2"
-          style={{ top: '100%' }}
+          style={{ top: "100%" }}
         >
           <div className="border-8 border-transparent border-t-gray-900"></div>
         </div>
@@ -449,239 +491,252 @@ const PipelineHeaderComponent: React.FC<PipelineHeaderProps> = ({
       {/* Tooltip Portal */}
       <TooltipPortal />
 
-      <div className={cn('bg-background border-b sticky top-0 z-10', className)}>
-      {/* Primeira linha - Nome, Status, Ações */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between px-4 py-4 gap-3">
-        {/* Esquerda - Nome do Lead e Status */}
-        <div className="flex items-center gap-3 min-w-0 flex-1">
-          <div className="min-w-0 flex-shrink">
-            <div className="flex flex-col sm:flex-row sm:items-center gap-2 mb-1">
+      <div
+        className={cn("bg-background border-b sticky top-0 z-10", className)}
+      >
+        {/* Primeira linha - Nome, Status, Ações */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between px-4 py-4 gap-3">
+          {/* Esquerda - Nome do Lead e Status */}
+          <div className="flex items-center gap-3 min-w-0 flex-1">
+            <div className="min-w-0 flex-shrink">
+              <div className="flex flex-col sm:flex-row sm:items-center gap-2 mb-1">
+                <EditableField
+                  field="name"
+                  value={lead.name || ""}
+                  className="min-w-0"
+                >
+                  <h1 className="text-lg font-semibold text-foreground truncate">
+                    {lead.name}
+                  </h1>
+                </EditableField>
+                {getStatusBadge()}
+              </div>
               <EditableField
-                field="name"
-                value={lead.name || ''}
-                className="min-w-0"
+                field="value"
+                value={lead.value?.toString() || "0"}
+                className="inline-block w-auto max-w-[200px]"
               >
-                <h1 className="text-lg font-semibold text-foreground truncate">
-                  {lead.name}
-                </h1>
+                <span className="text-sm font-medium text-green-600 dark:text-green-400 truncate">
+                  {lead.value
+                    ? formatCurrency(lead.value)
+                    : "Clique para definir valor..."}
+                </span>
               </EditableField>
-              {getStatusBadge()}
             </div>
-            <EditableField
-              field="value"
-              value={lead.value?.toString() || '0'}
-              className="inline-block w-auto max-w-[200px]"
-            >
-              <span className="text-sm font-medium text-green-600 dark:text-green-400 truncate">
-                {lead.value ? formatCurrency(lead.value) : 'Clique para definir valor...'}
-              </span>
-            </EditableField>
           </div>
-        </div>
 
-        {/* Direita - Botões de Ação */}
-        {isActive && (
-          <div className="flex flex-wrap items-center gap-2">
-            {/* Botão Won - Simples, sem motivo */}
-            <Button
-              onClick={handleWon}
-              disabled={isLoading}
-              className="bg-green-600 hover:bg-green-700 text-white"
-              size="sm"
-            >
-              {isLoading ? (
-                <Loader2 className="w-3 h-3 mr-1 animate-spin" />
-              ) : (
-                <CheckCircle className="w-3 h-3 mr-1" />
-              )}
-              <span className="hidden sm:inline">Ganho</span>
-              <span className="sm:hidden">G</span>
-            </Button>
+          {/* Direita - Botões de Ação */}
+          {isActive && (
+            <div className="flex flex-wrap items-center gap-2">
+              {/* Botão Won - Simples, sem motivo */}
+              <Button
+                onClick={handleWon}
+                disabled={isLoading}
+                className="bg-green-600 hover:bg-green-700 text-white"
+                size="sm"
+              >
+                {isLoading ? (
+                  <Loader2 className="w-3 h-3 mr-1 animate-spin" />
+                ) : (
+                  <CheckCircle className="w-3 h-3 mr-1" />
+                )}
+                <span className="hidden sm:inline">Ganho</span>
+                <span className="sm:hidden">G</span>
+              </Button>
 
-            {/* Botão Lost - Abre dialog de motivos */}
-            <Button
-              onClick={handleLostClick}
-              disabled={isLoading}
-              variant="destructive"
-              size="sm"
-            >
-              <XCircle className="w-3 h-3 mr-1" />
-              <span className="hidden sm:inline">Perdido</span>
-              <span className="sm:hidden">P</span>
-            </Button>
+              {/* Botão Lost - Abre dialog de motivos */}
+              <Button
+                onClick={handleLostClick}
+                disabled={isLoading}
+                variant="destructive"
+                size="sm"
+              >
+                <XCircle className="w-3 h-3 mr-1" />
+                <span className="hidden sm:inline">Perdido</span>
+                <span className="sm:hidden">P</span>
+              </Button>
 
-            {/* Seletor de Vendedor Responsável */}
-            <Select
-              value={lead.assigned_to_user_id || 'none'}
-              onValueChange={(value) => handleAssigneeChange(value === 'none' ? '' : value)}
-              disabled={isLoading || loadingUsers}
-            >
-              <SelectTrigger className="w-auto min-w-[120px] sm:min-w-[140px] h-8">
-                <SelectValue placeholder="Vendedor" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="none">Não atribuído</SelectItem>
-                {users
-                  .filter(user => user.is_active)
-                  .map(user => (
-                    <SelectItem key={user.id} value={user.id}>
-                      <div className="flex items-center gap-2">
-                        <span>{user.name}</span>
-                        <span className="text-xs text-muted-foreground hidden sm:inline">({user.email})</span>
-                        {user.role && (
-                          <span className="text-xs bg-muted px-1 rounded hidden sm:inline">
-                            {user.role}
-                          </span>
-                        )}
-                      </div>
-                    </SelectItem>
-                  ))
+              {/* Seletor de Vendedor Responsável */}
+              <Select
+                value={lead.assigned_to_user_id || "none"}
+                onValueChange={(value) =>
+                  handleAssigneeChange(value === "none" ? "" : value)
                 }
-              </SelectContent>
-            </Select>
+                disabled={isLoading || loadingUsers}
+              >
+                <SelectTrigger className="w-auto min-w-[120px] sm:min-w-[140px] h-8">
+                  <SelectValue placeholder="Vendedor" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">Não atribuído</SelectItem>
+                  {users
+                    .filter((user) => user.is_active)
+                    .map((user) => (
+                      <SelectItem key={user.id} value={user.id}>
+                        <div className="flex items-center gap-2">
+                          <span>{user.name}</span>
+                          <span className="text-xs text-muted-foreground hidden sm:inline">
+                            ({user.email})
+                          </span>
+                          {user.role && (
+                            <span className="text-xs bg-muted px-1 rounded hidden sm:inline">
+                              {user.role}
+                            </span>
+                          )}
+                        </div>
+                      </SelectItem>
+                    ))}
+                </SelectContent>
+              </Select>
 
-            {/* Menu de opções */}
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="text-muted-foreground hover:text-foreground"
-                >
-                  <MoreHorizontal className="w-4 h-4" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuPortal>
-                <DropdownMenuContent align="end" className="z-[100]">
-                {onDelete ? (
-                  <DropdownMenuItem
-                    onClick={() => {
-                      setShowDeleteConfirm(true);
-                    }}
-                    className="text-destructive focus:text-destructive"
+              {/* Menu de opções */}
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="text-muted-foreground hover:text-foreground"
                   >
-                    <Trash2 className="w-4 h-4 mr-2" />
-                    Excluir Lead
-                  </DropdownMenuItem>
-                ) : (
-                  <DropdownMenuItem disabled>
-                    Nenhuma opção disponível
-                  </DropdownMenuItem>
-                )}
-              </DropdownMenuContent>
-              </DropdownMenuPortal>
-            </DropdownMenu>
-          </div>
-        )}
+                    <MoreHorizontal className="w-4 h-4" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuPortal>
+                  <DropdownMenuContent align="end" className="z-[100]">
+                    {onDelete ? (
+                      <DropdownMenuItem
+                        onClick={() => {
+                          setShowDeleteConfirm(true);
+                        }}
+                        className="text-destructive focus:text-destructive"
+                      >
+                        <Trash2 className="w-4 h-4 mr-2" />
+                        Excluir Lead
+                      </DropdownMenuItem>
+                    ) : (
+                      <DropdownMenuItem disabled>
+                        Nenhuma opção disponível
+                      </DropdownMenuItem>
+                    )}
+                  </DropdownMenuContent>
+                </DropdownMenuPortal>
+              </DropdownMenu>
+            </div>
+          )}
 
-        {/* Menu de opções sempre visível para leads ganhos/perdidos */}
-        {!isActive && (
-          <div className="flex items-center gap-2">
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="text-muted-foreground hover:text-foreground"
-                >
-                  <MoreHorizontal className="w-4 h-4" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuPortal>
-                <DropdownMenuContent align="end" className="z-[100]">
-                {onDelete ? (
-                  <DropdownMenuItem
-                    onClick={() => {
-                      setShowDeleteConfirm(true);
-                    }}
-                    className="text-destructive focus:text-destructive"
+          {/* Menu de opções sempre visível para leads ganhos/perdidos */}
+          {!isActive && (
+            <div className="flex items-center gap-2">
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="text-muted-foreground hover:text-foreground"
                   >
-                    <Trash2 className="w-4 h-4 mr-2" />
-                    Excluir Lead
-                  </DropdownMenuItem>
-                ) : (
-                  <DropdownMenuItem disabled>
-                    Nenhuma opção disponível
-                  </DropdownMenuItem>
-                )}
-              </DropdownMenuContent>
-              </DropdownMenuPortal>
-            </DropdownMenu>
-          </div>
-        )}
-      </div>
-
-      {/* Segunda linha - Pipeline Grosso e Visual */}
-      <div className="px-4 pb-4">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-2 gap-1">
-          <div className="text-xs text-muted-foreground truncate">
-            {currentColumnIndex >= 0 ? sortedColumns[currentColumnIndex].name : 'Indefinido'}
-          </div>
-          <div className="text-xs font-medium text-foreground">
-            {Math.round(progressPercentage)}% concluído
-          </div>
+                    <MoreHorizontal className="w-4 h-4" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuPortal>
+                  <DropdownMenuContent align="end" className="z-[100]">
+                    {onDelete ? (
+                      <DropdownMenuItem
+                        onClick={() => {
+                          setShowDeleteConfirm(true);
+                        }}
+                        className="text-destructive focus:text-destructive"
+                      >
+                        <Trash2 className="w-4 h-4 mr-2" />
+                        Excluir Lead
+                      </DropdownMenuItem>
+                    ) : (
+                      <DropdownMenuItem disabled>
+                        Nenhuma opção disponível
+                      </DropdownMenuItem>
+                    )}
+                  </DropdownMenuContent>
+                </DropdownMenuPortal>
+              </DropdownMenu>
+            </div>
+          )}
         </div>
 
-        {/* Pipeline com Gradiente */}
-        <div className="relative">
-          <div
-            className="w-full h-7 rounded-md overflow-hidden relative bg-muted"
-            style={{
-              background: `linear-gradient(90deg,
+        {/* Segunda linha - Pipeline Grosso e Visual */}
+        <div className="px-4 pb-4">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-2 gap-1">
+            <div className="text-xs text-muted-foreground truncate">
+              {currentColumnIndex >= 0
+                ? sortedColumns[currentColumnIndex].name
+                : "Indefinido"}
+            </div>
+            <div className="text-xs font-medium text-foreground">
+              {Math.round(progressPercentage)}% concluído
+            </div>
+          </div>
+
+          {/* Pipeline com Gradiente */}
+          <div className="relative">
+            <div
+              className="w-full h-7 rounded-md overflow-hidden relative bg-muted"
+              style={{
+                background: `linear-gradient(90deg,
                 #22c55e 0%,
                 #22c55e ${progressPercentage - 2}%,
                 hsl(var(--muted)) ${progressPercentage + 2}%,
-                hsl(var(--muted)) 100%)`
-            }}
-          >
-            {/* Container de textos */}
-            <div className="absolute inset-0 flex items-center">
-              {sortedColumns.map((column, index) => {
-                const isPassed = index < currentColumnIndex;
-                const isCurrent = index === currentColumnIndex;
-                const isStageActive = isPassed || isCurrent;
+                hsl(var(--muted)) 100%)`,
+              }}
+            >
+              {/* Container de textos */}
+              <div className="absolute inset-0 flex items-center">
+                {sortedColumns.map((column, index) => {
+                  const isPassed = index < currentColumnIndex;
+                  const isCurrent = index === currentColumnIndex;
+                  const isStageActive = isPassed || isCurrent;
 
-                // Obter tempo gasto nesta etapa
-                let stageTime = '';
-                if (isCurrent) {
-                  stageTime = lead.timeInCurrentStage || formatDistanceToNow(lead.updatedAt);
-                } else if (isPassed && lead.stageTimelines?.[column.id]) {
-                  stageTime = lead.stageTimelines[column.id];
-                } else if (isPassed) {
-                  stageTime = '- dias'; // Fallback para etapas passadas
-                } else {
-                  stageTime = '0 dias'; // Etapas futuras
-                }
+                  // Obter tempo gasto nesta etapa
+                  let stageTime = "";
+                  if (isCurrent) {
+                    stageTime =
+                      lead.timeInCurrentStage ||
+                      formatDistanceToNow(lead.updatedAt);
+                  } else if (isPassed && lead.stageTimelines?.[column.id]) {
+                    stageTime = lead.stageTimelines[column.id];
+                  } else if (isPassed) {
+                    stageTime = "- dias"; // Fallback para etapas passadas
+                  } else {
+                    stageTime = "0 dias"; // Etapas futuras
+                  }
 
-                const canClick = isActive && !isLoading;
+                  const canClick = isActive && !isLoading;
 
-                return (
-                  <div
-                    key={column.id}
-                    className={cn(
-                      "pipeline-stage relative flex-1 flex items-center justify-center px-1 sm:px-2",
-                      canClick && "clickable"
-                    )}
-                    style={{
-                      minWidth: '60px'
-                    }}
-                    onClick={() => canClick && handleStageClick(column.id)}
-                    onMouseEnter={(e) => handleStageMouseEnter(column, e)}
-                    onMouseLeave={handleStageMouseLeave}
-                  >
-                    <div className={cn(
-                      "text-[10px] sm:text-xs font-medium truncate text-center",
-                      isStageActive ? "text-white" : "text-muted-foreground"
-                    )}>
-                      {stageTime}
+                  return (
+                    <div
+                      key={column.id}
+                      className={cn(
+                        "pipeline-stage relative flex-1 flex items-center justify-center px-1 sm:px-2",
+                        canClick && "clickable"
+                      )}
+                      style={{
+                        minWidth: "60px",
+                      }}
+                      onClick={() => canClick && handleStageClick(column.id)}
+                      onMouseEnter={(e) => handleStageMouseEnter(column, e)}
+                      onMouseLeave={handleStageMouseLeave}
+                    >
+                      <div
+                        className={cn(
+                          "text-[10px] sm:text-xs font-medium truncate text-center",
+                          isStageActive ? "text-white" : "text-muted-foreground"
+                        )}
+                      >
+                        {stageTime}
+                      </div>
                     </div>
-                  </div>
-                );
-              })}
+                  );
+                })}
+              </div>
             </div>
           </div>
         </div>
-      </div>
       </div>
 
       {/* Dialog de Motivo de Perda */}
@@ -700,7 +755,8 @@ const PipelineHeaderComponent: React.FC<PipelineHeaderProps> = ({
               Confirmar Exclusão
             </h4>
             <p className="text-muted-foreground mb-4">
-              Tem certeza que deseja excluir o lead "{lead.name}"? Esta ação não pode ser desfeita.
+              Tem certeza que deseja excluir o lead "{lead.name}"? Esta ação não
+              pode ser desfeita.
             </p>
             <div className="flex items-center justify-end gap-3">
               <Button
@@ -716,7 +772,7 @@ const PipelineHeaderComponent: React.FC<PipelineHeaderProps> = ({
                 disabled={isLoading}
               >
                 <Trash2 className="w-4 h-4 mr-2" />
-                {isLoading ? 'Excluindo...' : 'Excluir'}
+                {isLoading ? "Excluindo..." : "Excluir"}
               </Button>
             </div>
           </div>
