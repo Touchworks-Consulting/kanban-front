@@ -1,15 +1,13 @@
-import { api } from './api';
-import type { 
-  WhatsAppAccount, 
-  CreateWhatsAppAccountDto, 
+import { api } from "./api";
+import type {
+  CreateWhatsAppAccountDto,
   UpdateWhatsAppAccountDto,
-  WebhookLog
-} from '../types';
+} from "../types";
 
 export const whatsappService = {
   // Get all WhatsApp accounts
   async getAccounts(params?: { is_active?: boolean }) {
-    const response = await api.get('/api/whatsapp-accounts', { params });
+    const response = await api.get("/api/whatsapp-accounts", { params });
     return response.data;
   },
 
@@ -21,7 +19,7 @@ export const whatsappService = {
 
   // Create WhatsApp account
   async createAccount(data: CreateWhatsAppAccountDto) {
-    const response = await api.post('/api/whatsapp-accounts', data);
+    const response = await api.post("/api/whatsapp-accounts", data);
     return response.data;
   },
 
@@ -39,13 +37,18 @@ export const whatsappService = {
 
   // Test webhook connection
   async testWebhook(id: string) {
-    const response = await api.post(`/api/whatsapp-accounts/${id}/test-webhook`);
+    const response = await api.post(
+      `/api/whatsapp-accounts/${id}/test-webhook`
+    );
     return response.data;
   },
 
   // Get webhook logs
   async getWebhookLogs(id: string, params?: { limit?: number }) {
-    const response = await api.get(`/api/whatsapp-accounts/${id}/webhook-logs`, { params });
+    const response = await api.get(
+      `/api/whatsapp-accounts/${id}/webhook-logs`,
+      { params }
+    );
     return response.data;
   },
 };

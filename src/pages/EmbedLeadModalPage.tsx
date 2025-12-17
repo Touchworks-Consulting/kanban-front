@@ -249,6 +249,9 @@ export const EmbedLeadModalPage: React.FC = () => {
             { type: "lead-deleted", leadId: deletedLeadId },
             "*"
           );
+          await axios.delete(`/api/leads/${deletedLeadId}`, {
+            headers: { "x-api-key": apiKey },
+          });
         }}
       />
     </div>

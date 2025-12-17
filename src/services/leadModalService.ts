@@ -1,5 +1,5 @@
-import { apiService } from './api';
-import { kanbanService } from './kanban';
+import { apiService } from "./api";
+import { kanbanService } from "./kanban";
 import type {
   LeadModalData,
   LeadStats,
@@ -8,18 +8,25 @@ import type {
   CreateContactRequest,
   LeadActivity,
   LeadContact,
-  LeadFile
-} from '../types/leadModal';
-import type { KanbanColumn, UpdateLeadDto } from '../types/kanban';
+  LeadFile,
+} from "../types/leadModal";
+import type { KanbanColumn, UpdateLeadDto } from "../types/kanban";
 
 export const leadModalService = {
   /**
    * Obter dados completos do modal do lead
    */
-  async getLeadModalData(leadId: string): Promise<LeadModalData & { columns: KanbanColumn[] }> {
+  async getLeadModalData(
+    leadId: string
+  ): Promise<
+    LeadModalData & {
+      lead: import("../types/kanban").Lead;
+      columns: KanbanColumn[];
+    }
+  > {
     const [leadResponse, columnsResponse] = await Promise.all([
       kanbanService.getLeadById(leadId),
-      kanbanService.getColumns()
+      kanbanService.getColumns(),
     ]);
 
     // Estrutura os dados no formato esperado pelo modal
@@ -32,9 +39,9 @@ export const leadModalService = {
         totalActivities: 0,
         pendingTasks: 0,
         totalContacts: 0,
-        totalFiles: 0
+        totalFiles: 0,
       },
-      columns: columnsResponse.columns
+      columns: columnsResponse.columns,
     };
   },
 
@@ -50,25 +57,35 @@ export const leadModalService = {
    */
   async getStats(leadId: string): Promise<LeadStats> {
     const response = await apiService.get(`/lead-modal/${leadId}/stats`);
-    return response.data.data;
+    return (response.data as { data: LeadStats }).data;
   },
 
   /**
    * Obter timeline paginada
    */
-  async getTimeline(leadId: string, page: number = 1, limit: number = 20): Promise<TimelineResponse> {
+  async getTimeline(
+    leadId: string,
+    page: number = 1,
+    limit: number = 20
+  ): Promise<TimelineResponse> {
     const response = await apiService.get(`/lead-modal/${leadId}/timeline`, {
-      params: { page, limit }
+      params: { page, limit },
     });
-    return response.data.data;
+    return (response.data as { data: TimelineResponse }).data;
   },
 
   /**
    * Adicionar nova atividade
    */
-  async addActivity(leadId: string, activity: CreateActivityRequest): Promise<LeadActivity> {
-    const response = await apiService.post(`/lead-modal/${leadId}/activities`, activity);
-    return response.data.data;
+  async addActivity(
+    leadId: string,
+    activity: CreateActivityRequest
+  ): Promise<LeadActivity> {
+    const response = await apiService.post(
+      `/lead-modal/${leadId}/activities`,
+      activity
+    );
+    return (response.data as { data: LeadActivity }).data;
   },
 
   /**
@@ -76,15 +93,21 @@ export const leadModalService = {
    */
   async getContacts(leadId: string): Promise<LeadContact[]> {
     const response = await apiService.get(`/lead-modal/${leadId}/contacts`);
-    return response.data.data;
+    return (response.data as { data: LeadContact[] }).data;
   },
 
   /**
    * Adicionar novo contato
    */
-  async addContact(leadId: string, contact: CreateContactRequest): Promise<LeadContact> {
-    const response = await apiService.post(`/lead-modal/${leadId}/contacts`, contact);
-    return response.data.data;
+  async addContact(
+    leadId: string,
+    contact: CreateContactRequest
+  ): Promise<LeadContact> {
+    const response = await apiService.post(
+      `/lead-modal/${leadId}/contacts`,
+      contact
+    );
+    return (response.data as { data: LeadContact }).data;
   },
 
   /**
@@ -92,7 +115,7 @@ export const leadModalService = {
    */
   async getFiles(leadId: string): Promise<LeadFile[]> {
     const response = await apiService.get(`/lead-modal/${leadId}/files`);
-    return response.data.data;
+    return (response.data as { data: LeadFile[] }).data;
   },
 
   /**
@@ -107,11 +130,15 @@ export const leadModalService = {
   /**
    * Marcar lead como ganho ou perdido
    */
-  async updateLeadStatus(leadId: string, status: 'won' | 'lost', reason?: string): Promise<any> {
+  async updateLeadStatus(
+    leadId: string,
+    status: "won" | "lost",
+    reason?: string
+  ): Promise<any> {
     const updates: any = { status };
-    if (status === 'won' && reason) {
+    if (status === "won" && reason) {
       updates.won_reason = reason;
-    } else if (status === 'lost' && reason) {
+    } else if (status === "lost" && reason) {
       updates.lost_reason = reason;
     }
 
@@ -127,8 +154,8 @@ export const leadModalService = {
     // Usa o endpoint correto do kanbanService
     const response = await kanbanService.moveLead(leadId, {
       column_id: columnId,
-      position: 0
+      position: 0,
     });
     return response.lead;
-  }
+  },
 };

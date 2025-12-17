@@ -1,21 +1,23 @@
-import { apiService } from './api';
-import { API_ENDPOINTS } from '../constants';
-import type { 
-  Lead, 
-  KanbanColumn, 
-  LeadCreateData, 
-  LeadUpdateData, 
-  LeadFilters, 
-  LeadSort,
-  PaginatedResponse 
-} from '../types';
+import { apiService } from "./api";
+import { API_ENDPOINTS } from "../constants";
+import type {
+  Lead,
+  KanbanColumn,
+  CreateLeadDto,
+  UpdateLeadDto,
+} from "../types/kanban";
+import type {
+  PaginatedResponse,
+  CreateData,
+  UpdateData,
+} from "../types/common";
 
 class LeadService {
   async getLeads(
     page = 1,
     limit = 20,
-    filters?: LeadFilters,
-    sort?: LeadSort
+    filters?: Partial<Lead>,
+    sort?: { field: string; direction: "asc" | "desc" }
   ): Promise<PaginatedResponse<Lead>> {
     const params = {
       page,
@@ -23,36 +25,41 @@ class LeadService {
       ...filters,
       ...(sort && { sortBy: sort.field, sortOrder: sort.direction }),
     };
-
-    const res = await apiService.get<{ leads: any[]; pagination: { total: number; page: number; limit: number; pages: number } }>(API_ENDPOINTS.LEADS, params);
+    const res = await apiService.get<{
+      leads: any[];
+      pagination: { total: number; page: number; limit: number; pages: number };
+    }>(API_ENDPOINTS.LEADS, params);
     const payload = res.data;
     const adapt = (l: any): Lead => {
-      const colId = l.column_id ?? l.column?.id;
-      const tags = Array.isArray(l.tags) ? l.tags : [];
       return {
         id: String(l.id),
-        name: l.name ?? '',
-        email: l.email ?? '',
+        name: l.name ?? "",
+        email: l.email ?? "",
         phone: l.phone,
-        company: l.company,
-        position: l.position,
-        source: l.platform ?? l.source ?? 'Desconhecido',
-        status: l.status ?? 'novo',
-        score: l.score ?? 0,
-        tags: tags.map((t: any) => t.name),
-        tagsMeta: tags.map((t: any) => ({ name: t.name, color: t.color ?? '#64748b' })),
-        notes: l.notes ?? '',
-        kanbanColumnId: colId ? String(colId) : '',
-        accountId: String(l.account_id ?? ''),
-        assignedTo: undefined,
-        lastContact: undefined,
-        nextFollowUp: undefined,
-        createdAt: (l.createdAt ?? l.created_at ?? new Date().toISOString()).toString(),
-        updatedAt: (l.updatedAt ?? l.updated_at ?? new Date().toISOString()).toString(),
+        platform: l.platform ?? l.source ?? "Desconhecido",
+        status: l.status ?? "novo",
+        column_id: l.column_id ?? l.column?.id,
+        position: l.position ?? 0,
+        value: l.value,
+        notes: l.notes ?? "",
+        account_id: String(l.account_id ?? ""),
+        assigned_to_user_id: l.assigned_to_user_id,
+        createdAt: (
+          l.createdAt ??
+          l.created_at ??
+          new Date().toISOString()
+        ).toString(),
+        updatedAt: (
+          l.updatedAt ??
+          l.updated_at ??
+          new Date().toISOString()
+        ).toString(),
+        tags: l.tags,
+        column: l.column,
       };
     };
     return {
-      data: (payload.leads as any[]).map(adapt) as Lead[],
+      data: (payload.leads as any[]).map(adapt),
       pagination: {
         page: payload.pagination.page,
         limit: payload.pagination.limit,
@@ -65,73 +72,110 @@ class LeadService {
   }
 
   async getLeadById(id: string): Promise<Lead> {
-    const res = await apiService.get<{ lead: any }>(API_ENDPOINTS.LEAD_BY_ID(id));
-    return res.data.lead as unknown as Lead;
-  }
-
-  async createLead(data: LeadCreateData): Promise<Lead> {
-    const payload: any = {
-      name: data.name,
-      email: data.email,
-      phone: data.phone,
-      notes: data.notes,
-      value: (data as any).value,
-      platform: data.source, // backend expects platform
-      column_id: data.kanbanColumnId, // backend expects column_id
+    const res = await apiService.get<{ lead: any }>(
+      API_ENDPOINTS.LEAD_BY_ID(id)
+    );
+    const l = res.data.lead;
+    return {
+      id: String(l.id),
+      name: l.name ?? "",
+      email: l.email ?? "",
+      phone: l.phone,
+      platform: l.platform ?? l.source ?? "Desconhecido",
+      status: l.status ?? "novo",
+      column_id: l.column_id ?? l.column?.id,
+      position: l.position ?? 0,
+      value: l.value,
+      notes: l.notes ?? "",
+      account_id: String(l.account_id ?? ""),
+      assigned_to_user_id: l.assigned_to_user_id,
+      createdAt: (
+        l.createdAt ??
+        l.created_at ??
+        new Date().toISOString()
+      ).toString(),
+      updatedAt: (
+        l.updatedAt ??
+        l.updated_at ??
+        new Date().toISOString()
+      ).toString(),
+      tags: l.tags,
+      column: l.column,
     };
-    const res = await apiService.post<{ message: string; lead: any }>(API_ENDPOINTS.LEADS, payload);
-    const l = res.data.lead;
-    return {
-      id: String(l.id),
-      name: l.name ?? '',
-      email: l.email ?? '',
-      phone: l.phone,
-      company: l.company,
-      position: l.position,
-      source: l.platform ?? l.source ?? 'Desconhecido',
-      status: l.status ?? 'novo',
-      score: l.score ?? 0,
-      tags: (l.tags ?? []).map((t: any) => t.name),
-      tagsMeta: (l.tags ?? []).map((t: any) => ({ name: t.name, color: t.color ?? '#64748b' })),
-      notes: l.notes ?? '',
-      kanbanColumnId: String(l.column_id ?? l.column?.id ?? ''),
-      accountId: String(l.account_id ?? ''),
-      assignedTo: undefined,
-      lastContact: undefined,
-      nextFollowUp: undefined,
-      createdAt: (l.createdAt ?? l.created_at ?? new Date().toISOString()).toString(),
-      updatedAt: (l.updatedAt ?? l.updated_at ?? new Date().toISOString()).toString(),
-    } as Lead;
   }
 
-  async updateLead(id: string, data: LeadUpdateData): Promise<Lead> {
-    const payload: any = { ...data };
-    if (data.kanbanColumnId) payload.column_id = data.kanbanColumnId;
-    if (data.source) payload.platform = data.source;
-    delete payload.kanbanColumnId;
-    const res = await apiService.patch<{ message: string; lead: any }>(API_ENDPOINTS.LEAD_BY_ID(id), payload);
+  async createLead(data: CreateData<CreateLeadDto>): Promise<Lead> {
+    const payload: CreateLeadDto = {
+      ...data,
+    };
+    const res = await apiService.post<{ message: string; lead: any }>(
+      API_ENDPOINTS.LEADS,
+      payload
+    );
     const l = res.data.lead;
     return {
       id: String(l.id),
-      name: l.name ?? '',
-      email: l.email ?? '',
+      name: l.name ?? "",
+      email: l.email ?? "",
       phone: l.phone,
-      company: l.company,
-      position: l.position,
-      source: l.platform ?? l.source ?? 'Desconhecido',
-      status: l.status ?? 'novo',
-      score: l.score ?? 0,
-      tags: (l.tags ?? []).map((t: any) => t.name),
-      tagsMeta: (l.tags ?? []).map((t: any) => ({ name: t.name, color: t.color ?? '#64748b' })),
-      notes: l.notes ?? '',
-      kanbanColumnId: String(l.column_id ?? l.column?.id ?? ''),
-      accountId: String(l.account_id ?? ''),
-      assignedTo: undefined,
-      lastContact: undefined,
-      nextFollowUp: undefined,
-      createdAt: (l.createdAt ?? l.created_at ?? new Date().toISOString()).toString(),
-      updatedAt: (l.updatedAt ?? l.updated_at ?? new Date().toISOString()).toString(),
-    } as Lead;
+      platform: l.platform ?? l.source ?? "Desconhecido",
+      status: l.status ?? "novo",
+      column_id: l.column_id ?? l.column?.id,
+      position: l.position ?? 0,
+      value: l.value,
+      notes: l.notes ?? "",
+      account_id: String(l.account_id ?? ""),
+      assigned_to_user_id: l.assigned_to_user_id,
+      createdAt: (
+        l.createdAt ??
+        l.created_at ??
+        new Date().toISOString()
+      ).toString(),
+      updatedAt: (
+        l.updatedAt ??
+        l.updated_at ??
+        new Date().toISOString()
+      ).toString(),
+      tags: l.tags,
+      column: l.column,
+    };
+  }
+
+  async updateLead(id: string, data: UpdateData<UpdateLeadDto>): Promise<Lead> {
+    const payload: UpdateLeadDto = {
+      ...data,
+    };
+    const res = await apiService.patch<{ message: string; lead: any }>(
+      API_ENDPOINTS.LEAD_BY_ID(id),
+      payload
+    );
+    const l = res.data.lead;
+    return {
+      id: String(l.id),
+      name: l.name ?? "",
+      email: l.email ?? "",
+      phone: l.phone,
+      platform: l.platform ?? l.source ?? "Desconhecido",
+      status: l.status ?? "novo",
+      column_id: l.column_id ?? l.column?.id,
+      position: l.position ?? 0,
+      value: l.value,
+      notes: l.notes ?? "",
+      account_id: String(l.account_id ?? ""),
+      assigned_to_user_id: l.assigned_to_user_id,
+      createdAt: (
+        l.createdAt ??
+        l.created_at ??
+        new Date().toISOString()
+      ).toString(),
+      updatedAt: (
+        l.updatedAt ??
+        l.updated_at ??
+        new Date().toISOString()
+      ).toString(),
+      tags: l.tags,
+      column: l.column,
+    };
   }
 
   async deleteLead(id: string): Promise<void> {
@@ -139,89 +183,158 @@ class LeadService {
   }
 
   async searchLeads(query: string): Promise<Lead[]> {
-    const res = await apiService.get<Lead[]>(API_ENDPOINTS.LEAD_SEARCH, { q: query });
-    return res.data as unknown as Lead[];
+    const res = await apiService.get<{ leads: any[] }>(
+      API_ENDPOINTS.LEAD_SEARCH,
+      { q: query }
+    );
+    return (res.data.leads || []).map((l: any) => ({
+      id: String(l.id),
+      name: l.name ?? "",
+      email: l.email ?? "",
+      phone: l.phone,
+      platform: l.platform ?? l.source ?? "Desconhecido",
+      status: l.status ?? "novo",
+      column_id: l.column_id ?? l.column?.id,
+      position: l.position ?? 0,
+      value: l.value,
+      notes: l.notes ?? "",
+      account_id: String(l.account_id ?? ""),
+      assigned_to_user_id: l.assigned_to_user_id,
+      createdAt: (
+        l.createdAt ??
+        l.created_at ??
+        new Date().toISOString()
+      ).toString(),
+      updatedAt: (
+        l.updatedAt ??
+        l.updated_at ??
+        new Date().toISOString()
+      ).toString(),
+      tags: l.tags,
+      column: l.column,
+    }));
   }
 
   async getKanbanColumns(): Promise<KanbanColumn[]> {
-    const res = await apiService.get<{ columns: any[] }>(API_ENDPOINTS.KANBAN_COLUMNS);
-  const adaptLead = (l: any): Lead => {
-      const colId = l.column_id ?? l.column?.id;
-      return {
-        id: String(l.id),
-        name: l.name ?? '',
-        email: l.email ?? '',
-        phone: l.phone,
-        company: l.company,
-        position: l.position,
-        source: l.platform ?? l.source ?? 'Desconhecido',
-        status: l.status ?? 'novo',
-        score: l.score ?? 0,
-    tags: (l.tags ?? []).map((t: any) => t.name),
-    tagsMeta: (l.tags ?? []).map((t: any) => ({ name: t.name, color: t.color ?? '#64748b' })),
-        notes: l.notes ?? '',
-        kanbanColumnId: colId ? String(colId) : '',
-        accountId: String(l.account_id),
-        assignedTo: undefined,
-        lastContact: undefined,
-        nextFollowUp: undefined,
-        createdAt: (l.createdAt ?? l.created_at ?? new Date().toISOString()).toString(),
-        updatedAt: (l.updatedAt ?? l.updated_at ?? new Date().toISOString()).toString(),
-      };
-    };
+    const res = await apiService.get<{ columns: any[] }>(
+      API_ENDPOINTS.KANBAN_COLUMNS
+    );
+    const adaptLead = (l: any): Lead => ({
+      id: String(l.id),
+      name: l.name ?? "",
+      email: l.email ?? "",
+      phone: l.phone,
+      platform: l.platform ?? l.source ?? "Desconhecido",
+      status: l.status ?? "novo",
+      column_id: l.column_id ?? l.column?.id,
+      position: l.position ?? 0,
+      value: l.value,
+      notes: l.notes ?? "",
+      account_id: String(l.account_id ?? ""),
+      assigned_to_user_id: l.assigned_to_user_id,
+      createdAt: (
+        l.createdAt ??
+        l.created_at ??
+        new Date().toISOString()
+      ).toString(),
+      updatedAt: (
+        l.updatedAt ??
+        l.updated_at ??
+        new Date().toISOString()
+      ).toString(),
+      tags: l.tags,
+      column: l.column,
+    });
     const columns = (res.data.columns || []).map((c: any) => ({
       id: String(c.id),
       name: c.name,
-      order: c.position ?? 0,
-      color: c.color ?? '#6b7280',
-      accountId: String(c.account_id),
+      position: c.position ?? 0,
+      color: c.color ?? "#6b7280",
+      is_system: !!c.is_system,
+      is_active: !!c.is_active,
+      is_mql: !!c.is_mql,
+      account_id: String(c.account_id),
       leads: (c.leads ?? []).map(adaptLead),
-      createdAt: (c.createdAt ?? c.created_at ?? new Date().toISOString()).toString(),
-      updatedAt: (c.updatedAt ?? c.updated_at ?? new Date().toISOString()).toString(),
-    })) as KanbanColumn[];
+      createdAt: (
+        c.createdAt ??
+        c.created_at ??
+        new Date().toISOString()
+      ).toString(),
+      updatedAt: (
+        c.updatedAt ??
+        c.updated_at ??
+        new Date().toISOString()
+      ).toString(),
+    }));
     return columns;
   }
 
   async createKanbanColumn(data: {
     name: string;
-    color: string;
-    order: number;
+    color?: string;
   }): Promise<KanbanColumn> {
-    const res = await apiService.post<{ column: any }>(API_ENDPOINTS.KANBAN_COLUMNS, data);
-    // Map minimal shape
+    const res = await apiService.post<{ column: any }>(
+      API_ENDPOINTS.KANBAN_COLUMNS,
+      data
+    );
     const c = res.data.column;
-    return ({
-      id: (c.id as unknown) as any,
+    return {
+      id: String(c.id),
       name: c.name,
-      order: c.position ?? 0,
-      color: c.color ?? '#6b7280',
-      accountId: c.account_id,
+      position: c.position ?? 0,
+      color: c.color ?? "#6b7280",
+      is_system: !!c.is_system,
+      is_active: !!c.is_active,
+      is_mql: !!c.is_mql,
+      account_id: String(c.account_id),
       leads: [],
-      createdAt: (c.createdAt ?? c.created_at ?? new Date().toISOString()).toString(),
-      updatedAt: (c.updatedAt ?? c.updated_at ?? new Date().toISOString()).toString(),
-    }) as KanbanColumn;
+      createdAt: (
+        c.createdAt ??
+        c.created_at ??
+        new Date().toISOString()
+      ).toString(),
+      updatedAt: (
+        c.updatedAt ??
+        c.updated_at ??
+        new Date().toISOString()
+      ).toString(),
+    };
   }
 
   async updateKanbanColumn(
     id: string,
-    data: { name?: string; color?: string; order?: number }
+    data: { name?: string; color?: string; position?: number; is_mql?: boolean }
   ): Promise<KanbanColumn> {
-    const res = await apiService.patch<{ column: any }>(API_ENDPOINTS.KANBAN_COLUMN_BY_ID(id), data);
+    const res = await apiService.patch<{ column: any }>(
+      API_ENDPOINTS.KANBAN_COLUMN_BY_ID(id),
+      data
+    );
     const c = res.data.column;
-    return ({
+    return {
       id: String(c.id),
       name: c.name,
-      order: c.position ?? 0,
-      color: c.color ?? '#6b7280',
-      accountId: String(c.account_id),
+      position: c.position ?? 0,
+      color: c.color ?? "#6b7280",
+      is_system: !!c.is_system,
+      is_active: !!c.is_active,
+      is_mql: !!c.is_mql,
+      account_id: String(c.account_id),
       leads: [],
-      createdAt: (c.createdAt ?? c.created_at ?? new Date().toISOString()).toString(),
-      updatedAt: (c.updatedAt ?? c.updated_at ?? new Date().toISOString()).toString(),
-    }) as KanbanColumn;
+      createdAt: (
+        c.createdAt ??
+        c.created_at ??
+        new Date().toISOString()
+      ).toString(),
+      updatedAt: (
+        c.updatedAt ??
+        c.updated_at ??
+        new Date().toISOString()
+      ).toString(),
+    };
   }
 
   async deleteKanbanColumn(id: string): Promise<void> {
-  await apiService.delete(API_ENDPOINTS.KANBAN_COLUMN_BY_ID(id));
+    await apiService.delete(API_ENDPOINTS.KANBAN_COLUMN_BY_ID(id));
   }
 
   async moveLeadToColumn(
@@ -229,37 +342,39 @@ class LeadService {
     columnId: string,
     position?: number
   ): Promise<void> {
-  await apiService.patch(API_ENDPOINTS.LEAD_MOVE(leadId), {
+    await apiService.patch(API_ENDPOINTS.LEAD_MOVE(leadId), {
       column_id: columnId,
       position,
     });
   }
 
-  async exportLeads(filters?: LeadFilters): Promise<Blob> {
+  async exportLeads(filters?: Partial<Lead>): Promise<Blob> {
     const params = { ...filters };
-    const response = await apiService.getAxiosInstance().get(
-      API_ENDPOINTS.LEAD_EXPORT,
-      {
+    const response = await apiService
+      .getAxiosInstance()
+      .get(API_ENDPOINTS.LEAD_EXPORT, {
         params,
-        responseType: 'blob',
-      }
-    );
+        responseType: "blob",
+      });
     return response.data;
   }
 
   async bulkUpdateLeads(
     leadIds: string[],
-    updates: LeadUpdateData
+    updates: UpdateData<UpdateLeadDto>
   ): Promise<Lead[]> {
-  const res = await apiService.post<Lead[]>(`${API_ENDPOINTS.LEADS}/bulk-update`, {
-      leadIds,
-      updates,
-    });
-  return res.data as unknown as Lead[];
+    const res = await apiService.post<Lead[]>(
+      `${API_ENDPOINTS.LEADS}/bulk-update`,
+      {
+        leadIds,
+        updates,
+      }
+    );
+    return res.data as unknown as Lead[];
   }
 
   async bulkDeleteLeads(leadIds: string[]): Promise<void> {
-  await apiService.post(`${API_ENDPOINTS.LEADS}/bulk-delete`, {
+    await apiService.post(`${API_ENDPOINTS.LEADS}/bulk-delete`, {
       leadIds,
     });
   }

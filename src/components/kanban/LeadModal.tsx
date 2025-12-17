@@ -1,19 +1,22 @@
-import React, { useEffect, useState, useCallback, useMemo } from 'react';
-import type { Lead, KanbanColumn } from '../../types/kanban';
-import type { LeadModalData } from '../../types/leadModal';
-import { Dialog, DialogContent, DialogTitle, DialogDescription } from '../ui/dialog';
-import { Button } from '../ui/button';
-import { PipelineHeader } from './PipelineHeader';
-import { PipelineHeaderSkeleton } from './PipelineHeaderSkeleton';
-import { LeadDataSidebar } from './LeadDataSidebar';
-import { LeadDataSidebarSkeleton } from './LeadDataSidebarSkeleton';
-import { ActivitiesArea } from './ActivitiesArea';
-import { ActivitiesAreaSkeleton } from './ActivitiesAreaSkeleton';
-import { AgendaPanel } from './AgendaPanel';
-import { useLeadModalStore } from '../../stores/leadModalStore';
-import { useKanbanStore } from '../../stores';
-import { optimizedLeadService } from '../../services/optimizedLeadService';
-import type { UserDto } from '../../services/users';
+import React, { useEffect, useCallback, useMemo } from "react";
+import type { Lead } from "../../types/kanban";
+import {
+  Dialog,
+  DialogContent,
+  DialogTitle,
+  DialogDescription,
+} from "../ui/dialog";
+import { Button } from "../ui/button";
+import { PipelineHeader } from "./PipelineHeader";
+import { PipelineHeaderSkeleton } from "./PipelineHeaderSkeleton";
+import { LeadDataSidebar } from "./LeadDataSidebar";
+import { LeadDataSidebarSkeleton } from "./LeadDataSidebarSkeleton";
+import { ActivitiesArea } from "./ActivitiesArea";
+import { ActivitiesAreaSkeleton } from "./ActivitiesAreaSkeleton";
+import { AgendaPanel } from "./AgendaPanel";
+import { useLeadModalStore } from "../../stores/leadModalStore";
+import { useKanbanStore } from "../../stores";
+import { optimizedLeadService } from "../../services/optimizedLeadService";
 
 interface LeadModalProps {
   leadId: string;
@@ -61,13 +64,12 @@ export const LeadModal: React.FC<LeadModalProps> = ({
     clearErrors,
   } = useLeadModalStore();
 
-
   // Load initial data only once when modal opens
   const loadInitialData = async () => {
     if (!leadId) return;
 
-    setLoading('lead', true);
-    setError('lead', null);
+    setLoading("lead", true);
+    setError("lead", null);
 
     try {
       const data = await optimizedLeadService.loadInitialData(leadId);
@@ -77,10 +79,10 @@ export const LeadModal: React.FC<LeadModalProps> = ({
       setUsers(data.users);
       setModalData(data.modalData);
     } catch (err: any) {
-      console.error('Erro ao carregar dados do modal:', err);
-      setError('lead', 'Erro ao carregar dados do lead');
+      console.error("Erro ao carregar dados do modal:", err);
+      setError("lead", "Erro ao carregar dados do lead");
     } finally {
-      setLoading('lead', false);
+      setLoading("lead", false);
     }
   };
 
@@ -106,24 +108,31 @@ export const LeadModal: React.FC<LeadModalProps> = ({
   };
 
   // Optimistic update for status changes
-  const handleStatusChange = async (status: 'won' | 'lost', reason?: string) => {
+  const handleStatusChange = async (
+    status: "won" | "lost",
+    reason?: string
+  ) => {
     if (!lead) return;
 
     // Immediate UI update
     updateStatusOptimistic(status, reason);
-    setLoading('status', true);
-    setError('status', null);
+    setLoading("status", true);
+    setError("status", null);
 
     try {
-      const updatedLead = await optimizedLeadService.updateStatus(lead.id, status, reason);
+      const updatedLead = await optimizedLeadService.updateStatus(
+        lead.id,
+        status,
+        reason
+      );
       setLead(updatedLead); // Update with server response
       onUpdate?.();
     } catch (error) {
-      console.error('Erro ao atualizar status do lead:', error);
-      setError('status', 'Erro ao atualizar status');
+      console.error("Erro ao atualizar status do lead:", error);
+      setError("status", "Erro ao atualizar status");
       rollbackStatus(); // Rollback on error
     } finally {
-      setLoading('status', false);
+      setLoading("status", false);
     }
   };
 
@@ -131,92 +140,110 @@ export const LeadModal: React.FC<LeadModalProps> = ({
   const handleMoveToNext = async (nextColumnId: string) => {
     if (!lead) return;
 
-    const targetColumn = columns.find(c => c.id === nextColumnId);
+    const targetColumn = columns.find((c) => c.id === nextColumnId);
 
     // Immediate UI update
     updateColumnOptimistic(nextColumnId, targetColumn);
-    setLoading('column', true);
-    setError('column', null);
+    setLoading("column", true);
+    setError("column", null);
 
     try {
-      const updatedLead = await optimizedLeadService.moveToColumn(lead.id, nextColumnId);
+      const updatedLead = await optimizedLeadService.moveToColumn(
+        lead.id,
+        nextColumnId
+      );
       setLead(updatedLead); // Update with server response
       onUpdate?.();
     } catch (error) {
-      console.error('Erro ao mover lead:', error);
-      setError('column', 'Erro ao mover lead');
+      console.error("Erro ao mover lead:", error);
+      setError("column", "Erro ao mover lead");
       rollbackColumn(); // Rollback on error
     } finally {
-      setLoading('column', false);
+      setLoading("column", false);
     }
   };
 
   // Optimistic update for all sidebar field updates (including status)
-  const handleUpdateLead = useCallback(async (updates: Partial<Lead>) => {
-    if (!lead) return;
+  const handleUpdateLead = useCallback(
+    async (updates: Partial<Lead>) => {
+      if (!lead) return;
 
-    // Immediate UI update
-    updateLeadOptimistic(updates);
-    setLoading('sidebarField', true); // Use specific loading state for sidebar fields
-    setError('lead', null);
+      // Immediate UI update
+      updateLeadOptimistic(updates);
+      setLoading("sidebarField", true); // Use specific loading state for sidebar fields
+      setError("lead", null);
 
-    try {
-      await optimizedLeadService.updateLead(lead.id, updates);
-      console.log('✅ handleUpdateLead: Campo atualizado com sucesso', { field: Object.keys(updates)[0], value: Object.values(updates)[0] });
-      // Don't setLead() with server response for sidebar updates - optimistic update is sufficient
-      // Don't call onUpdate() for sidebar fields - prevents full modal refresh
-    } catch (error) {
-      console.error('Erro ao atualizar lead:', error);
-      setError('lead', 'Erro ao atualizar lead');
-      rollbackLead(); // Rollback on error
-      throw error;
-    } finally {
-      setLoading('sidebarField', false);
-    }
-  }, [lead, updateLeadOptimistic, setLoading, setError, rollbackLead]);
+      try {
+        await optimizedLeadService.updateLead(lead.id, updates);
+        console.log("✅ handleUpdateLead: Campo atualizado com sucesso", {
+          field: Object.keys(updates)[0],
+          value: Object.values(updates)[0],
+        });
+        // Don't setLead() with server response for sidebar updates - optimistic update is sufficient
+        // Don't call onUpdate() for sidebar fields - prevents full modal refresh
+      } catch (error) {
+        console.error("Erro ao atualizar lead:", error);
+        setError("lead", "Erro ao atualizar lead");
+        rollbackLead(); // Rollback on error
+        throw error;
+      } finally {
+        setLoading("sidebarField", false);
+      }
+    },
+    [lead, updateLeadOptimistic, setLoading, setError, rollbackLead]
+  );
 
   // Optimistic update for assignee changes - NOW TRULY OPTIMIZED!
   const handleAssigneeChange = async (userId: string) => {
     if (!lead) return;
 
-    const assignedUser = users.find(u => u.id === userId);
+    const assignedUser = users.find((u) => u.id === userId);
 
     // Immediate UI update - no more full payload!
     updateAssigneeOptimistic(userId, assignedUser);
-    setLoading('assignee', true);
-    setError('assignee', null);
+    setLoading("assignee", true);
+    setError("assignee", null);
 
     try {
-      const updatedLead = await optimizedLeadService.updateAssignee(lead.id, userId);
+      const updatedLead = await optimizedLeadService.updateAssignee(
+        lead.id,
+        userId
+      );
       setLead(updatedLead); // Update with server response
       // Don't call onUpdate() for assignee changes - optimistic updates are sufficient
     } catch (error) {
-      console.error('Erro ao alterar responsável:', error);
-      setError('assignee', 'Erro ao alterar responsável');
+      console.error("Erro ao alterar responsável:", error);
+      setError("assignee", "Erro ao alterar responsável");
       rollbackAssignee(); // Rollback on error
       throw error;
     } finally {
-      setLoading('assignee', false);
+      setLoading("assignee", false);
     }
   };
 
   // Handle delete lead
   const handleDeleteLead = async () => {
-    console.log('🗑️ handleDeleteLead chamado', { lead: lead?.id, hasOnDelete: !!onDelete });
+    console.log("🗑️ handleDeleteLead chamado", {
+      lead: lead?.id,
+      hasOnDelete: !!onDelete,
+    });
 
     if (!lead || !onDelete) {
-      console.warn('⚠️ handleDeleteLead: lead ou onDelete não disponível', { lead: !!lead, onDelete: !!onDelete });
+      console.warn("⚠️ handleDeleteLead: lead ou onDelete não disponível", {
+        lead: !!lead,
+        onDelete: !!onDelete,
+      });
       return;
     }
 
     try {
-      console.log('🗑️ Chamando onDelete para lead:', lead.id);
+      console.log("🗑️ Chamando onDelete para lead:", lead.id);
       await onDelete(lead.id);
-      console.log('✅ Lead excluído com sucesso');
+      console.log("✅ Lead excluído com sucesso");
       handleClose();
     } catch (error) {
-      console.error('❌ Erro ao excluir lead:', error);
-      setError('lead', 'Erro ao excluir lead');
+      console.error("❌ Erro ao excluir lead:", error);
+      setError("lead", "Erro ao excluir lead");
       throw error;
     }
   };
@@ -264,7 +291,7 @@ export const LeadModal: React.FC<LeadModalProps> = ({
     lead?.assigned_to_user_id,
     lead?.column_id,
     lead?.createdAt,
-    JSON.stringify(lead?.tags)
+    JSON.stringify(lead?.tags),
   ]);
 
   // Memoize lead object for header - create NEW object with STABLE reference
@@ -295,22 +322,31 @@ export const LeadModal: React.FC<LeadModalProps> = ({
   // Stable references for ActivitiesArea to prevent unnecessary re-renders
   const leadName = useMemo(() => lead?.name, [lead?.name]);
 
-  const memoizedModalData = useMemo(() => modalData, [
-    modalData?.timeline?.length,
-    modalData?.contacts?.length,
-    modalData?.files?.length,
-    JSON.stringify(modalData?.timeline?.map(t => t.id)),
-    JSON.stringify(modalData?.contacts?.map(c => c.id)),
-    JSON.stringify(modalData?.files?.map(f => f.id))
-  ]);
+  const memoizedModalData = useMemo(
+    () => modalData,
+    [
+      modalData?.timeline?.length,
+      modalData?.contacts?.length,
+      modalData?.files?.length,
+      JSON.stringify(modalData?.timeline?.map((t) => t.id)),
+      JSON.stringify(modalData?.contacts?.map((c) => c.id)),
+      JSON.stringify(modalData?.files?.map((f) => f.id)),
+    ]
+  );
 
   return (
     <Dialog open={isOpen} onOpenChange={handleClose}>
-      <DialogContent isEmbed={isEmbed} className="max-w-7xl max-h-[95vh] overflow-hidden focus:outline-none border-0 p-0 [&>button]:!visible [&>button]:!opacity-100 [&>button]:!bg-background [&>button]:!text-foreground [&>button]:!border [&>button]:!border-border [&>button]:!shadow-sm [&>button]:!z-50 [&>button]:!top-2 [&>button]:!right-2 [&>button]:hover:!bg-muted">
+      <DialogContent
+        isEmbed={isEmbed}
+        className="max-w-7xl max-h-[95vh] overflow-hidden focus:outline-none border-0 p-0 [&>button]:!visible [&>button]:!opacity-100 [&>button]:!bg-background [&>button]:!text-foreground [&>button]:!border [&>button]:!border-border [&>button]:!shadow-sm [&>button]:!z-50 [&>button]:!top-2 [&>button]:!right-2 [&>button]:hover:!bg-muted"
+      >
         <div className="sr-only">
-          <DialogTitle>{lead ? `Lead: ${lead.name}` : 'Detalhes do Lead'}</DialogTitle>
+          <DialogTitle>
+            {lead ? `Lead: ${lead.name}` : "Detalhes do Lead"}
+          </DialogTitle>
           <DialogDescription>
-            Modal com informações detalhadas do lead incluindo dados, atividades e arquivos
+            Modal com informações detalhadas do lead incluindo dados, atividades
+            e arquivos
           </DialogDescription>
         </div>
         {isMainLoading ? (
@@ -348,10 +384,12 @@ export const LeadModal: React.FC<LeadModalProps> = ({
                 // Atualizar o estado interno do modal primeiro
                 if (leadId) {
                   try {
-                    const data = await optimizedLeadService.loadInitialData(leadId);
+                    const data = await optimizedLeadService.loadInitialData(
+                      leadId
+                    );
                     setLead(data.lead); // Atualizar estado interno do modal
                   } catch (error) {
-                    console.error('Erro ao atualizar lead no modal:', error);
+                    console.error("Erro ao atualizar lead no modal:", error);
                   }
                 }
 
@@ -399,7 +437,9 @@ export const LeadModal: React.FC<LeadModalProps> = ({
               <AgendaPanel
                 onNewActivity={() => {
                   // TODO: Implementar nova lógica direta se necessário
-                  console.log('AgendaPanel: Nova atividade clicada - funcionalidade desabilitada temporariamente');
+                  console.log(
+                    "AgendaPanel: Nova atividade clicada - funcionalidade desabilitada temporariamente"
+                  );
                 }}
               />
             </div>
