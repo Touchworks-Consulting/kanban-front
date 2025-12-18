@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import { useParams, useSearchParams } from "react-router-dom";
 import { LeadModal } from "../components/kanban/LeadModal";
 import { CreateLeadModal } from "../components/kanban/CreateLeadModal";
-import axios from "axios";
+import { apiService } from "../services/api";
 import { LoadingSpinner } from "../components/LoadingSpinner";
 import { Button } from "../components/ui/button";
 import { UserPlus, Phone } from "lucide-react";
@@ -64,7 +64,7 @@ export const EmbedLeadModalPage: React.FC = () => {
 
       try {
         // Validar acesso ao lead com a API key
-        const response = await axios.get(`/api/embed/lead-modal/${leadId}`, {
+        const response = await apiService.get(`/api/embed/lead-modal/${leadId}`, {
           headers: {
             "x-api-key": apiKey,
           },
@@ -98,14 +98,14 @@ export const EmbedLeadModalPage: React.FC = () => {
     }
 
     try {
-      const response = await axios.post("/api/embed/lead", data, {
+      const response = await apiService.post("/api/embed/lead", data, {
         headers: {
           "x-api-key": apiKey,
           "Content-Type": "application/json",
         },
       });
 
-      const newLead = response.data;
+      const newLead = response.data as { id: string;[key: string]: unknown };
       setCreatedLeadId(newLead.id);
       setShowCreateModal(false);
       setIsValid(true);
@@ -249,7 +249,7 @@ export const EmbedLeadModalPage: React.FC = () => {
             { type: "lead-deleted", leadId: deletedLeadId },
             "*"
           );
-          await axios.delete(`/api/leads/${deletedLeadId}`, {
+          await apiService.delete(`/api/leads/${deletedLeadId}`, {
             headers: { "x-api-key": apiKey },
           });
         }}
