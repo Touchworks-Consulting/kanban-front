@@ -31,7 +31,12 @@ export const LeadCard: React.FC<LeadCardProps> = ({ lead, onOpenModal, activityC
   const { getStatusByValue } = useCustomStatuses();
 
   // Usar contagem externa se fornecida, senão buscar individualmente
-  const { counts: internalCounts } = useLeadActivityCounts(externalCounts ? '' : lead.id);
+  // IMPORTANTE: Se externalCounts é null (passado explicitamente pelo KanbanColumn),
+  // isso significa que o bulk está carregando/falhou. NÃO disparar request individual
+  // para evitar ERR_INSUFFICIENT_RESOURCES com milhares de leads.
+  // Só dispara individual se externalCounts for undefined (prop não fornecida).
+  const shouldFetchIndividual = externalCounts === undefined;
+  const { counts: internalCounts } = useLeadActivityCounts(shouldFetchIndividual ? lead.id : '');
   const activityCounts = externalCounts || internalCounts;
 
   const taskColors = useTaskBadgeColors(activityCounts || {
