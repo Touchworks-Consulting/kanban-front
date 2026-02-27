@@ -225,7 +225,7 @@ const getTotalValue = () => {
                   onEdit={onEditLead}
                   onDelete={onDeleteLead}
                   onOpenModal={onOpenModal}
-                  activityCounts={activityCountsMap?.get(lead.id) || null}
+                  activityCounts={activityCountsMap?.get(lead.id) ?? null}
                 />
               ))}
             </SortableContext>

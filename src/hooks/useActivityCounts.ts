@@ -91,6 +91,9 @@ export const useLeadActivityCounts = (leadId: string) => {
   };
 };
 
+// Limite máximo de leads para busca bulk (evita ERR_INSUFFICIENT_RESOURCES)
+const MAX_BULK_LEADS = 200;
+
 // Hook para contagens bulk (para o kanban board)
 export const useBulkActivityCounts = (leadIds: string[]) => {
   const [countsMap, setCountsMap] = useState<Map<string, ActivityCounts>>(new Map());
@@ -98,6 +101,8 @@ export const useBulkActivityCounts = (leadIds: string[]) => {
   const [error, setError] = useState<string | null>(null);
   const leadIdsStringRef = useRef<string>('');
   const fetchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const retryCountRef = useRef(0);
+  const MAX_RETRIES = 2;
 
   const fetchBulkCounts = useCallback(async (ids: string[]) => {
     if (!ids.length) {
@@ -105,22 +110,57 @@ export const useBulkActivityCounts = (leadIds: string[]) => {
       return;
     }
 
+    // Limitar quantidade para não sobrecarregar o servidor/navegador
+    const limitedIds = ids.slice(0, MAX_BULK_LEADS);
+    if (ids.length > MAX_BULK_LEADS) {
+      console.warn(`⚠️ [BulkActivityCounts] Limitando de ${ids.length} para ${MAX_BULK_LEADS} leads`);
+    }
+
     setLoading(true);
     setError(null);
 
     try {
-      const response = await activityService.getBulkLeadActivityCounts(ids);
+      const response = await activityService.getBulkLeadActivityCounts(limitedIds);
 
       const newMap = new Map<string, ActivityCounts>();
       response.lead_counts.forEach((item: LeadActivityCounts) => {
         newMap.set(item.lead_id, item.counts);
       });
 
+      // Para leads que excedem o limite, criar contagem vazia (evita fallback individual)
+      if (ids.length > MAX_BULK_LEADS) {
+        const emptyCount: ActivityCounts = {
+          total_pending: 0, today: 0, overdue: 0,
+          has_tasks: false, has_overdue: false, has_today: false
+        };
+        ids.slice(MAX_BULK_LEADS).forEach(id => {
+          newMap.set(id, emptyCount);
+        });
+      }
+
       setCountsMap(newMap);
+      retryCountRef.current = 0; // Reset retry count on success
     } catch (err: any) {
       console.error('Erro ao buscar contagens bulk de atividades:', err);
       setError(err.message || 'Erro ao carregar contagens');
-      setCountsMap(new Map());
+
+      // Em caso de erro, criar mapa com contagens vazias para TODOS os leads
+      // Isso evita que LeadCard dispare requisições individuais
+      const emptyMap = new Map<string, ActivityCounts>();
+      const emptyCount: ActivityCounts = {
+        total_pending: 0, today: 0, overdue: 0,
+        has_tasks: false, has_overdue: false, has_today: false
+      };
+      ids.forEach(id => emptyMap.set(id, emptyCount));
+      setCountsMap(emptyMap);
+
+      // Retry com número menor de leads após falha
+      if (retryCountRef.current < MAX_RETRIES) {
+        retryCountRef.current++;
+        const retryIds = ids.slice(0, Math.min(50, ids.length));
+        console.log(`🔄 Retry ${retryCountRef.current}/${MAX_RETRIES} com ${retryIds.length} leads`);
+        setTimeout(() => fetchBulkCounts(retryIds), 2000 * retryCountRef.current);
+      }
     } finally {
       setLoading(false);
     }
@@ -136,16 +176,17 @@ export const useBulkActivityCounts = (leadIds: string[]) => {
     }
 
     leadIdsStringRef.current = leadIdsString;
+    retryCountRef.current = 0; // Reset retries when IDs change
 
     // Clear any pending timeout
     if (fetchTimeoutRef.current) {
       clearTimeout(fetchTimeoutRef.current);
     }
 
-    // Debounce bulk fetch by 300ms to allow multiple leads to batch together
+    // Debounce bulk fetch by 500ms to allow multiple leads to batch together
     fetchTimeoutRef.current = setTimeout(() => {
       fetchBulkCounts(leadIds);
-    }, 300);
+    }, 500);
 
     return () => {
       if (fetchTimeoutRef.current) {

@@ -445,16 +445,21 @@ export const useSmartSearch = (
   const isSearchingAPI = searchResult.isSearchingAPI;
   const searchPerformed = searchResult.searchPerformed;
 
-  // Log de debug para diagnosticar problemas de ordenação
-  console.log('🔍 useSmartSearch RETURN:', {
-    hasSortBy,
-    hasSearchOrFilters,
-    resultSource: result === board ? 'board (original)' :
-                  result === searchResult.apiResults ? 'apiResults' :
-                  result === searchResult.localResults ? 'localResults' : 'unknown',
-    sortBy: filters.sortBy,
-    firstLeadInFirstColumn: result?.columns[0]?.leads?.[0]?.name || 'N/A'
-  });
+  // Log de debug reduzido - apenas quando resultado muda (evita 7200+ logs)
+  const resultSource = result === board ? 'board' :
+                result === searchResult.apiResults ? 'apiResults' :
+                result === searchResult.localResults ? 'localResults' : 'unknown';
+  const resultSourceRef = useRef('');
+  if (resultSourceRef.current !== resultSource) {
+    resultSourceRef.current = resultSource;
+    console.log('🔍 useSmartSearch RETURN:', {
+      hasSortBy,
+      hasSearchOrFilters,
+      resultSource,
+      sortBy: filters.sortBy,
+      firstLeadInFirstColumn: result?.columns[0]?.leads?.[0]?.name || 'N/A'
+    });
+  }
 
   return {
     result,
