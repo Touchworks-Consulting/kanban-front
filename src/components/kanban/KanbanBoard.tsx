@@ -121,6 +121,7 @@ export const KanbanBoard: React.FC = () => {
 
   // Ref para controlar se já carregou o board inicial
   const hasLoadedRef = useRef(false);
+  const prevSortByRef = useRef(filters.sortBy);
 
   // Carregar board apenas uma vez no mount
   useEffect(() => {
@@ -131,10 +132,11 @@ export const KanbanBoard: React.FC = () => {
     }
   }, []); // Dependências vazias - executa só no mount
 
-  // Recarregar apenas quando sortBy mudar (não no mount)
+  // Recarregar apenas quando sortBy REALMENTE mudar (não no mount)
   useEffect(() => {
-    if (hasLoadedRef.current) {
+    if (hasLoadedRef.current && prevSortByRef.current !== filters.sortBy) {
       console.log('🔄 SortBy mudou - recarregando board');
+      prevSortByRef.current = filters.sortBy;
       fetchBoard(filters.sortBy);
     }
   }, [filters.sortBy]); // Apenas sortBy - fetchBoard é estável do Zustand
