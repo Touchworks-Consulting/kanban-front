@@ -23,6 +23,16 @@ const getPageTitle = (pathname: string) => {
       return 'Campanhas';
     case '/settings':
       return 'Configurações';
+    case '/users':
+      return 'Usuários';
+    case '/profile':
+      return 'Perfil';
+    case '/plans':
+      return 'Planos';
+    case '/feedbacks':
+      return 'Feedbacks';
+    case '/guide':
+      return 'Guia do Usuário';
     default:
       return 'Dashboard';
   }

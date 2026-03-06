@@ -1502,88 +1502,77 @@ export function GuidePage() {
   );
 
   return (
-    <div className="flex gap-6 h-full -m-6">
+    <div className="flex gap-0 h-[calc(100vh-7rem)] -m-6">
       {/* Sidebar de navegação (desktop) */}
-      <div className="hidden lg:block w-64 flex-shrink-0 border-r border-border bg-background p-4 overflow-y-auto">
-        <GuideSidebarNav
-          sections={guideSections}
-          activeSection={activeSection}
-          searchQuery={searchQuery}
-          onSearchChange={setSearchQuery}
-          onSectionClick={handleSectionClick}
-        />
+      <div className="hidden lg:block w-60 flex-shrink-0 border-r border-border/50 bg-card/50 overflow-y-auto">
+        <div className="p-4">
+          <GuideSidebarNav
+            sections={guideSections}
+            activeSection={activeSection}
+            searchQuery={searchQuery}
+            onSearchChange={setSearchQuery}
+            onSectionClick={handleSectionClick}
+          />
+        </div>
       </div>
 
       {/* Conteúdo principal */}
-      <div ref={contentRef} className="flex-1 overflow-y-auto p-6">
-        {/* Header mobile */}
-        <MobileSectionNav
-          sections={guideSections}
-          activeSection={activeSection}
-          onSectionClick={handleSectionClick}
-        />
+      <div ref={contentRef} className="flex-1 overflow-y-auto">
+        <div className="p-6">
+          {/* Header mobile */}
+          <MobileSectionNav
+            sections={guideSections}
+            activeSection={activeSection}
+            onSectionClick={handleSectionClick}
+          />
 
-        {/* Barra de busca mobile */}
-        <div className="lg:hidden mb-4">
-          <div className="relative">
-            <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-            <Input
-              placeholder="Buscar no guia..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-9 h-9 text-sm"
-            />
-          </div>
-        </div>
-
-        {/* Banner de boas-vindas */}
-        <div className="mb-6 hidden lg:block">
-          <div className="flex items-center gap-3 mb-2">
-            <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center">
-              <BookOpen className="h-6 w-6 text-primary" />
-            </div>
-            <div>
-              <h1 className="text-2xl font-bold">Guia do Usuário</h1>
-              <p className="text-sm text-muted-foreground">
-                Aprenda a usar todas as funcionalidades do Touch Run CRM
-              </p>
+          {/* Barra de busca mobile */}
+          <div className="lg:hidden mb-4">
+            <div className="relative">
+              <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder="Buscar no guia..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-9 h-9 text-sm"
+              />
             </div>
           </div>
-        </div>
 
-        {/* Seções */}
-        <div className="space-y-3 max-w-4xl">
-          {filteredSections.map((section) => {
-            const ContentComponent = sectionContentMap[section.id];
-            return (
-              <div key={section.id} ref={(el) => registerSectionRef(section.id, el)}>
-                <SectionWrapper id={section.id}>
-                  <CollapsibleSection
-                    section={section}
-                    isOpen={openSections.has(section.id)}
-                    onToggle={() => toggleSection(section.id)}
-                  >
-                    {ContentComponent && <ContentComponent />}
-                  </CollapsibleSection>
-                </SectionWrapper>
-              </div>
-            );
-          })}
-        </div>
-
-        {/* Rodapé */}
-        {filteredSections.length === 0 && (
-          <div className="text-center py-12">
-            <Search className="h-12 w-12 text-muted-foreground/30 mx-auto mb-3" />
-            <p className="text-muted-foreground">Nenhuma seção encontrada para "{searchQuery}"</p>
-            <button
-              onClick={() => setSearchQuery('')}
-              className="text-primary text-sm mt-2 hover:underline"
-            >
-              Limpar busca
-            </button>
+          {/* Seções */}
+          <div className="space-y-3 max-w-4xl mx-auto">
+            {filteredSections.map((section) => {
+              const ContentComponent = sectionContentMap[section.id];
+              return (
+                <div key={section.id} ref={(el) => registerSectionRef(section.id, el)}>
+                  <SectionWrapper id={section.id}>
+                    <CollapsibleSection
+                      section={section}
+                      isOpen={openSections.has(section.id)}
+                      onToggle={() => toggleSection(section.id)}
+                    >
+                      {ContentComponent && <ContentComponent />}
+                    </CollapsibleSection>
+                  </SectionWrapper>
+                </div>
+              );
+            })}
           </div>
-        )}
+
+          {/* Sem resultados */}
+          {filteredSections.length === 0 && (
+            <div className="text-center py-12">
+              <Search className="h-12 w-12 text-muted-foreground/30 mx-auto mb-3" />
+              <p className="text-muted-foreground">Nenhuma seção encontrada para "{searchQuery}"</p>
+              <button
+                onClick={() => setSearchQuery('')}
+                className="text-primary text-sm mt-2 hover:underline"
+              >
+                Limpar busca
+              </button>
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );
