@@ -10,6 +10,7 @@ import {
   Users,
   ThumbsUp,
   MessageSquare,
+  BookOpen,
   PanelLeftClose,
   PanelRightClose,
 } from 'lucide-react';
@@ -31,7 +32,8 @@ const navItems: NavItem[] = [
   { icon: Users, text: 'Usuários', path: '/users' },
   { icon: Settings, text: 'Configurações', path: '/settings' },
   { icon: MessageSquare, text: 'Inbox', path: 'https://inbox.touchworks.com.br/', external: true },
-  { icon: ThumbsUp, text: 'Feedbacks', path: '/feedbacks', isNew: true },
+  { icon: BookOpen, text: 'Guia', path: '/guide', isNew: true },
+  { icon: ThumbsUp, text: 'Feedbacks', path: '/feedbacks' },
 ];
 
 const Sidebar = () => {

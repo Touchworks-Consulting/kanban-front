@@ -19,6 +19,7 @@ import { PlansPage } from './pages/PlansPage';
 import TermsPage from './pages/TermsPage';
 import PrivacyPage from './pages/PrivacyPage';
 import { FeedbackAdminPage } from './pages/FeedbackAdminPage';
+import { GuidePage } from './pages/GuidePage';
 import { EmbedLeadModalPage } from './pages/EmbedLeadModalPage';
 import { ProtectedRoute } from './components/ProtectedRoute';
 import { LoadingSpinner } from './components/LoadingSpinner';
@@ -195,6 +196,14 @@ function App() {
               element={
                 <ErrorBoundary>
                   <FeedbackAdminPage />
+                </ErrorBoundary>
+              }
+            />
+            <Route
+              path="guide"
+              element={
+                <ErrorBoundary>
+                  <GuidePage />
                 </ErrorBoundary>
               }
             />
