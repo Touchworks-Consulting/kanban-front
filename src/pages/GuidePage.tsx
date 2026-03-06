@@ -43,7 +43,6 @@ import {
   Crown,
   Cog,
   User,
-  Eye,
   RefreshCw,
   Tag,
   Hash,
@@ -67,13 +66,14 @@ import {
   Code2,
   MonitorSmartphone,
   Info,
-  ChevronUp,
+  Move,
+  Check,
+  X,
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '../components/ui/card';
 import { Badge } from '../components/ui/badge';
 import { Alert, AlertDescription, AlertTitle } from '../components/ui/alert';
 import { Input } from '../components/ui/input';
-import { ScrollArea } from '../components/ui/scroll-area';
 
 // ==========================================
 // Tipos e dados das seções
@@ -110,7 +110,7 @@ const guideSections: GuideSection[] = [
 
 function SectionWrapper({ id, children }: Readonly<{ id: string; children: React.ReactNode }>) {
   return (
-    <section id={id} className="scroll-mt-6">
+    <section id={id} className="scroll-mt-4">
       {children}
     </section>
   );
@@ -120,7 +120,7 @@ function StepList({ steps }: Readonly<{ steps: string[] }>) {
   return (
     <ol className="space-y-2 ml-1">
       {steps.map((step) => (
-        <li key={step.slice(0, 40)} className="flex gap-3 items-start">
+        <li key={step.slice(0, 50)} className="flex gap-3 items-start">
           <span className="flex-shrink-0 w-6 h-6 rounded-full bg-primary/10 text-primary text-xs font-bold flex items-center justify-center mt-0.5">
             {steps.indexOf(step) + 1}
           </span>
@@ -163,11 +163,11 @@ function WarningCard({ title, children }: Readonly<{ title: string; children: Re
 
 function FeatureCard({ icon: Icon, title, children }: Readonly<{ icon: React.ComponentType<{ className?: string }>; title: string; children: React.ReactNode }>) {
   return (
-    <Card className="border-border/50">
+    <Card className="border-border/50 overflow-hidden">
       <CardHeader className="pb-3">
         <CardTitle className="text-base flex items-center gap-2">
-          <Icon className="h-4 w-4 text-primary" />
-          {title}
+          <Icon className="h-4 w-4 text-primary flex-shrink-0" />
+          <span className="truncate">{title}</span>
         </CardTitle>
       </CardHeader>
       <CardContent className="text-sm text-muted-foreground space-y-2">
@@ -180,9 +180,389 @@ function FeatureCard({ icon: Icon, title, children }: Readonly<{ icon: React.Com
 function IconLabel({ icon: Icon, label }: Readonly<{ icon: React.ComponentType<{ className?: string }>; label: string }>) {
   return (
     <span className="inline-flex items-center gap-1.5 text-sm">
-      <Icon className="h-3.5 w-3.5 text-primary" />
+      <Icon className="h-3.5 w-3.5 text-primary flex-shrink-0" />
       <span>{label}</span>
     </span>
+  );
+}
+
+// ==========================================
+// Demos interativas / Animações
+// ==========================================
+
+/** Mini Kanban arrastrável para demonstrar drag & drop */
+function DragDropDemo() {
+  const [columns, setColumns] = useState([
+    { id: 'new', name: 'Novos', color: 'bg-blue-500', leads: ['Maria Silva', 'João Santos'] },
+    { id: 'contact', name: 'Contatados', color: 'bg-yellow-500', leads: ['Ana Costa'] },
+    { id: 'won', name: 'Ganhos', color: 'bg-green-500', leads: [] as string[] },
+  ]);
+  const [dragging, setDragging] = useState<{ col: number; lead: number } | null>(null);
+  const [dragOver, setDragOver] = useState<number | null>(null);
+
+  const moveLead = (fromCol: number, leadIdx: number, toCol: number) => {
+    setColumns(prev => {
+      const next = prev.map(c => ({ ...c, leads: [...c.leads] }));
+      const [lead] = next[fromCol].leads.splice(leadIdx, 1);
+      next[toCol].leads.push(lead);
+      return next;
+    });
+    setDragging(null);
+    setDragOver(null);
+  };
+
+  return (
+    <div className="border border-border/50 rounded-lg p-3 bg-muted/30">
+      <div className="flex items-center gap-2 mb-2">
+        <Move className="h-3.5 w-3.5 text-primary" />
+        <span className="text-xs font-medium text-primary">Demo interativa — Arraste os leads entre as colunas</span>
+      </div>
+      <div className="grid grid-cols-3 gap-2">
+        {columns.map((col, colIdx) => (
+          <div
+            key={col.id}
+            className={`rounded-lg border p-2 min-h-[80px] transition-colors ${
+              dragOver === colIdx ? 'border-primary bg-primary/5' : 'border-border/50 bg-background/50'
+            }`}
+            onDragOver={(e) => { e.preventDefault(); setDragOver(colIdx); }}
+            onDragLeave={() => setDragOver(null)}
+            onDrop={() => { if (dragging) moveLead(dragging.col, dragging.lead, colIdx); }}
+          >
+            <div className="flex items-center gap-1.5 mb-1.5">
+              <div className={`w-2 h-2 rounded-full ${col.color}`} />
+              <span className="text-xs font-medium">{col.name}</span>
+              <span className="text-xs text-muted-foreground ml-auto">{col.leads.length}</span>
+            </div>
+            <div className="space-y-1">
+              {col.leads.map((lead, leadIdx) => (
+                <div
+                  key={lead}
+                  draggable
+                  onDragStart={() => setDragging({ col: colIdx, lead: leadIdx })}
+                  onDragEnd={() => { setDragging(null); setDragOver(null); }}
+                  className="flex items-center gap-1.5 px-2 py-1.5 rounded bg-card border border-border/30 cursor-grab active:cursor-grabbing text-xs hover:border-primary/50 transition-colors select-none"
+                >
+                  <GripVertical className="h-3 w-3 text-muted-foreground/50" />
+                  <User className="h-3 w-3 text-muted-foreground" />
+                  <span>{lead}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+/** Demo do pipeline visual clicável */
+function getStageStyle(i: number, active: number): string {
+  if (i > active) return 'bg-muted text-muted-foreground hover:bg-muted/80';
+  if (i === active) return 'bg-primary text-primary-foreground shadow-sm';
+  return 'bg-primary/20 text-primary';
+}
+
+function PipelineDemo() {
+  const stages = ['Novo', 'Contatado', 'Qualificado', 'Proposta', 'Ganho'];
+  const [active, setActive] = useState(1);
+
+  return (
+    <div className="border border-border/50 rounded-lg p-3 bg-muted/30">
+      <div className="flex items-center gap-2 mb-2">
+        <MousePointerClick className="h-3.5 w-3.5 text-primary" />
+        <span className="text-xs font-medium text-primary">Demo interativa — Clique nas etapas para mover o lead</span>
+      </div>
+      <div className="flex items-center gap-0.5">
+        {stages.map((stage, i) => (
+          <button
+            key={stage}
+            onClick={() => setActive(i)}
+            className={`flex-1 py-1.5 px-1 text-xs font-medium text-center transition-all rounded-md ${getStageStyle(i, active)}`}
+          >
+            {stage}
+          </button>
+        ))}
+      </div>
+      <div className="flex items-center gap-2 mt-2">
+        <div className="flex gap-1.5">
+          <button
+            onClick={() => setActive(4)}
+            className="flex items-center gap-1 px-2 py-1 rounded text-xs font-medium bg-green-500/10 text-green-600 hover:bg-green-500/20 transition-colors"
+          >
+            <Trophy className="h-3 w-3" /> Ganhou
+          </button>
+          <button
+            onClick={() => setActive(0)}
+            className="flex items-center gap-1 px-2 py-1 rounded text-xs font-medium bg-red-500/10 text-red-600 hover:bg-red-500/20 transition-colors"
+          >
+            <X className="h-3 w-3" /> Perdeu
+          </button>
+        </div>
+        <span className="text-xs text-muted-foreground ml-auto">
+          Etapa atual: <strong>{stages[active]}</strong>
+        </span>
+      </div>
+    </div>
+  );
+}
+
+/** Demo de edição inline */
+function InlineEditDemo() {
+  const [editing, setEditing] = useState<string | null>(null);
+  const [values, setValues] = useState({
+    name: 'Maria Silva',
+    phone: '(11) 99999-8888',
+    value: 'R$ 5.000,00',
+    status: 'Qualificado',
+  });
+
+  const handleSave = (field: string, newVal: string) => {
+    setValues(prev => ({ ...prev, [field]: newVal }));
+    setEditing(null);
+  };
+
+  const fields = [
+    { key: 'name', label: 'Nome', icon: User },
+    { key: 'phone', label: 'Telefone', icon: Phone },
+    { key: 'value', label: 'Valor', icon: Hash },
+    { key: 'status', label: 'Status', icon: CircleDot },
+  ];
+
+  return (
+    <div className="border border-border/50 rounded-lg p-3 bg-muted/30">
+      <div className="flex items-center gap-2 mb-2">
+        <Pencil className="h-3.5 w-3.5 text-primary" />
+        <span className="text-xs font-medium text-primary">Demo interativa — Clique nos campos para editar inline</span>
+      </div>
+      <div className="space-y-1.5">
+        {fields.map(({ key, label, icon: Icon }) => (
+          <div key={key} className="flex items-center gap-2 group">
+            <Icon className="h-3.5 w-3.5 text-muted-foreground flex-shrink-0" />
+            <span className="text-xs text-muted-foreground w-16 flex-shrink-0">{label}:</span>
+            {editing === key ? (
+              <div className="flex items-center gap-1 flex-1">
+                <input
+                  className="flex-1 bg-background border border-primary rounded px-2 py-0.5 text-xs focus:outline-none"
+                  defaultValue={values[key as keyof typeof values]}
+                  autoFocus
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') handleSave(key, e.currentTarget.value);
+                    if (e.key === 'Escape') setEditing(null);
+                  }}
+                  onBlur={(e) => handleSave(key, e.currentTarget.value)}
+                />
+                <Check className="h-3 w-3 text-green-500 cursor-pointer" onClick={() => setEditing(null)} />
+              </div>
+            ) : (
+              <button
+                type="button"
+                className="text-xs cursor-pointer hover:text-primary transition-colors flex-1 px-2 py-0.5 rounded hover:bg-primary/5 text-left bg-transparent border-none"
+                onClick={() => setEditing(key)}
+              >
+                {values[key as keyof typeof values]}
+              </button>
+            )}
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+/** Demo de filtro com animação */
+function FilterDemo() {
+  const [query, setQuery] = useState('');
+  const leads = ['Maria Silva', 'João Santos', 'Ana Costa', 'Pedro Oliveira', 'Carla Mendes'];
+  const filtered = leads.filter(l => l.toLowerCase().includes(query.toLowerCase()));
+
+  return (
+    <div className="border border-border/50 rounded-lg p-3 bg-muted/30">
+      <div className="flex items-center gap-2 mb-2">
+        <Search className="h-3.5 w-3.5 text-primary" />
+        <span className="text-xs font-medium text-primary">Demo interativa — Busca inteligente em tempo real</span>
+      </div>
+      <div className="relative mb-2">
+        <Search className="absolute left-2 top-1.5 h-3 w-3 text-muted-foreground" />
+        <input
+          className="w-full bg-background border border-border rounded pl-7 pr-2 py-1 text-xs focus:outline-none focus:border-primary"
+          placeholder="Buscar leads..."
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+        />
+      </div>
+      <div className="space-y-1">
+        {filtered.map((lead) => (
+          <div key={lead} className="flex items-center gap-2 px-2 py-1 rounded bg-card/50 text-xs transition-all">
+            <User className="h-3 w-3 text-muted-foreground" />
+            <span>{lead}</span>
+          </div>
+        ))}
+        {filtered.length === 0 && (
+          <p className="text-xs text-muted-foreground text-center py-2">Nenhum lead encontrado</p>
+        )}
+      </div>
+      <p className="text-xs text-muted-foreground mt-1.5">{filtered.length} de {leads.length} leads</p>
+    </div>
+  );
+}
+
+/** Demo de notificações */
+function NotificationDemo() {
+  const [notifications, setNotifications] = useState([
+    { id: 1, type: 'overdue', text: 'Ligar para Maria Silva', read: false },
+    { id: 2, type: 'today', text: 'Reunião com João Santos às 14h', read: false },
+    { id: 3, type: 'pending', text: 'Enviar proposta para Ana Costa', read: false },
+  ]);
+
+  const typeConfig: Record<string, { icon: typeof AlertTriangle; color: string; label: string }> = {
+    overdue: { icon: AlertTriangle, color: 'text-red-500', label: 'Atrasada' },
+    today: { icon: Clock, color: 'text-orange-500', label: 'Hoje' },
+    pending: { icon: CheckCircle2, color: 'text-blue-500', label: 'Pendente' },
+  };
+
+  const markRead = (id: number) => {
+    setNotifications(prev => prev.map(n => n.id === id ? { ...n, read: !n.read } : n));
+  };
+
+  const unreadCount = notifications.filter(n => !n.read).length;
+
+  return (
+    <div className="border border-border/50 rounded-lg p-3 bg-muted/30">
+      <div className="flex items-center gap-2 mb-2">
+        <Bell className="h-3.5 w-3.5 text-primary" />
+        <span className="text-xs font-medium text-primary">Demo interativa — Clique para marcar como lida</span>
+        {unreadCount > 0 && (
+          <span className="ml-auto bg-red-500 text-white text-xs rounded-full w-4 h-4 flex items-center justify-center font-bold">
+            {unreadCount}
+          </span>
+        )}
+      </div>
+      <div className="space-y-1">
+        {notifications.map((n) => {
+          const cfg = typeConfig[n.type];
+          const NotifIcon = cfg.icon;
+          return (
+            <button
+              key={n.id}
+              onClick={() => markRead(n.id)}
+              className={`w-full flex items-center gap-2 px-2 py-1.5 rounded text-xs text-left transition-all ${
+                n.read ? 'opacity-50 bg-card/30' : 'bg-card/50 hover:bg-card'
+              }`}
+            >
+              <NotifIcon className={`h-3.5 w-3.5 ${cfg.color} flex-shrink-0`} />
+              <span className="flex-1">{n.text}</span>
+              <Badge variant="outline" className={`text-[10px] px-1.5 py-0 ${n.read ? 'opacity-50' : ''}`}>{cfg.label}</Badge>
+              {n.read && <Check className="h-3 w-3 text-green-500" />}
+            </button>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+/** Demo de status customizáveis */
+function StatusDemo() {
+  const [statuses, setStatuses] = useState([
+    { name: 'Novo', color: '#3b82f6', isWon: false, isLost: false },
+    { name: 'Contatado', color: '#f59e0b', isWon: false, isLost: false },
+    { name: 'Qualificado', color: '#8b5cf6', isWon: false, isLost: false },
+    { name: 'Ganho', color: '#22c55e', isWon: true, isLost: false },
+    { name: 'Perdido', color: '#ef4444', isWon: false, isLost: true },
+  ]);
+  const [dragIdx, setDragIdx] = useState<number | null>(null);
+
+  const moveStatus = (from: number, to: number) => {
+    setStatuses(prev => {
+      const next = [...prev];
+      const [item] = next.splice(from, 1);
+      next.splice(to, 0, item);
+      return next;
+    });
+    setDragIdx(null);
+  };
+
+  return (
+    <div className="border border-border/50 rounded-lg p-3 bg-muted/30">
+      <div className="flex items-center gap-2 mb-2">
+        <Palette className="h-3.5 w-3.5 text-primary" />
+        <span className="text-xs font-medium text-primary">Demo interativa — Arraste para reordenar os status</span>
+      </div>
+      <div className="space-y-1">
+        {statuses.map((s, i) => (
+          <div
+            key={s.name}
+            draggable
+            onDragStart={() => setDragIdx(i)}
+            onDragOver={(e) => e.preventDefault()}
+            onDrop={() => { if (dragIdx !== null) moveStatus(dragIdx, i); }}
+            onDragEnd={() => setDragIdx(null)}
+            className="flex items-center gap-2 px-2 py-1.5 rounded bg-card/50 cursor-grab active:cursor-grabbing text-xs select-none hover:bg-card transition-colors"
+          >
+            <GripVertical className="h-3 w-3 text-muted-foreground/50" />
+            <div className="w-3 h-3 rounded-full flex-shrink-0" style={{ backgroundColor: s.color }} />
+            <span className="flex-1">{s.name}</span>
+            {s.isWon && <Badge variant="outline" className="text-[10px] px-1 py-0 bg-green-500/10 text-green-600 border-green-500/30">Ganho</Badge>}
+            {s.isLost && <Badge variant="outline" className="text-[10px] px-1 py-0 bg-red-500/10 text-red-600 border-red-500/30">Perda</Badge>}
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+/** Demo de tarefas com prioridade */
+function TaskDemo() {
+  const [tasks, setTasks] = useState([
+    { id: 1, text: 'Ligar para Maria Silva', priority: 'urgent' as const, done: false },
+    { id: 2, text: 'Enviar proposta comercial', priority: 'high' as const, done: false },
+    { id: 3, text: 'Follow-up por WhatsApp', priority: 'medium' as const, done: true },
+    { id: 4, text: 'Atualizar notas do lead', priority: 'low' as const, done: false },
+  ]);
+
+  const priorityConfig = {
+    urgent: { color: 'bg-red-500', label: 'Urgente' },
+    high: { color: 'bg-orange-500', label: 'Alta' },
+    medium: { color: 'bg-blue-500', label: 'Média' },
+    low: { color: 'bg-gray-400', label: 'Baixa' },
+  };
+
+  const toggleTask = (id: number) => {
+    setTasks(prev => prev.map(t => t.id === id ? { ...t, done: !t.done } : t));
+  };
+
+  return (
+    <div className="border border-border/50 rounded-lg p-3 bg-muted/30">
+      <div className="flex items-center gap-2 mb-2">
+        <ClipboardList className="h-3.5 w-3.5 text-primary" />
+        <span className="text-xs font-medium text-primary">Demo interativa — Clique para marcar tarefas como concluídas</span>
+      </div>
+      <div className="space-y-1">
+        {tasks.map((task) => {
+          const cfg = priorityConfig[task.priority];
+          return (
+            <button
+              key={task.id}
+              onClick={() => toggleTask(task.id)}
+              className={`w-full flex items-center gap-2 px-2 py-1.5 rounded text-xs text-left transition-all ${
+                task.done ? 'opacity-50 line-through' : 'hover:bg-card'
+              } bg-card/50`}
+            >
+              <div className={`w-4 h-4 rounded border-2 flex items-center justify-center flex-shrink-0 transition-colors ${
+                task.done ? 'bg-green-500 border-green-500' : 'border-muted-foreground/30'
+              }`}>
+                {task.done && <Check className="h-2.5 w-2.5 text-white" />}
+              </div>
+              <span className="flex-1">{task.text}</span>
+              <div className="flex items-center gap-1">
+                <div className={`w-2 h-2 rounded-full ${cfg.color}`} />
+                <span className="text-[10px] text-muted-foreground">{cfg.label}</span>
+              </div>
+            </button>
+          );
+        })}
+      </div>
+    </div>
   );
 }
 
@@ -216,132 +596,17 @@ function CollapsibleSection({
           <h2 className="text-base font-semibold">{section.title}</h2>
           <p className="text-xs text-muted-foreground mt-0.5">{section.description}</p>
         </div>
-        {isOpen ? (
-          <ChevronUp className="h-5 w-5 text-muted-foreground flex-shrink-0" />
-        ) : (
-          <ChevronDown className="h-5 w-5 text-muted-foreground flex-shrink-0" />
-        )}
+        <ChevronDown className={`h-5 w-5 text-muted-foreground flex-shrink-0 transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`} />
       </button>
       <div
         className={`transition-all duration-300 ease-in-out overflow-hidden ${
           isOpen ? 'max-h-[10000px] opacity-100' : 'max-h-0 opacity-0'
         }`}
       >
-        <div className="p-4 pt-0 space-y-4 border-t border-border/30">
+        <div className="px-4 pb-4 space-y-4 border-t border-border/30">
           <div className="pt-4">{children}</div>
         </div>
       </div>
-    </div>
-  );
-}
-
-// ==========================================
-// Sidebar do Guia (índice lateral)
-// ==========================================
-
-function GuideSidebarNav({
-  sections,
-  activeSection,
-  searchQuery,
-  onSearchChange,
-  onSectionClick,
-}: Readonly<{
-  sections: GuideSection[];
-  activeSection: string;
-  searchQuery: string;
-  onSearchChange: (q: string) => void;
-  onSectionClick: (id: string) => void;
-}>) {
-  const filteredSections = sections.filter(
-    (s) =>
-      s.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      s.description.toLowerCase().includes(searchQuery.toLowerCase())
-  );
-
-  return (
-    <div className="w-64 flex-shrink-0 hidden lg:block">
-      <div className="sticky top-0 space-y-3">
-        <div className="flex items-center gap-2 mb-4">
-          <BookOpen className="h-5 w-5 text-primary" />
-          <h1 className="text-lg font-bold">Guia do Usuário</h1>
-        </div>
-        <div className="relative">
-          <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-          <Input
-            placeholder="Buscar no guia..."
-            value={searchQuery}
-            onChange={(e) => onSearchChange(e.target.value)}
-            className="pl-9 h-9 text-sm"
-          />
-        </div>
-        <ScrollArea className="h-[calc(100vh-220px)]">
-          <nav className="space-y-0.5 pr-3">
-            {filteredSections.map((section) => {
-              const Icon = section.icon;
-              const isActive = activeSection === section.id;
-              return (
-                <button
-                  key={section.id}
-                  onClick={() => onSectionClick(section.id)}
-                  className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm transition-colors text-left ${
-                    isActive
-                      ? 'bg-primary/10 text-primary font-medium'
-                      : 'text-muted-foreground hover:text-foreground hover:bg-muted/50'
-                  }`}
-                >
-                  <Icon className={`h-4 w-4 flex-shrink-0 ${isActive ? 'text-primary' : ''}`} />
-                  <span className="truncate">{section.title}</span>
-                </button>
-              );
-            })}
-          </nav>
-        </ScrollArea>
-      </div>
-    </div>
-  );
-}
-
-// ==========================================
-// Mobile: índice horizontal
-// ==========================================
-
-function MobileSectionNav({
-  sections,
-  activeSection,
-  onSectionClick,
-}: Readonly<{
-  sections: GuideSection[];
-  activeSection: string;
-  onSectionClick: (id: string) => void;
-}>) {
-  return (
-    <div className="lg:hidden sticky top-0 z-10 bg-background/95 backdrop-blur-sm border-b border-border pb-2 mb-4 -mx-2 px-2">
-      <div className="flex items-center gap-2 mb-2">
-        <BookOpen className="h-5 w-5 text-primary" />
-        <h1 className="text-lg font-bold">Guia do Usuário</h1>
-      </div>
-      <ScrollArea className="w-full">
-        <div className="flex gap-1.5 pb-1">
-          {sections.map((section) => {
-            const Icon = section.icon;
-            const isActive = activeSection === section.id;
-            return (
-              <button
-                key={section.id}
-                onClick={() => onSectionClick(section.id)}
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs whitespace-nowrap border transition-colors ${
-                  isActive
-                    ? 'bg-primary text-primary-foreground border-primary'
-                    : 'border-border text-muted-foreground hover:bg-muted'
-                }`}
-              >
-                <Icon className="h-3 w-3" />
-                {section.title}
-              </button>
-            );
-          })}
-        </div>
-      </ScrollArea>
     </div>
   );
 }
@@ -353,7 +618,7 @@ function MobileSectionNav({
 function PrimeirosPassosContent() {
   return (
     <div className="space-y-4">
-      <div className="grid gap-4 md:grid-cols-2">
+      <div className="grid gap-4 sm:grid-cols-2">
         <FeatureCard icon={LogIn} title="Login">
           <p>Acesse o sistema com seu <strong>e-mail</strong> e <strong>senha</strong> cadastrados.</p>
           <StepList steps={[
@@ -412,7 +677,7 @@ function NavegacaoContent() {
         O Touch Run possui uma interface intuitiva com sidebar lateral, cabeçalho superior e área principal de conteúdo.
       </p>
 
-      <div className="grid gap-4 md:grid-cols-2">
+      <div className="grid gap-4 sm:grid-cols-2">
         <FeatureCard icon={Columns3} title="Sidebar (Menu Lateral)">
           <p>O menu lateral esquerdo é o principal meio de navegação:</p>
           <ul className="space-y-1.5">
@@ -462,7 +727,10 @@ function KanbanContent() {
         O Quadro Kanban é o coração do Touch Run. É aqui que você visualiza, organiza e gerencia todos os seus leads em um fluxo visual de colunas arrastáveis.
       </p>
 
-      <div className="grid gap-4 md:grid-cols-2">
+      {/* Demo interativa de drag & drop */}
+      <DragDropDemo />
+
+      <div className="grid gap-4 sm:grid-cols-2">
         <FeatureCard icon={Columns3} title="Colunas do Kanban">
           <p>Cada coluna representa uma <strong>etapa do funil de vendas</strong>. O sistema já vem com uma coluna padrão:</p>
           <ul className="space-y-1">
@@ -517,32 +785,23 @@ function KanbanContent() {
             <li><IconLabel icon={Hash} label="Filtro por faixa de valor (mín/máx)" /></li>
           </ul>
           <p className="mt-2"><strong>Ordenação:</strong> 10 opções disponíveis — por data de atualização, criação, título, valor, próxima atividade, entre outras.</p>
-          <TipCard title="Busca local-first">
-            A busca primeiro procura nos dados já carregados (resposta instantânea). Se não encontrar, automaticamente consulta a API para resultados mais completos. Os resultados são cacheados por 1 minuto.
-          </TipCard>
         </FeatureCard>
       </div>
+
+      {/* Demo de busca */}
+      <FilterDemo />
 
       <FeatureCard icon={StickyNote} title="Card do Lead">
         <p>Cada card no quadro exibe informações resumidas do lead:</p>
         <div className="grid gap-2 sm:grid-cols-2 mt-2">
-          <div className="flex items-start gap-2"><User className="h-4 w-4 text-primary mt-0.5" /> <div><strong>Nome</strong> — Identificação do lead</div></div>
-          <div className="flex items-start gap-2"><Phone className="h-4 w-4 text-primary mt-0.5" /> <div><strong>Telefone</strong> — Número formatado</div></div>
-          <div className="flex items-start gap-2"><Mail className="h-4 w-4 text-primary mt-0.5" /> <div><strong>E-mail</strong> — Quando informado</div></div>
-          <div className="flex items-start gap-2"><Hash className="h-4 w-4 text-primary mt-0.5" /> <div><strong>Valor</strong> — Em R$ (reais)</div></div>
-          <div className="flex items-start gap-2"><Globe className="h-4 w-4 text-primary mt-0.5" /> <div><strong>Badge de plataforma</strong> — Ícone da origem</div></div>
-          <div className="flex items-start gap-2"><CheckCircle2 className="h-4 w-4 text-primary mt-0.5" /> <div><strong>Badge de tarefas</strong> — Vermelho (atrasada), laranja (hoje), azul (pendente)</div></div>
-          <div className="flex items-start gap-2"><UserCheck className="h-4 w-4 text-primary mt-0.5" /> <div><strong>Avatar do responsável</strong> — Quem cuida desse lead</div></div>
+          <div className="flex items-start gap-2"><User className="h-4 w-4 text-primary mt-0.5 flex-shrink-0" /> <div><strong>Nome</strong> — Identificação do lead</div></div>
+          <div className="flex items-start gap-2"><Phone className="h-4 w-4 text-primary mt-0.5 flex-shrink-0" /> <div><strong>Telefone</strong> — Número formatado</div></div>
+          <div className="flex items-start gap-2"><Mail className="h-4 w-4 text-primary mt-0.5 flex-shrink-0" /> <div><strong>E-mail</strong> — Quando informado</div></div>
+          <div className="flex items-start gap-2"><Hash className="h-4 w-4 text-primary mt-0.5 flex-shrink-0" /> <div><strong>Valor</strong> — Em R$ (reais)</div></div>
+          <div className="flex items-start gap-2"><Globe className="h-4 w-4 text-primary mt-0.5 flex-shrink-0" /> <div><strong>Badge de plataforma</strong> — Ícone da origem</div></div>
+          <div className="flex items-start gap-2"><CheckCircle2 className="h-4 w-4 text-primary mt-0.5 flex-shrink-0" /> <div><strong>Badge de tarefas</strong> — Vermelho (atrasada), laranja (hoje), azul (pendente)</div></div>
         </div>
         <p className="mt-3">Clique em qualquer card para abrir o <strong>Modal do Lead</strong> com todos os detalhes.</p>
-      </FeatureCard>
-
-      <FeatureCard icon={ArrowUpDown} title="Informações das Colunas">
-        <p>Cada coluna exibe no topo:</p>
-        <ul className="space-y-1">
-          <li>• <strong>Contagem de leads</strong> — Quantos leads estão naquele estágio</li>
-          <li>• <strong>Valor total</strong> — Soma dos valores de todos os leads da coluna (em R$)</li>
-        </ul>
       </FeatureCard>
     </div>
   );
@@ -554,6 +813,9 @@ function LeadModalContent() {
       <p className="text-sm text-muted-foreground">
         Ao clicar em um lead no quadro, abre-se o Modal do Lead — uma visão completa com todas as informações, atividades e ferramentas de gerenciamento.
       </p>
+
+      {/* Demo do pipeline */}
+      <PipelineDemo />
 
       <FeatureCard icon={Target} title="Cabeçalho do Pipeline">
         <p>No topo do modal, você encontra a <strong>barra de estágios visuais</strong>:</p>
@@ -568,24 +830,25 @@ function LeadModalContent() {
         </ul>
       </FeatureCard>
 
-      <div className="grid gap-4 md:grid-cols-2">
-        <FeatureCard icon={FileText} title="Sidebar de Dados (Painel Esquerdo)">
-          <p>Todos os campos do lead ficam no painel esquerdo, com <strong>edição inline</strong>:</p>
-          <ul className="space-y-1.5">
-            <li><IconLabel icon={Phone} label="Telefone — Com validação e formatação automática" /></li>
-            <li><IconLabel icon={Mail} label="E-mail — Validação de formato" /></li>
-            <li><IconLabel icon={Hash} label="Valor — Em R$ com formatação de moeda" /></li>
-            <li><IconLabel icon={Globe} label="Plataforma — Origem do lead (Meta, Google, etc.)" /></li>
-            <li><IconLabel icon={Megaphone} label="Campanha — Campanha vinculada" /></li>
-            <li><IconLabel icon={CircleDot} label="Status — Status personalizado da conta" /></li>
-            <li><IconLabel icon={UserCheck} label="Responsável — Membro da equipe" /></li>
-            <li><IconLabel icon={StickyNote} label="Notas — Campo de texto livre para anotações" /></li>
-            <li><IconLabel icon={Tag} label="Tags — Etiquetas para categorização" /></li>
-          </ul>
-          <TipCard title="Edição inline instantânea">
-            Clique em qualquer campo, edite e pressione Enter ou clique fora para salvar. A atualização aparece instantaneamente (otimista) — se falhar, o valor anterior é restaurado automaticamente.
-          </TipCard>
-        </FeatureCard>
+      <div className="grid gap-4 sm:grid-cols-2">
+        <div className="space-y-4">
+          <FeatureCard icon={FileText} title="Sidebar de Dados (Painel Esquerdo)">
+            <p>Todos os campos do lead ficam no painel esquerdo, com <strong>edição inline</strong>:</p>
+            <ul className="space-y-1.5">
+              <li><IconLabel icon={Phone} label="Telefone — Com validação e formatação automática" /></li>
+              <li><IconLabel icon={Mail} label="E-mail — Validação de formato" /></li>
+              <li><IconLabel icon={Hash} label="Valor — Em R$ com formatação de moeda" /></li>
+              <li><IconLabel icon={Globe} label="Plataforma — Origem do lead" /></li>
+              <li><IconLabel icon={Megaphone} label="Campanha — Campanha vinculada" /></li>
+              <li><IconLabel icon={CircleDot} label="Status — Status personalizado" /></li>
+              <li><IconLabel icon={UserCheck} label="Responsável — Membro da equipe" /></li>
+              <li><IconLabel icon={StickyNote} label="Notas — Campo de texto livre" /></li>
+              <li><IconLabel icon={Tag} label="Tags — Etiquetas para categorização" /></li>
+            </ul>
+          </FeatureCard>
+          {/* Demo de edição inline */}
+          <InlineEditDemo />
+        </div>
 
         <div className="space-y-4">
           <FeatureCard icon={ClipboardList} title="Aba: Atividades / Timeline">
@@ -604,12 +867,8 @@ function LeadModalContent() {
           </FeatureCard>
 
           <FeatureCard icon={CheckCircle2} title="Aba: Tarefas">
-            <p>Gerencie tarefas vinculadas ao lead:</p>
-            <ul className="space-y-1">
-              <li>• Criar tarefas com título, descrição, data limite e prioridade</li>
-              <li>• <strong>4 níveis de prioridade:</strong></li>
-            </ul>
-            <div className="flex flex-wrap gap-1.5 mt-1 ml-4">
+            <p>Gerencie tarefas vinculadas ao lead com 4 prioridades:</p>
+            <div className="flex flex-wrap gap-1.5 mt-1">
               <Badge variant="outline" className="bg-red-500/10 text-red-600 border-red-500/30 text-xs">Urgente</Badge>
               <Badge variant="outline" className="bg-orange-500/10 text-orange-600 border-orange-500/30 text-xs">Alta</Badge>
               <Badge variant="outline" className="bg-blue-500/10 text-blue-600 border-blue-500/30 text-xs">Média</Badge>
@@ -624,7 +883,10 @@ function LeadModalContent() {
         </div>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-2">
+      {/* Demo de tarefas */}
+      <TaskDemo />
+
+      <div className="grid gap-4 sm:grid-cols-2">
         <FeatureCard icon={Users} title="Aba: Contatos">
           <p>Adicione múltiplos contatos ao lead (útil para empresas com vários decisores):</p>
           <ul className="space-y-1">
@@ -632,18 +894,16 @@ function LeadModalContent() {
             <li>• <strong>Cargo</strong> e <strong>departamento</strong></li>
             <li>• <strong>Notas</strong> sobre cada contato</li>
             <li>• Marcar um contato como <strong>principal</strong></li>
-            <li>• Editar ou remover contatos a qualquer momento</li>
           </ul>
         </FeatureCard>
 
         <FeatureCard icon={Upload} title="Aba: Arquivos">
           <p>Anexe documentos ao lead:</p>
           <ul className="space-y-1">
-            <li>• <strong>Upload</strong> de arquivos (propostas, contratos, apresentações)</li>
-            <li>• <strong>Download</strong> de arquivos anexados</li>
-            <li>• <strong>Preview</strong> de imagens e documentos</li>
+            <li>• <strong>Upload</strong> de arquivos (propostas, contratos, etc.)</li>
+            <li>• <strong>Download</strong> e <strong>preview</strong> de documentos</li>
             <li>• Ícone do tipo de arquivo para identificação rápida</li>
-            <li>• Status de verificação de vírus dos arquivos</li>
+            <li>• Status de verificação de vírus</li>
           </ul>
         </FeatureCard>
       </div>
@@ -654,7 +914,6 @@ function LeadModalContent() {
           <li>• Mostra suas <strong>atividades agendadas</strong> para os próximos dias</li>
           <li>• Navegação por dia (anterior/próximo)</li>
           <li>• Abra ou feche o painel clicando no ícone de calendário</li>
-          <li>• Ajuda a ter visão geral da sua agenda sem sair do lead</li>
         </ul>
       </FeatureCard>
     </div>
@@ -670,53 +929,40 @@ function DashboardContent() {
 
       <FeatureCard icon={TrendingUp} title="KPIs (Indicadores Principais)">
         <p>Cards no topo do dashboard com métricas em tempo real:</p>
-        <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 mt-2">
+        <div className="grid grid-cols-3 gap-2 mt-2">
           <div className="p-2 rounded-lg bg-muted/50 text-center">
-            <div className="text-xs text-muted-foreground">Total de Leads</div>
-            <div className="text-lg font-bold text-primary">—</div>
+            <div className="text-[10px] text-muted-foreground">Total de Leads</div>
+            <div className="text-sm font-bold text-primary">—</div>
           </div>
           <div className="p-2 rounded-lg bg-muted/50 text-center">
-            <div className="text-xs text-muted-foreground">Leads Recentes</div>
-            <div className="text-lg font-bold text-blue-500">—</div>
+            <div className="text-[10px] text-muted-foreground">Leads Ganhos</div>
+            <div className="text-sm font-bold text-green-500">—</div>
           </div>
           <div className="p-2 rounded-lg bg-muted/50 text-center">
-            <div className="text-xs text-muted-foreground">Leads Ganhos</div>
-            <div className="text-lg font-bold text-green-500">—</div>
-          </div>
-          <div className="p-2 rounded-lg bg-muted/50 text-center">
-            <div className="text-xs text-muted-foreground">Taxa de Conversão</div>
-            <div className="text-lg font-bold text-purple-500">— %</div>
-          </div>
-          <div className="p-2 rounded-lg bg-muted/50 text-center">
-            <div className="text-xs text-muted-foreground">Receita Total</div>
-            <div className="text-lg font-bold text-emerald-500">R$ —</div>
-          </div>
-          <div className="p-2 rounded-lg bg-muted/50 text-center">
-            <div className="text-xs text-muted-foreground">MQL %</div>
-            <div className="text-lg font-bold text-cyan-500">— %</div>
+            <div className="text-[10px] text-muted-foreground">Taxa Conversão</div>
+            <div className="text-sm font-bold text-purple-500">— %</div>
           </div>
         </div>
       </FeatureCard>
 
-      <div className="grid gap-4 md:grid-cols-2">
+      <div className="grid gap-4 sm:grid-cols-2">
         <FeatureCard icon={BarChart3} title="Gráficos de Performance">
-          <p>Visualizações interativas dos seus dados:</p>
           <ul className="space-y-1.5">
-            <li><IconLabel icon={TrendingUp} label="Timeline de leads — Leads e conversões ao longo do tempo" /></li>
-            <li><IconLabel icon={BarChart3} label="Performance de vendas — Gráfico de barras por vendedor" /></li>
-            <li><IconLabel icon={PieChart} label="Distribuição por status — Como seus leads estão distribuídos" /></li>
-            <li><IconLabel icon={Target} label="Scatter atividade vs conversão — Correlação entre esforço e resultado" /></li>
-            <li><IconLabel icon={Clock} label="Tempo por estágio — Quanto tempo leads ficam em cada etapa" /></li>
+            <li><IconLabel icon={TrendingUp} label="Timeline — Leads e conversões ao longo do tempo" /></li>
+            <li><IconLabel icon={BarChart3} label="Vendas — Gráfico de barras por vendedor" /></li>
+            <li><IconLabel icon={PieChart} label="Distribuição — Como seus leads estão distribuídos" /></li>
+            <li><IconLabel icon={Target} label="Scatter — Atividade vs conversão" /></li>
+            <li><IconLabel icon={Clock} label="Timing — Tempo em cada etapa" /></li>
           </ul>
         </FeatureCard>
 
         <FeatureCard icon={PieChart} title="Relatórios Detalhados">
           <ul className="space-y-1.5">
-            <li><IconLabel icon={Target} label="Funil de conversão — Visualize as taxas de passagem entre etapas" /></li>
-            <li><IconLabel icon={ListOrdered} label="Métricas por estágio — Tabela detalhada com dados de cada coluna" /></li>
-            <li><IconLabel icon={Trophy} label="Ranking de vendedores — Classificação por leads, conversão e receita" /></li>
-            <li><IconLabel icon={AlertTriangle} label="Motivos de perda — Análise dos motivos mais frequentes de perda" /></li>
-            <li><IconLabel icon={Clock} label="Leads estagnados — Leads parados há muito tempo (clique para abrir o lead)" /></li>
+            <li><IconLabel icon={Target} label="Funil — Taxas de passagem entre etapas" /></li>
+            <li><IconLabel icon={ListOrdered} label="Métricas por estágio — Tabela detalhada" /></li>
+            <li><IconLabel icon={Trophy} label="Ranking de vendedores — Por leads, conversão e receita" /></li>
+            <li><IconLabel icon={AlertTriangle} label="Motivos de perda — Análise dos mais frequentes" /></li>
+            <li><IconLabel icon={Clock} label="Leads estagnados — Parados há muito tempo (clicável)" /></li>
           </ul>
         </FeatureCard>
       </div>
@@ -729,7 +975,7 @@ function DashboardContent() {
           <Badge variant="outline">Este mês</Badge>
           <Badge variant="outline">Personalizado</Badge>
         </div>
-        <p className="mt-2">O filtro de datas afeta todos os gráficos e métricas simultaneamente, permitindo análises comparativas precisas.</p>
+        <p className="mt-2">O filtro afeta todos os gráficos e métricas simultaneamente.</p>
       </FeatureCard>
     </div>
   );
@@ -742,7 +988,7 @@ function CampanhasContent() {
         A seção de Campanhas permite gerenciar suas campanhas de marketing e configurar automações com frases-gatilho para captura de leads via WhatsApp.
       </p>
 
-      <div className="grid gap-4 md:grid-cols-2">
+      <div className="grid gap-4 sm:grid-cols-2">
         <FeatureCard icon={Plus} title="Criar Campanha">
           <StepList steps={[
             'Acesse "Campanhas" no menu lateral.',
@@ -764,37 +1010,37 @@ function CampanhasContent() {
         </FeatureCard>
 
         <FeatureCard icon={Zap} title="Frases-Gatilho (Trigger Phrases)">
-          <p>As frases-gatilho conectam mensagens recebidas no <strong>WhatsApp</strong> às campanhas:</p>
+          <p>Conectam mensagens do <strong>WhatsApp</strong> às campanhas:</p>
           <StepList steps={[
             'Abra uma campanha existente.',
             'Clique em "Frases-Gatilho" ou no ícone de raio ⚡.',
-            'Adicione frases que identificam a campanha (ex: "quero saber mais", "promoção verão").',
-            'Escolha o tipo de correspondência: exata ou contém.',
-            'Quando uma mensagem do WhatsApp contiver a frase, o lead será vinculado a essa campanha automaticamente.',
+            'Adicione frases (ex: "quero saber mais", "promoção verão").',
+            'Escolha: correspondência exata ou contém.',
+            'Lead será vinculado automaticamente à campanha.',
           ]} />
-          <TipCard title="Como funciona na prática?">
-            Quando alguém envia "Olá, vi a promoção verão" no WhatsApp e você tem a frase-gatilho "promoção verão" (tipo: contém), o sistema cria o lead e associa automaticamente à campanha.
+          <TipCard title="Exemplo prático">
+            Mensagem "Olá, vi a promoção verão" + frase-gatilho "promoção verão" (tipo: contém) = lead vinculado automaticamente.
           </TipCard>
         </FeatureCard>
+      </div>
 
+      <div className="grid gap-4 sm:grid-cols-2">
         <FeatureCard icon={BarChart3} title="Relatórios de Campanha">
-          <p>Acompanhe o desempenho de cada campanha:</p>
           <ul className="space-y-1">
             <li>• <strong>Total de leads</strong> gerados pela campanha</li>
-            <li>• <strong>Custo por lead</strong> calculado automaticamente (budget ÷ leads)</li>
-            <li>• <strong>Gráficos de performance</strong> ao longo do tempo</li>
-            <li>• <strong>Frases mais efetivas</strong> — Quais frases-gatilho geram mais leads</li>
+            <li>• <strong>Custo por lead</strong> (budget ÷ leads)</li>
+            <li>• <strong>Gráficos de performance</strong></li>
+            <li>• <strong>Frases mais efetivas</strong></li>
           </ul>
         </FeatureCard>
 
         <FeatureCard icon={Filter} title="Filtros e Busca">
-          <p>Encontre campanhas rapidamente:</p>
           <ul className="space-y-1">
-            <li>• <strong>Busca por texto</strong> — Pesquise pelo nome da campanha</li>
-            <li>• <strong>Filtro por plataforma</strong> — Veja apenas campanhas de uma plataforma</li>
-            <li>• <strong>Cards de resumo</strong> — Total de campanhas, ativas e por plataforma no topo</li>
+            <li>• <strong>Busca por texto</strong> — Nome da campanha</li>
+            <li>• <strong>Filtro por plataforma</strong></li>
+            <li>• <strong>Cards de resumo</strong> — Total, ativas, por plataforma</li>
           </ul>
-          <p className="mt-2">Clique em uma campanha para abrir o <strong>painel lateral</strong> com todos os detalhes, métricas e configurações.</p>
+          <p className="mt-2">Clique na campanha para abrir o <strong>painel lateral</strong> com detalhes.</p>
         </FeatureCard>
       </div>
     </div>
@@ -817,54 +1063,49 @@ function UsuariosContent() {
           'Após a criação, um modal exibirá as credenciais — copie e envie ao usuário.',
         ]} />
         <WarningCard title="Atenção">
-          As credenciais (e-mail + senha) são exibidas apenas uma vez após a criação. Copie-as imediatamente usando o botão de cópia.
+          As credenciais (e-mail + senha) são exibidas apenas uma vez. Copie-as imediatamente.
         </WarningCard>
       </FeatureCard>
 
       <FeatureCard icon={Shield} title="Papéis e Permissões">
-        <p>O sistema possui 3 níveis de acesso hierárquicos:</p>
+        <p>3 níveis de acesso hierárquicos:</p>
         <div className="mt-3 space-y-3">
           <div className="p-3 rounded-lg border border-yellow-500/30 bg-yellow-500/5">
-            <div className="flex items-center gap-2 mb-1">
+            <div className="flex items-center gap-2 mb-1 flex-wrap">
               <Crown className="h-4 w-4 text-yellow-600" />
               <strong className="text-sm">Dono (Owner)</strong>
               <RoleBadge role="owner" />
             </div>
-            <p className="text-xs text-muted-foreground">Controle total: gerencia todos os usuários, altera funções, gera chaves API, exclui conta. Primeira pessoa a criar a conta recebe este papel automaticamente.</p>
+            <p className="text-xs text-muted-foreground">Controle total: gerencia usuários, altera funções, gera chaves API, exclui conta.</p>
           </div>
           <div className="p-3 rounded-lg border border-blue-500/30 bg-blue-500/5">
-            <div className="flex items-center gap-2 mb-1">
+            <div className="flex items-center gap-2 mb-1 flex-wrap">
               <Cog className="h-4 w-4 text-blue-600" />
               <strong className="text-sm">Administrador (Admin)</strong>
               <RoleBadge role="admin" />
             </div>
-            <p className="text-xs text-muted-foreground">Pode criar usuários, resetar senhas de outros membros, gerenciar campanhas e configurações. Não pode alterar funções nem excluir a conta.</p>
+            <p className="text-xs text-muted-foreground">Cria usuários, reseta senhas, gerencia campanhas e configurações.</p>
           </div>
           <div className="p-3 rounded-lg border border-gray-500/30 bg-gray-500/5">
-            <div className="flex items-center gap-2 mb-1">
+            <div className="flex items-center gap-2 mb-1 flex-wrap">
               <User className="h-4 w-4 text-gray-600" />
               <strong className="text-sm">Membro (Member)</strong>
               <RoleBadge role="member" />
             </div>
-            <p className="text-xs text-muted-foreground">Acesso padrão: trabalha com leads, visualiza dashboard, registra atividades. Não pode gerenciar outros usuários nem configurações avançadas.</p>
+            <p className="text-xs text-muted-foreground">Acesso padrão: trabalha com leads, visualiza dashboard, registra atividades.</p>
           </div>
         </div>
       </FeatureCard>
 
-      <div className="grid gap-4 md:grid-cols-3">
+      <div className="grid gap-4 sm:grid-cols-3">
         <FeatureCard icon={RefreshCw} title="Resetar Senha">
-          <p className="text-xs">Administradores e donos podem redefinir a senha de outros membros da equipe. Uma nova senha segura é gerada automaticamente.</p>
-          <WarningCard title="Restrição">
-            Você não pode resetar sua própria senha por aqui. Use "Esqueceu a senha?" na tela de login.
-          </WarningCard>
+          <p className="text-xs">Admins e donos podem redefinir a senha de outros membros.</p>
         </FeatureCard>
-
         <FeatureCard icon={UserCheck} title="Ativar/Desativar">
-          <p className="text-xs">Desative usuários para bloquear o acesso sem excluí-los. Os dados e histórico permanecem intactos. Reative a qualquer momento.</p>
+          <p className="text-xs">Desative para bloquear acesso sem excluir dados.</p>
         </FeatureCard>
-
         <FeatureCard icon={ArrowUpDown} title="Alterar Função">
-          <p className="text-xs">Apenas o <RoleBadge role="owner" /> pode alterar funções de outros usuários entre Membro e Admin via o dropdown na listagem.</p>
+          <p className="text-xs">Apenas o <RoleBadge role="owner" /> altera funções.</p>
         </FeatureCard>
       </div>
     </div>
@@ -878,38 +1119,31 @@ function ConfiguracoesContent() {
         A página de Configurações é dividida em várias abas, cada uma controlando um aspecto diferente do sistema.
       </p>
 
-      <div className="grid gap-4 md:grid-cols-2">
+      {/* Demo de status */}
+      <StatusDemo />
+
+      <div className="grid gap-4 sm:grid-cols-2">
         <FeatureCard icon={User} title="Perfil da Conta">
-          <p>Edite as informações da sua organização:</p>
           <ul className="space-y-1">
-            <li>• <strong>Nome</strong> e <strong>nome de exibição</strong> da conta</li>
+            <li>• <strong>Nome</strong> e <strong>nome de exibição</strong></li>
             <li>• <strong>E-mail</strong> de contato</li>
             <li>• <strong>Descrição</strong> da organização</li>
-            <li>• <strong>URL do avatar</strong> da conta</li>
+            <li>• <strong>URL do avatar</strong></li>
           </ul>
         </FeatureCard>
 
         <FeatureCard icon={Palette} title="Status Personalizados">
-          <p>Personalize os status dos leads para se adaptar ao seu fluxo:</p>
+          <p>Personalize os status dos leads:</p>
           <StepList steps={[
             'Acesse Configurações > aba "Status".',
-            'Veja os status padrão: Novo, Contatado, Qualificado, Proposta, Ganho, Perdido.',
-            'Clique no "+" para criar um novo status.',
-            'Defina: nome, cor e se é status de ganho ou perda.',
-            'Arraste para reordenar a sequência dos status.',
-            'Edite ou exclua status existentes (exceto os marcados como sistema).',
+            'Crie novos status com nome e cor.',
+            'Marque flags especiais: "É Ganho" ou "É Perda".',
+            'Arraste para reordenar a sequência.',
           ]} />
-          <div className="mt-2">
-            <p className="text-xs font-medium mb-1">Flags especiais:</p>
-            <div className="flex gap-2">
-              <Badge variant="outline" className="bg-green-500/10 text-green-600 border-green-500/30 text-xs">✓ É Ganho</Badge>
-              <Badge variant="outline" className="bg-red-500/10 text-red-600 border-red-500/30 text-xs">✗ É Perda</Badge>
-            </div>
-          </div>
         </FeatureCard>
 
         <FeatureCard icon={AlertTriangle} title="Motivos de Perda">
-          <p>Configure os motivos de perda que aparecem quando um lead é marcado como perdido:</p>
+          <p>Configure os motivos quando um lead é perdido:</p>
           <div className="flex flex-wrap gap-1.5 mt-1">
             <Badge variant="outline" className="text-xs">Preço</Badge>
             <Badge variant="outline" className="text-xs">Timing</Badge>
@@ -918,52 +1152,46 @@ function ConfiguracoesContent() {
             <Badge variant="outline" className="text-xs">Sem Interesse</Badge>
             <Badge variant="outline" className="text-xs">Outro</Badge>
           </div>
-          <p className="mt-2">Adicione, edite ou remova motivos de acordo com a realidade do seu negócio.</p>
         </FeatureCard>
 
         <FeatureCard icon={MessageSquare} title="WhatsApp Business">
-          <p>Conecte contas do WhatsApp Business para automação:</p>
           <StepList steps={[
             'Acesse Configurações > aba "WhatsApp".',
             'Clique em "Adicionar Conta".',
-            'Informe o Phone ID e Access Token da API do WhatsApp Business (Meta Cloud API).',
-            'Copie o URL do webhook exibido e configure-o no painel da Meta.',
-            'Use "Testar Webhook" para verificar a conexão.',
-            'Acesse "Logs do Webhook" para monitorar eventos recebidos.',
+            'Informe Phone ID e Access Token (Meta Cloud API).',
+            'Copie o URL do webhook e configure na Meta.',
+            'Use "Testar Webhook" para verificar.',
           ]} />
         </FeatureCard>
 
         <FeatureCard icon={Bell} title="Notificações">
-          <p>Configure quais notificações deseja receber:</p>
+          <p>Configure quais notificações receber:</p>
           <ul className="space-y-1">
-            <li>• <strong>Novos leads</strong> — Quando um lead é criado</li>
-            <li>• <strong>Webhooks</strong> — Quando mensagens chegam via WhatsApp</li>
-            <li>• <strong>Mudanças de status</strong> — Quando status de leads mudam</li>
+            <li>• <strong>Novos leads</strong> — Quando criados</li>
+            <li>• <strong>Webhooks</strong> — Mensagens do WhatsApp</li>
+            <li>• <strong>Mudanças de status</strong> — Status alterados</li>
           </ul>
-          <p className="mt-2">Ative ou desative cada tipo usando os toggles.</p>
         </FeatureCard>
 
         <FeatureCard icon={KeyRound} title="Chave API">
-          <p>Gere uma chave API para integrações externas (iframe/embed):</p>
           <StepList steps={[
             'Acesse Configurações > aba "API".',
             'Clique em "Gerar Chave API".',
-            'A chave será exibida (parcialmente oculta por padrão).',
-            'Use os botões para: revelar/ocultar, copiar, ou regenerar.',
+            'Use os botões: revelar/ocultar, copiar ou regenerar.',
           ]} />
           <WarningCard title="Segurança">
-            A chave API dá acesso aos dados da conta. Nunca compartilhe publicamente. Se comprometida, regenere imediatamente.
+            Nunca compartilhe a chave publicamente. Se comprometida, regenere imediatamente.
           </WarningCard>
         </FeatureCard>
 
         <FeatureCard icon={Download} title="Exportação de Dados">
-          <p>Exporte seus dados em formato CSV ou JSON:</p>
+          <p>Exporte seus dados em CSV ou JSON:</p>
           <ul className="space-y-1">
-            <li><IconLabel icon={KanbanSquare} label="Exportar leads — Todos os leads com seus dados" /></li>
-            <li><IconLabel icon={Megaphone} label="Exportar campanhas — Dados de todas as campanhas" /></li>
-            <li><IconLabel icon={Webhook} label="Exportar logs de webhook — Histórico de eventos" /></li>
+            <li><IconLabel icon={KanbanSquare} label="Exportar leads" /></li>
+            <li><IconLabel icon={Megaphone} label="Exportar campanhas" /></li>
+            <li><IconLabel icon={Webhook} label="Exportar logs de webhook" /></li>
           </ul>
-          <p className="mt-2">Também disponível: <strong>limpeza de logs antigos</strong> para manutenção do sistema.</p>
+          <p className="mt-2">Também: <strong>limpeza de logs antigos</strong>.</p>
         </FeatureCard>
       </div>
     </div>
@@ -974,63 +1202,29 @@ function NotificacoesContent() {
   return (
     <div className="space-y-4">
       <p className="text-sm text-muted-foreground">
-        O sistema de notificações do Touch Run mantém você informado sobre tarefas, atividades e eventos importantes — tudo acessível pelo sino no cabeçalho.
+        O sistema mantém você informado sobre tarefas, atividades e eventos importantes.
       </p>
 
-      <FeatureCard icon={Bell} title="Central de Notificações">
-        <p>Clique no <IconLabel icon={Bell} label="sino no header" /> para abrir o painel de notificações:</p>
-        <div className="mt-3 space-y-2">
-          <div className="flex items-center gap-3 p-2 rounded-lg bg-red-500/5 border border-red-500/20">
-            <AlertTriangle className="h-4 w-4 text-red-500" />
-            <div>
-              <p className="text-xs font-medium">Tarefas Atrasadas</p>
-              <p className="text-xs text-muted-foreground">Tarefas que passaram do prazo e precisam de atenção urgente</p>
-            </div>
-          </div>
-          <div className="flex items-center gap-3 p-2 rounded-lg bg-orange-500/5 border border-orange-500/20">
-            <Clock className="h-4 w-4 text-orange-500" />
-            <div>
-              <p className="text-xs font-medium">Tarefas de Hoje</p>
-              <p className="text-xs text-muted-foreground">Atividades programadas para o dia de hoje</p>
-            </div>
-          </div>
-          <div className="flex items-center gap-3 p-2 rounded-lg bg-blue-500/5 border border-blue-500/20">
-            <CheckCircle2 className="h-4 w-4 text-blue-500" />
-            <div>
-              <p className="text-xs font-medium">Tarefas Pendentes</p>
-              <p className="text-xs text-muted-foreground">Atividades agendadas para os próximos dias</p>
-            </div>
-          </div>
-          <div className="flex items-center gap-3 p-2 rounded-lg bg-purple-500/5 border border-purple-500/20">
-            <Bell className="h-4 w-4 text-purple-500" />
-            <div>
-              <p className="text-xs font-medium">Lembretes de Atividade</p>
-              <p className="text-xs text-muted-foreground">Notificações da área de trabalho para lembretes agendados</p>
-            </div>
-          </div>
-        </div>
-      </FeatureCard>
+      {/* Demo de notificações */}
+      <NotificationDemo />
 
-      <div className="grid gap-4 md:grid-cols-2">
-        <FeatureCard icon={Eye} title="Ações nas Notificações">
-          <ul className="space-y-1">
-            <li>• <strong>Marcar como lida</strong> — Clique na notificação individual</li>
-            <li>• <strong>Marcar todas como lidas</strong> — Botão no topo do painel</li>
-            <li>• <strong>Dispensar</strong> — Remove a notificação da lista</li>
-            <li>• <strong>Contagem no badge</strong> — O número no sino mostra quantas não-lidas</li>
-          </ul>
-          <TipCard title="Persistência">
-            O estado de lido/dispensado é salvo localmente no navegador, então suas notificações mantêm o estado entre sessões.
-          </TipCard>
+      <div className="grid gap-4 sm:grid-cols-2">
+        <FeatureCard icon={Bell} title="Central de Notificações">
+          <p>Clique no sino no header para ver:</p>
+          <div className="mt-2 space-y-1.5">
+            <div className="flex items-center gap-2 text-xs"><AlertTriangle className="h-3.5 w-3.5 text-red-500" /> <strong>Atrasadas</strong> — Tarefas que passaram do prazo</div>
+            <div className="flex items-center gap-2 text-xs"><Clock className="h-3.5 w-3.5 text-orange-500" /> <strong>Hoje</strong> — Atividades do dia</div>
+            <div className="flex items-center gap-2 text-xs"><CheckCircle2 className="h-3.5 w-3.5 text-blue-500" /> <strong>Pendentes</strong> — Agendadas para os próximos dias</div>
+            <div className="flex items-center gap-2 text-xs"><Bell className="h-3.5 w-3.5 text-purple-500" /> <strong>Lembretes</strong> — Notificações desktop</div>
+          </div>
         </FeatureCard>
 
         <FeatureCard icon={MonitorSmartphone} title="Notificações Desktop">
-          <p>O sistema pode enviar <strong>notificações da área de trabalho</strong> (via API de Notificações do navegador) para lembretes de atividades:</p>
           <StepList steps={[
             'Ao criar uma atividade, ative o "Lembrete".',
-            'Escolha quando deseja ser lembrado (ex: 15min antes).',
-            'Permita notificações do navegador quando solicitado.',
-            'Uma notificação aparecerá na área de trabalho no horário programado.',
+            'Escolha quando ser lembrado (ex: 15min antes).',
+            'Permita notificações no navegador.',
+            'Notificação aparecerá no horário programado.',
           ]} />
         </FeatureCard>
       </div>
@@ -1042,17 +1236,16 @@ function ContasContent() {
   return (
     <div className="space-y-4">
       <p className="text-sm text-muted-foreground">
-        O Touch Run suporta múltiplas contas (multi-tenant), permitindo que um mesmo usuário participe de diferentes organizações com dados completamente isolados.
+        O Touch Run suporta múltiplas contas (multi-tenant), com dados completamente isolados por organização.
       </p>
 
-      <div className="grid gap-4 md:grid-cols-2">
-        <FeatureCard icon={Building2} title="Como Funciona o Multi-Tenant">
+      <div className="grid gap-4 sm:grid-cols-2">
+        <FeatureCard icon={Building2} title="Como Funciona">
           <ul className="space-y-1.5">
             <li>• Cada <strong>conta</strong> é uma organização independente</li>
-            <li>• Dados (leads, campanhas, colunas) são <strong>isolados por conta</strong></li>
+            <li>• Dados são <strong>isolados por conta</strong></li>
             <li>• Um usuário pode pertencer a <strong>várias contas</strong></li>
-            <li>• Cada conta tem seu próprio <strong>plano de assinatura</strong></li>
-            <li>• O papel do usuário pode ser <strong>diferente em cada conta</strong> (Dono em uma, Membro em outra)</li>
+            <li>• Papel pode ser <strong>diferente em cada conta</strong></li>
           </ul>
         </FeatureCard>
 
@@ -1061,25 +1254,20 @@ function ContasContent() {
             'No topo do sidebar, clique no nome da conta ativa.',
             'Selecione outra conta na lista.',
             'O sistema recarrega todos os dados automaticamente.',
-            'Agora você está trabalhando no contexto da conta selecionada.',
           ]} />
-          <TipCard title="Troca instantânea">
-            Ao trocar de conta, todos os dados (quadro Kanban, dashboard, campanhas) são recarregados para refletir a conta selecionada.
-          </TipCard>
         </FeatureCard>
 
         <FeatureCard icon={Plus} title="Criar Nova Conta">
           <StepList steps={[
-            'No Account Switcher (topo do sidebar), clique em "Criar nova conta".',
-            'Informe o nome da conta e opcionalmente um nome de exibição e descrição.',
-            'Selecione o plano desejado.',
-            'Confirme — você será o Dono (Owner) da nova conta.',
+            'No Account Switcher, clique em "Criar nova conta".',
+            'Informe o nome e opcionalmente descrição.',
+            'Você será o Dono (Owner) automaticamente.',
           ]} />
         </FeatureCard>
 
         <FeatureCard icon={Shield} title="Papéis por Conta">
-          <p>Seus papéis podem variar entre contas:</p>
-          <div className="mt-2 space-y-2">
+          <p>Seus papéis variam entre contas:</p>
+          <div className="mt-2 space-y-1.5">
             <div className="flex items-center gap-2 text-xs">
               <span className="text-muted-foreground">Empresa ABC:</span> <RoleBadge role="owner" />
             </div>
@@ -1100,58 +1288,54 @@ function PlanosContent() {
   return (
     <div className="space-y-4">
       <p className="text-sm text-muted-foreground">
-        Visualize os planos disponíveis e gerencie sua assinatura na página de Planos, acessível pelo menu do avatar no header.
+        Visualize os planos disponíveis e gerencie sua assinatura.
       </p>
 
       <FeatureCard icon={CreditCard} title="Planos Disponíveis">
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 mt-2">
-          <div className="p-3 rounded-lg border border-green-500/30 bg-green-500/5 text-center">
+        <div className="grid grid-cols-4 gap-2 mt-2">
+          <div className="p-2 rounded-lg border border-green-500/30 bg-green-500/5 text-center">
             <div className="text-xs font-medium">Beta</div>
-            <div className="text-lg font-bold text-green-500">Grátis</div>
-            <div className="text-xs text-muted-foreground mt-1">Todos os recursos</div>
+            <div className="text-sm font-bold text-green-500">Grátis</div>
           </div>
-          <div className="p-3 rounded-lg border border-border text-center opacity-60">
+          <div className="p-2 rounded-lg border border-border text-center opacity-60">
             <div className="text-xs font-medium">Starter</div>
-            <div className="text-xs text-muted-foreground mt-1">Em Breve</div>
+            <div className="text-[10px] text-muted-foreground">Em Breve</div>
           </div>
-          <div className="p-3 rounded-lg border border-border text-center opacity-60">
-            <div className="text-xs font-medium">Professional</div>
-            <div className="text-xs text-muted-foreground mt-1">Em Breve</div>
+          <div className="p-2 rounded-lg border border-border text-center opacity-60">
+            <div className="text-xs font-medium">Pro</div>
+            <div className="text-[10px] text-muted-foreground">Em Breve</div>
           </div>
-          <div className="p-3 rounded-lg border border-border text-center opacity-60">
+          <div className="p-2 rounded-lg border border-border text-center opacity-60">
             <div className="text-xs font-medium">Enterprise</div>
-            <div className="text-xs text-muted-foreground mt-1">Em Breve</div>
+            <div className="text-[10px] text-muted-foreground">Em Breve</div>
           </div>
         </div>
       </FeatureCard>
 
-      <div className="grid gap-4 md:grid-cols-2">
-        <FeatureCard icon={CheckCircle2} title="O que está incluído no Beta?">
+      <div className="grid gap-4 sm:grid-cols-2">
+        <FeatureCard icon={CheckCircle2} title="Incluído no Beta">
           <ul className="space-y-1">
-            <li className="flex items-center gap-2"><CheckCircle2 className="h-3.5 w-3.5 text-green-500" /> Leads ilimitados</li>
-            <li className="flex items-center gap-2"><CheckCircle2 className="h-3.5 w-3.5 text-green-500" /> Usuários ilimitados</li>
-            <li className="flex items-center gap-2"><CheckCircle2 className="h-3.5 w-3.5 text-green-500" /> Todas as funcionalidades</li>
-            <li className="flex items-center gap-2"><CheckCircle2 className="h-3.5 w-3.5 text-green-500" /> Dashboard completo</li>
-            <li className="flex items-center gap-2"><CheckCircle2 className="h-3.5 w-3.5 text-green-500" /> Integração WhatsApp</li>
-            <li className="flex items-center gap-2"><CheckCircle2 className="h-3.5 w-3.5 text-green-500" /> API e Iframe/Embed</li>
-            <li className="flex items-center gap-2"><CheckCircle2 className="h-3.5 w-3.5 text-green-500" /> Exportação de dados</li>
-            <li className="flex items-center gap-2"><CheckCircle2 className="h-3.5 w-3.5 text-green-500" /> Multi-tenant (múltiplas contas)</li>
+            <li className="flex items-center gap-2 text-xs"><CheckCircle2 className="h-3 w-3 text-green-500 flex-shrink-0" /> Leads e usuários ilimitados</li>
+            <li className="flex items-center gap-2 text-xs"><CheckCircle2 className="h-3 w-3 text-green-500 flex-shrink-0" /> Todas as funcionalidades</li>
+            <li className="flex items-center gap-2 text-xs"><CheckCircle2 className="h-3 w-3 text-green-500 flex-shrink-0" /> Dashboard e integração WhatsApp</li>
+            <li className="flex items-center gap-2 text-xs"><CheckCircle2 className="h-3 w-3 text-green-500 flex-shrink-0" /> API, Iframe e exportação de dados</li>
+            <li className="flex items-center gap-2 text-xs"><CheckCircle2 className="h-3 w-3 text-green-500 flex-shrink-0" /> Multi-tenant (múltiplas contas)</li>
           </ul>
         </FeatureCard>
 
-        <FeatureCard icon={Info} title="FAQ (Perguntas Frequentes)">
+        <FeatureCard icon={Info} title="FAQ">
           <div className="space-y-2">
             <div>
               <p className="text-xs font-medium">O beta é realmente gratuito?</p>
-              <p className="text-xs text-muted-foreground">Sim! Durante o período beta, todos os recursos estão disponíveis sem custo.</p>
+              <p className="text-xs text-muted-foreground">Sim, todos os recursos sem custo.</p>
             </div>
             <div>
-              <p className="text-xs font-medium">Vou perder meus dados quando sair do beta?</p>
-              <p className="text-xs text-muted-foreground">Não. Seus dados serão mantidos na transição para os planos pagos.</p>
+              <p className="text-xs font-medium">Vou perder meus dados?</p>
+              <p className="text-xs text-muted-foreground">Não, dados mantidos na transição.</p>
             </div>
             <div>
-              <p className="text-xs font-medium">Posso cancelar a qualquer momento?</p>
-              <p className="text-xs text-muted-foreground">Sim. Após o beta, os planos pagos poderão ser cancelados a qualquer momento.</p>
+              <p className="text-xs font-medium">Posso cancelar depois?</p>
+              <p className="text-xs text-muted-foreground">Sim, a qualquer momento.</p>
             </div>
           </div>
         </FeatureCard>
@@ -1164,69 +1348,46 @@ function WhatsAppContent() {
   return (
     <div className="space-y-4">
       <p className="text-sm text-muted-foreground">
-        O Touch Run integra-se com o WhatsApp Business API (Meta Cloud API) para capturar leads automaticamente a partir de mensagens recebidas.
+        O Touch Run integra-se com o WhatsApp Business API (Meta Cloud API) para capturar leads automaticamente.
       </p>
 
-      <FeatureCard icon={Webhook} title="Como Funciona o Fluxo de Webhook">
-        <p>O fluxo completo de captura de lead via WhatsApp:</p>
-        <div className="mt-3 space-y-2">
-          <div className="flex items-start gap-3">
-            <span className="flex-shrink-0 w-8 h-8 rounded-full bg-green-500/10 text-green-500 text-xs font-bold flex items-center justify-center">1</span>
-            <div>
-              <p className="text-xs font-medium">Cliente envia mensagem</p>
-              <p className="text-xs text-muted-foreground">O cliente escreve no WhatsApp Business da sua empresa</p>
+      <FeatureCard icon={Webhook} title="Fluxo do Webhook">
+        <div className="mt-2 space-y-2">
+          {[
+            { num: 1, color: 'bg-green-500/10 text-green-500', title: 'Cliente envia mensagem', desc: 'Via WhatsApp Business da sua empresa' },
+            { num: 2, color: 'bg-blue-500/10 text-blue-500', title: 'Meta envia webhook', desc: 'Dados enviados para o Touch Run' },
+            { num: 3, color: 'bg-purple-500/10 text-purple-500', title: 'Sistema processa', desc: 'Identifica conta, texto e frases-gatilho' },
+            { num: 4, color: 'bg-orange-500/10 text-orange-500', title: 'Lead criado/atualizado', desc: 'Novo lead ou atualiza existente por telefone' },
+            { num: 5, color: 'bg-cyan-500/10 text-cyan-500', title: 'Campanha vinculada', desc: 'Se frase-gatilho corresponder à campanha' },
+          ].map(({ num, color, title, desc }) => (
+            <div key={num} className="flex items-start gap-3">
+              <span className={`flex-shrink-0 w-7 h-7 rounded-full ${color} text-xs font-bold flex items-center justify-center`}>{num}</span>
+              <div>
+                <p className="text-xs font-medium">{title}</p>
+                <p className="text-xs text-muted-foreground">{desc}</p>
+              </div>
             </div>
-          </div>
-          <div className="flex items-start gap-3">
-            <span className="flex-shrink-0 w-8 h-8 rounded-full bg-blue-500/10 text-blue-500 text-xs font-bold flex items-center justify-center">2</span>
-            <div>
-              <p className="text-xs font-medium">Meta envia webhook</p>
-              <p className="text-xs text-muted-foreground">A Meta (Facebook) envia os dados da mensagem para o Touch Run</p>
-            </div>
-          </div>
-          <div className="flex items-start gap-3">
-            <span className="flex-shrink-0 w-8 h-8 rounded-full bg-purple-500/10 text-purple-500 text-xs font-bold flex items-center justify-center">3</span>
-            <div>
-              <p className="text-xs font-medium">Sistema processa</p>
-              <p className="text-xs text-muted-foreground">O sistema identifica a conta do WhatsApp, extrai o texto e verifica frases-gatilho</p>
-            </div>
-          </div>
-          <div className="flex items-start gap-3">
-            <span className="flex-shrink-0 w-8 h-8 rounded-full bg-orange-500/10 text-orange-500 text-xs font-bold flex items-center justify-center">4</span>
-            <div>
-              <p className="text-xs font-medium">Lead é criado ou atualizado</p>
-              <p className="text-xs text-muted-foreground">Se o telefone já existe, atualiza a mensagem. Senão, cria um novo lead na coluna "Leads Entrantes"</p>
-            </div>
-          </div>
-          <div className="flex items-start gap-3">
-            <span className="flex-shrink-0 w-8 h-8 rounded-full bg-cyan-500/10 text-cyan-500 text-xs font-bold flex items-center justify-center">5</span>
-            <div>
-              <p className="text-xs font-medium">Campanha vinculada</p>
-              <p className="text-xs text-muted-foreground">Se a mensagem contém uma frase-gatilho, o lead é vinculado automaticamente à campanha</p>
-            </div>
-          </div>
+          ))}
         </div>
       </FeatureCard>
 
-      <div className="grid gap-4 md:grid-cols-2">
-        <FeatureCard icon={Globe} title="Detecção Automática de Plataforma">
-          <p>O sistema detecta automaticamente a origem do lead com base em:</p>
+      <div className="grid gap-4 sm:grid-cols-2">
+        <FeatureCard icon={Globe} title="Detecção de Plataforma">
           <ul className="space-y-1">
-            <li>• <strong>URL de origem</strong> (source_url) — Identifica Facebook, Instagram, Google, YouTube, LinkedIn, TikTok</li>
-            <li>• <strong>Conteúdo da mensagem</strong> — Palavras-chave configuradas no PlatformConfig</li>
-            <li>• <strong>Referral do anúncio</strong> (click-to-WhatsApp) — Captura a "frase efetiva" do anúncio que gerou o contato</li>
+            <li>• <strong>URL de origem</strong> — Facebook, Instagram, Google, etc.</li>
+            <li>• <strong>Conteúdo</strong> — Palavras-chave configuradas</li>
+            <li>• <strong>Referral</strong> — Anúncios click-to-WhatsApp</li>
           </ul>
         </FeatureCard>
 
         <FeatureCard icon={Phone} title="Normalização de Telefone">
-          <p>Todos os números de telefone são normalizados automaticamente:</p>
           <ul className="space-y-1">
-            <li>• Formato E.164 padrão internacional</li>
-            <li>• Prefixo +55 adicionado se ausente (Brasil)</li>
-            <li>• Deduplicação de leads pelo telefone normalizado</li>
+            <li>• Formato E.164 internacional</li>
+            <li>• Prefixo +55 se ausente (Brasil)</li>
+            <li>• Deduplicação automática</li>
           </ul>
           <TipCard title="Exemplo">
-            "(11) 99999-8888", "11999998888" e "+5511999998888" são todos reconhecidos como o mesmo número.
+            "(11) 99999-8888", "11999998888" e "+5511999998888" = mesmo número.
           </TipCard>
         </FeatureCard>
       </div>
@@ -1238,42 +1399,41 @@ function IframeContent() {
   return (
     <div className="space-y-4">
       <p className="text-sm text-muted-foreground">
-        O Touch Run pode ser incorporado em outros sistemas (sites, aplicações internas) via iframe usando autenticação por chave API.
+        Incorpore o Touch Run em outros sistemas via iframe com autenticação por chave API.
       </p>
 
-      <div className="grid gap-4 md:grid-cols-2">
-        <FeatureCard icon={Code2} title="Como Usar o Iframe/Embed">
+      <div className="grid gap-4 sm:grid-cols-2">
+        <FeatureCard icon={Code2} title="Como Usar">
           <StepList steps={[
-            'Gere uma chave API em Configurações > aba "API".',
-            'Use a URL de embed com o ID do lead ou modo de criação.',
-            'Adicione um iframe no seu site apontando para a URL.',
-            'O modal do lead será renderizado dentro do iframe.',
+            'Gere uma chave API em Configurações > "API".',
+            'Use a URL de embed com o ID do lead.',
+            'Adicione um iframe no seu site.',
           ]} />
-          <div className="mt-3 p-3 rounded-lg bg-muted font-mono text-xs overflow-x-auto">
-            <p className="text-muted-foreground mb-1">{'<!-- Visualizar lead existente -->'}</p>
-            <p>{'<iframe src="https://seudominio.com/embed/lead-modal/LEAD_ID?api_key=SUA_CHAVE&theme=dark" />'}</p>
-            <p className="text-muted-foreground mt-3 mb-1">{'<!-- Criar novo lead -->'}</p>
-            <p>{'<iframe src="https://seudominio.com/embed/lead-modal/new?api_key=SUA_CHAVE&phone=5511999998888" />'}</p>
+          <div className="mt-3 p-2 rounded-lg bg-muted font-mono text-[10px] overflow-x-auto">
+            <p className="text-muted-foreground">{'<!-- Visualizar lead -->'}</p>
+            <p className="break-all">{'<iframe src="/embed/lead-modal/ID?api_key=CHAVE" />'}</p>
+            <p className="text-muted-foreground mt-2">{'<!-- Criar lead -->'}</p>
+            <p className="break-all">{'<iframe src="/embed/lead-modal/new?api_key=CHAVE&phone=55..." />'}</p>
           </div>
         </FeatureCard>
 
-        <FeatureCard icon={MonitorSmartphone} title="Parâmetros Disponíveis">
+        <FeatureCard icon={MonitorSmartphone} title="Parâmetros">
           <div className="space-y-2 mt-1">
             <div className="flex items-start gap-2">
-              <Badge variant="outline" className="text-xs flex-shrink-0">api_key</Badge>
-              <span className="text-xs text-muted-foreground">Obrigatório. Sua chave API gerada nas configurações</span>
+              <Badge variant="outline" className="text-[10px] flex-shrink-0">api_key</Badge>
+              <span className="text-xs text-muted-foreground">Obrigatório. Chave API</span>
             </div>
             <div className="flex items-start gap-2">
-              <Badge variant="outline" className="text-xs flex-shrink-0">theme</Badge>
-              <span className="text-xs text-muted-foreground">Opcional. "dark" ou "light" (padrão: segue o sistema)</span>
+              <Badge variant="outline" className="text-[10px] flex-shrink-0">theme</Badge>
+              <span className="text-xs text-muted-foreground">"dark" ou "light"</span>
             </div>
             <div className="flex items-start gap-2">
-              <Badge variant="outline" className="text-xs flex-shrink-0">phone</Badge>
-              <span className="text-xs text-muted-foreground">Opcional. Pré-preenche o telefone ao criar lead</span>
+              <Badge variant="outline" className="text-[10px] flex-shrink-0">phone</Badge>
+              <span className="text-xs text-muted-foreground">Pré-preenche telefone ao criar</span>
             </div>
           </div>
-          <TipCard title="Comunicação com a página pai">
-            O iframe envia eventos via <code className="text-xs">postMessage</code> para comunicar com o sistema externo: <code className="text-xs">lead-created</code> e <code className="text-xs">lead-modal-closed</code>.
+          <TipCard title="Comunicação">
+            O iframe envia eventos via postMessage: "lead-created" e "lead-modal-closed".
           </TipCard>
         </FeatureCard>
       </div>
@@ -1285,49 +1445,37 @@ function FeedbackContent() {
   return (
     <div className="space-y-4">
       <p className="text-sm text-muted-foreground">
-        O sistema de feedback permite que você contribua diretamente para a evolução do Touch Run, enviando sugestões, reportando bugs ou elogiando funcionalidades.
+        Contribua para a evolução do Touch Run enviando sugestões, reportando bugs ou elogiando funcionalidades.
       </p>
 
-      <div className="grid gap-4 md:grid-cols-2">
-        <FeatureCard icon={MessageSquare} title="Widget de Feedback (Botão Flutuante)">
-          <p>Um botão flutuante no canto inferior direito de qualquer página permite enviar feedback rápido:</p>
-          <div className="mt-2 space-y-2">
+      <div className="grid gap-4 sm:grid-cols-2">
+        <FeatureCard icon={MessageSquare} title="Widget de Feedback">
+          <p>Botão flutuante no canto inferior direito:</p>
+          <div className="mt-2 space-y-1.5">
             <div className="flex items-center gap-2">
-              <Bug className="h-4 w-4 text-red-500" />
-              <div>
-                <span className="text-xs font-medium">Bug</span>
-                <span className="text-xs text-muted-foreground ml-1">— Reportar um problema encontrado</span>
-              </div>
+              <Bug className="h-3.5 w-3.5 text-red-500" /> <span className="text-xs"><strong>Bug</strong> — Reportar um problema</span>
             </div>
             <div className="flex items-center gap-2">
-              <Lightbulb className="h-4 w-4 text-yellow-500" />
-              <div>
-                <span className="text-xs font-medium">Sugestão</span>
-                <span className="text-xs text-muted-foreground ml-1">— Propor uma melhoria ou nova função</span>
-              </div>
+              <Lightbulb className="h-3.5 w-3.5 text-yellow-500" /> <span className="text-xs"><strong>Sugestão</strong> — Propor melhoria</span>
             </div>
             <div className="flex items-center gap-2">
-              <Heart className="h-4 w-4 text-pink-500" />
-              <div>
-                <span className="text-xs font-medium">Elogio</span>
-                <span className="text-xs text-muted-foreground ml-1">— Algo que você gostou no sistema</span>
-              </div>
+              <Heart className="h-3.5 w-3.5 text-pink-500" /> <span className="text-xs"><strong>Elogio</strong> — Algo que gostou</span>
             </div>
           </div>
           <TipCard title="Informações automáticas">
-            Junto com seu feedback, o sistema envia automaticamente informações técnicas (navegador, resolução da tela, página atual) para ajudar na análise.
+            Navegador, resolução e página atual são enviados junto com o feedback.
           </TipCard>
         </FeatureCard>
 
-        <FeatureCard icon={ThumbsUp} title="Página de Feedbacks da Comunidade">
-          <p>Acesse <strong>"Feedbacks"</strong> no menu lateral para:</p>
+        <FeatureCard icon={ThumbsUp} title="Página de Feedbacks">
+          <p>Acesse "Feedbacks" no menu lateral para:</p>
           <ul className="space-y-1">
-            <li>• Ver todos os feedbacks enviados pela comunidade</li>
-            <li>• <strong>Votar</strong> nos feedbacks que você considera mais importantes (polegar para cima)</li>
-            <li>• Filtrar por tipo (bug, sugestão, elogio) e status</li>
-            <li>• Acompanhar o progresso de implementação dos feedbacks</li>
+            <li>• Ver feedbacks da comunidade</li>
+            <li>• <strong>Votar</strong> nos mais importantes</li>
+            <li>• Filtrar por tipo e status</li>
+            <li>• Acompanhar implementação</li>
           </ul>
-          <p className="mt-2">Os feedbacks mais votados têm prioridade na implementação!</p>
+          <p className="mt-2 text-xs text-primary font-medium">Os mais votados têm prioridade na implementação!</p>
         </FeatureCard>
       </div>
     </div>
@@ -1338,61 +1486,57 @@ function DicasContent() {
   return (
     <div className="space-y-4">
       <p className="text-sm text-muted-foreground">
-        Domine o Touch Run com estas dicas e truques que vão acelerar seu dia a dia:
+        Domine o Touch Run com estas dicas e truques:
       </p>
 
-      <div className="grid gap-4 md:grid-cols-2">
+      <div className="grid gap-4 sm:grid-cols-2">
         <FeatureCard icon={Moon} title="Modo Escuro / Claro">
-          <p>Alterne entre o modo escuro e claro clicando no ícone <IconLabel icon={Sun} label="sol" /> / <IconLabel icon={Moon} label="lua" /> no cabeçalho. Sua preferência é salva automaticamente para as próximas sessões.</p>
+          <p>Alterne clicando no ícone <IconLabel icon={Sun} label="sol" /> / <IconLabel icon={Moon} label="lua" /> no header. Preferência salva automaticamente.</p>
         </FeatureCard>
 
         <FeatureCard icon={Search} title="Busca Inteligente">
-          <p>A busca no Kanban usa uma estratégia inteligente:</p>
+          <p>Estratégia em 3 etapas:</p>
           <ol className="space-y-1 ml-4 text-xs list-decimal">
-            <li><strong>Local-first:</strong> Busca nos dados já carregados (instantâneo)</li>
-            <li><strong>API fallback:</strong> Se não encontrar, consulta o servidor</li>
-            <li><strong>Cache:</strong> Resultados são cacheados por 1 minuto</li>
+            <li><strong>Local-first:</strong> Busca nos dados carregados (instantâneo)</li>
+            <li><strong>API fallback:</strong> Consulta o servidor se necessário</li>
+            <li><strong>Cache:</strong> Resultados cacheados por 1 minuto</li>
           </ol>
-          <p className="mt-1">Busque por nome, e-mail, telefone, campanha ou mensagem do lead.</p>
         </FeatureCard>
 
         <FeatureCard icon={Zap} title="Atualizações Otimistas">
-          <p>O sistema usa <strong>atualizações otimistas</strong> em todas as operações:</p>
           <ul className="space-y-1">
-            <li>• As mudanças aparecem <strong>instantaneamente</strong> na tela (0ms de latência percebida)</li>
-            <li>• Se houver erro de conexão, o <strong>valor anterior é restaurado</strong> automaticamente</li>
-            <li>• Funciona para: arrastar leads, editar campos, criar atividades, etc.</li>
+            <li>• Mudanças aparecem <strong>instantaneamente</strong> (0ms)</li>
+            <li>• Erro? <strong>Valor anterior restaurado</strong> automaticamente</li>
+            <li>• Funciona em: drag & drop, edição de campos, atividades</li>
           </ul>
         </FeatureCard>
 
         <FeatureCard icon={Download} title="Exportação de Dados">
-          <p>Exporte seus dados a qualquer momento em Configurações {'>'} Dados:</p>
+          <p>Em Configurações {'>'} Dados:</p>
           <ul className="space-y-1">
-            <li>• <strong>CSV</strong> — Ideal para planilhas (Excel, Google Sheets)</li>
-            <li>• <strong>JSON</strong> — Ideal para integrações e backups</li>
-            <li>• Todos os leads, campanhas e logs disponíveis para exportação</li>
+            <li>• <strong>CSV</strong> — Para planilhas (Excel, Sheets)</li>
+            <li>• <strong>JSON</strong> — Para integrações e backups</li>
           </ul>
         </FeatureCard>
 
         <FeatureCard icon={Columns3} title="Sidebar Colapsável">
-          <p>Ganhe mais espaço na tela recolhendo o sidebar:</p>
           <ul className="space-y-1">
-            <li>• Clique na seta na parte <strong>inferior do sidebar</strong></li>
-            <li>• Quando recolhido, passe o mouse nos ícones para ver <strong>tooltips</strong></li>
-            <li>• A página ganha toda a largura disponível para o quadro Kanban</li>
+            <li>• Seta <strong>inferior do sidebar</strong> para recolher</li>
+            <li>• Tooltips nos ícones quando recolhido</li>
+            <li>• Mais espaço para o quadro Kanban</li>
           </ul>
         </FeatureCard>
 
         <FeatureCard icon={Star} title="Favoritar Leads">
-          <p>Marque leads importantes com a estrela no modal do lead. Leads favoritados ficam mais fáceis de identificar e acompanhar.</p>
+          <p>Marque leads importantes com estrela para fácil identificação e acompanhamento.</p>
         </FeatureCard>
 
         <FeatureCard icon={Clock} title="Leads Estagnados">
-          <p>No Dashboard, a seção <strong>"Leads Estagnados"</strong> mostra leads parados há muito tempo em uma etapa. Clique neles para abrir direto no modal e tomar uma ação.</p>
+          <p>No Dashboard, <strong>"Leads Estagnados"</strong> mostra leads parados há muito tempo. Clique para abrir o modal.</p>
         </FeatureCard>
 
-        <FeatureCard icon={Tag} title="Use Tags para Organizar">
-          <p>Adicione tags aos leads para criar uma categorização personalizada. Depois, use o filtro de tags no quadro Kanban para visualizar apenas os leads de uma categoria específica.</p>
+        <FeatureCard icon={Tag} title="Use Tags">
+          <p>Adicione tags para categorizar leads. Use o filtro de tags no Kanban para visualizar por categoria.</p>
         </FeatureCard>
       </div>
 
@@ -1403,7 +1547,7 @@ function DicasContent() {
             Precisa de mais ajuda?
           </CardTitle>
           <CardDescription>
-            Se tiver dúvidas ou sugestões, use o <strong>Widget de Feedback</strong> (botão flutuante no canto inferior direito) para entrar em contato. Estamos aqui para ajudar!
+            Use o <strong>Widget de Feedback</strong> (botão flutuante no canto inferior direito) para entrar em contato.
           </CardDescription>
         </CardHeader>
       </Card>
@@ -1444,7 +1588,7 @@ export function GuidePage() {
   const contentRef = useRef<HTMLDivElement>(null);
   const sectionRefs = useRef<Map<string, HTMLElement>>(new Map());
 
-  // Scroll-spy: detecta seção visível
+  // Scroll-spy
   useEffect(() => {
     const observer = new IntersectionObserver(
       (entries) => {
@@ -1454,7 +1598,7 @@ export function GuidePage() {
           }
         }
       },
-      { rootMargin: '-20% 0px -60% 0px', threshold: 0 }
+      { rootMargin: '-10% 0px -70% 0px', threshold: 0 }
     );
 
     const currentRefs = sectionRefs.current;
@@ -1477,7 +1621,6 @@ export function GuidePage() {
     const el = sectionRefs.current.get(id);
     if (el) {
       el.scrollIntoView({ behavior: 'smooth', block: 'start' });
-      // Garantir que a seção está aberta
       setOpenSections((prev) => new Set(prev).add(id));
     }
   }, []);
@@ -1494,7 +1637,6 @@ export function GuidePage() {
     });
   }, []);
 
-  // Filtrar seções pela busca
   const filteredSections = guideSections.filter(
     (s) =>
       s.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -1502,45 +1644,96 @@ export function GuidePage() {
   );
 
   return (
-    <div className="flex gap-0 h-[calc(100vh-7rem)] -m-6">
-      {/* Sidebar de navegação (desktop) */}
-      <div className="hidden lg:block w-60 flex-shrink-0 border-r border-border/50 bg-card/50 overflow-y-auto">
-        <div className="p-4">
-          <GuideSidebarNav
-            sections={guideSections}
-            activeSection={activeSection}
-            searchQuery={searchQuery}
-            onSearchChange={setSearchQuery}
-            onSectionClick={handleSectionClick}
-          />
+    <div className="flex h-[calc(100vh-7.5rem)] -m-6 overflow-hidden">
+      {/* Sidebar do guia (desktop) */}
+      <aside className="hidden lg:flex flex-col w-56 flex-shrink-0 border-r border-border/40 bg-card/30">
+        <div className="p-4 pb-2">
+          <div className="flex items-center gap-2 mb-3">
+            <BookOpen className="h-4 w-4 text-primary flex-shrink-0" />
+            <h2 className="text-sm font-semibold truncate">Guia do Usuário</h2>
+          </div>
+          <div className="relative">
+            <Search className="absolute left-2 top-2 h-3.5 w-3.5 text-muted-foreground" />
+            <Input
+              placeholder="Buscar no guia..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="pl-7 h-8 text-xs"
+            />
+          </div>
         </div>
-      </div>
+        <nav className="flex-1 overflow-y-auto px-2 pb-4">
+          <div className="space-y-0.5">
+            {guideSections
+              .filter(
+                (s) =>
+                  s.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                  s.description.toLowerCase().includes(searchQuery.toLowerCase())
+              )
+              .map((section) => {
+                const Icon = section.icon;
+                const isActive = activeSection === section.id;
+                return (
+                  <button
+                    key={section.id}
+                    onClick={() => handleSectionClick(section.id)}
+                    className={`w-full flex items-center gap-2 px-2.5 py-1.5 rounded-md text-xs transition-colors text-left ${
+                      isActive
+                        ? 'bg-primary/10 text-primary font-medium'
+                        : 'text-muted-foreground hover:text-foreground hover:bg-muted/50'
+                    }`}
+                  >
+                    <Icon className={`h-3.5 w-3.5 flex-shrink-0 ${isActive ? 'text-primary' : ''}`} />
+                    <span className="truncate">{section.title}</span>
+                  </button>
+                );
+              })}
+          </div>
+        </nav>
+      </aside>
 
       {/* Conteúdo principal */}
-      <div ref={contentRef} className="flex-1 overflow-y-auto">
-        <div className="p-6">
-          {/* Header mobile */}
-          <MobileSectionNav
-            sections={guideSections}
-            activeSection={activeSection}
-            onSectionClick={handleSectionClick}
-          />
-
-          {/* Barra de busca mobile */}
+      <div ref={contentRef} className="flex-1 overflow-y-auto min-w-0">
+        <div className="p-6 max-w-4xl mx-auto">
+          {/* Mobile nav */}
           <div className="lg:hidden mb-4">
-            <div className="relative">
-              <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+            <div className="flex items-center gap-2 mb-3">
+              <BookOpen className="h-4 w-4 text-primary" />
+              <h2 className="text-sm font-semibold">Guia do Usuário</h2>
+            </div>
+            <div className="relative mb-3">
+              <Search className="absolute left-2 top-2 h-3.5 w-3.5 text-muted-foreground" />
               <Input
                 placeholder="Buscar no guia..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-9 h-9 text-sm"
+                className="pl-7 h-8 text-xs"
               />
+            </div>
+            <div className="flex flex-wrap gap-1.5">
+              {guideSections.map((section) => {
+                const Icon = section.icon;
+                const isActive = activeSection === section.id;
+                return (
+                  <button
+                    key={section.id}
+                    onClick={() => handleSectionClick(section.id)}
+                    className={`flex items-center gap-1 px-2 py-1 rounded-full text-[11px] border transition-colors ${
+                      isActive
+                        ? 'bg-primary text-primary-foreground border-primary'
+                        : 'border-border text-muted-foreground hover:bg-muted'
+                    }`}
+                  >
+                    <Icon className="h-3 w-3" />
+                    {section.title}
+                  </button>
+                );
+              })}
             </div>
           </div>
 
           {/* Seções */}
-          <div className="space-y-3 max-w-4xl mx-auto">
+          <div className="space-y-3">
             {filteredSections.map((section) => {
               const ContentComponent = sectionContentMap[section.id];
               return (
@@ -1559,7 +1752,6 @@ export function GuidePage() {
             })}
           </div>
 
-          {/* Sem resultados */}
           {filteredSections.length === 0 && (
             <div className="text-center py-12">
               <Search className="h-12 w-12 text-muted-foreground/30 mx-auto mb-3" />
