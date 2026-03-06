@@ -69,6 +69,7 @@ import {
   Move,
   Check,
   X,
+  ArrowUp,
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '../components/ui/card';
 import { Badge } from '../components/ui/badge';
@@ -102,6 +103,14 @@ const guideSections: GuideSection[] = [
   { id: 'iframe', icon: Code2, title: 'Integração Iframe/Embed', description: 'Incorporar o CRM em outros sistemas' },
   { id: 'feedback', icon: ThumbsUp, title: 'Feedback', description: 'Enviar sugestões e reportar bugs' },
   { id: 'dicas', icon: Lightbulb, title: 'Dicas & Atalhos', description: 'Truques para usar o sistema melhor' },
+];
+
+const sidebarGroups = [
+  { label: 'Início', sectionIds: ['primeiros-passos', 'navegacao'] },
+  { label: 'Funcionalidades', sectionIds: ['kanban', 'lead-modal', 'dashboard', 'campanhas', 'usuarios'] },
+  { label: 'Configuração', sectionIds: ['configuracoes', 'notificacoes', 'contas', 'planos'] },
+  { label: 'Integrações', sectionIds: ['whatsapp', 'iframe'] },
+  { label: 'Mais', sectionIds: ['feedback', 'dicas'] },
 ];
 
 // ==========================================
@@ -596,7 +605,9 @@ function CollapsibleSection({
           <h2 className="text-base font-semibold">{section.title}</h2>
           <p className="text-xs text-muted-foreground mt-0.5">{section.description}</p>
         </div>
-        <ChevronDown className={`h-5 w-5 text-muted-foreground flex-shrink-0 transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`} />
+        <div className={`flex-shrink-0 w-7 h-7 rounded-md flex items-center justify-center transition-all duration-200 ${isOpen ? 'bg-primary/10' : 'bg-muted/80'}`}>
+          <ChevronDown className={`h-4 w-4 transition-transform duration-200 ${isOpen ? 'rotate-180 text-primary' : 'text-muted-foreground'}`} />
+        </div>
       </button>
       <div
         className={`transition-all duration-300 ease-in-out overflow-hidden ${
@@ -1587,9 +1598,13 @@ export function GuidePage() {
   const [openSections, setOpenSections] = useState<Set<string>>(() => new Set(guideSections.map((s) => s.id)));
   const contentRef = useRef<HTMLDivElement>(null);
   const sectionRefs = useRef<Map<string, HTMLElement>>(new Map());
+  const [showBackToTop, setShowBackToTop] = useState(false);
 
-  // Scroll-spy
+  // Scroll-spy (uses content container as root for proper detection)
   useEffect(() => {
+    const container = contentRef.current;
+    if (!container) return;
+
     const observer = new IntersectionObserver(
       (entries) => {
         for (const entry of entries) {
@@ -1598,7 +1613,7 @@ export function GuidePage() {
           }
         }
       },
-      { rootMargin: '-10% 0px -70% 0px', threshold: 0 }
+      { root: container, rootMargin: '-10% 0px -70% 0px', threshold: 0 }
     );
 
     const currentRefs = sectionRefs.current;
@@ -1608,6 +1623,19 @@ export function GuidePage() {
       currentRefs.forEach((el) => observer.unobserve(el));
     };
   }, [searchQuery]);
+
+  // Back to top button visibility
+  useEffect(() => {
+    const el = contentRef.current;
+    if (!el) return;
+    const handleScroll = () => setShowBackToTop(el.scrollTop > 400);
+    el.addEventListener('scroll', handleScroll);
+    return () => el.removeEventListener('scroll', handleScroll);
+  }, []);
+
+  const scrollToTop = useCallback(() => {
+    contentRef.current?.scrollTo({ top: 0, behavior: 'smooth' });
+  }, []);
 
   const registerSectionRef = useCallback((id: string, el: HTMLElement | null) => {
     if (el) {
@@ -1644,9 +1672,9 @@ export function GuidePage() {
   );
 
   return (
-    <div className="flex h-[calc(100vh-7.5rem)] -m-6 overflow-hidden">
+    <div className="flex h-[calc(100vh-4rem)] -m-6 overflow-hidden">
       {/* Sidebar do guia (desktop) */}
-      <aside className="hidden lg:flex flex-col w-56 flex-shrink-0 border-r border-border/40 bg-card/30">
+      <aside className="hidden lg:flex flex-col w-56 flex-shrink-0 border-r border-primary/10 bg-card/60">
         <div className="p-4 pb-2">
           <div className="flex items-center gap-2 mb-3">
             <BookOpen className="h-4 w-4 text-primary flex-shrink-0" />
@@ -1658,43 +1686,63 @@ export function GuidePage() {
               placeholder="Buscar no guia..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-7 h-8 text-xs"
+              className="pl-7 h-8 text-xs bg-background/80 border-border/60 focus:border-primary/50"
             />
           </div>
         </div>
-        <nav className="flex-1 overflow-y-auto px-2 pb-4">
-          <div className="space-y-0.5">
-            {guideSections
-              .filter(
-                (s) =>
-                  s.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                  s.description.toLowerCase().includes(searchQuery.toLowerCase())
-              )
-              .map((section) => {
-                const Icon = section.icon;
-                const isActive = activeSection === section.id;
-                return (
-                  <button
-                    key={section.id}
-                    onClick={() => handleSectionClick(section.id)}
-                    className={`w-full flex items-center gap-2 px-2.5 py-1.5 rounded-md text-xs transition-colors text-left ${
-                      isActive
-                        ? 'bg-primary/10 text-primary font-medium'
-                        : 'text-muted-foreground hover:text-foreground hover:bg-muted/50'
-                    }`}
-                  >
-                    <Icon className={`h-3.5 w-3.5 flex-shrink-0 ${isActive ? 'text-primary' : ''}`} />
-                    <span className="truncate">{section.title}</span>
-                  </button>
-                );
-              })}
-          </div>
+        <nav className="flex-1 overflow-y-auto px-2 pb-4 pt-1">
+          {sidebarGroups.map((group) => {
+            const groupSections = group.sectionIds
+              .map(gid => guideSections.find(s => s.id === gid))
+              .filter((s): s is GuideSection =>
+                !!s && (s.title.toLowerCase().includes(searchQuery.toLowerCase()) || s.description.toLowerCase().includes(searchQuery.toLowerCase()))
+              );
+            if (groupSections.length === 0) return null;
+            return (
+              <div key={group.label} className="mb-2">
+                <p className="px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground/50">{group.label}</p>
+                <div className="space-y-0.5">
+                  {groupSections.map((section) => {
+                    const Icon = section.icon;
+                    const isActive = activeSection === section.id;
+                    return (
+                      <button
+                        key={section.id}
+                        onClick={() => handleSectionClick(section.id)}
+                        className={`w-full flex items-center gap-2 px-2.5 py-1.5 rounded-md text-xs transition-colors text-left ${
+                          isActive
+                            ? 'bg-primary/10 text-primary font-medium'
+                            : 'text-muted-foreground hover:text-foreground hover:bg-muted/50'
+                        }`}
+                      >
+                        <Icon className={`h-3.5 w-3.5 flex-shrink-0 ${isActive ? 'text-primary' : ''}`} />
+                        <span className="truncate">{section.title}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            );
+          })}
         </nav>
       </aside>
 
       {/* Conteúdo principal */}
-      <div ref={contentRef} className="flex-1 overflow-y-auto min-w-0">
+      <div className="flex-1 min-w-0 relative overflow-hidden">
+        <div ref={contentRef} className="absolute inset-0 overflow-y-auto">
         <div className="p-6 max-w-4xl mx-auto">
+          {/* Welcome banner (desktop) */}
+          <div className="mb-5 p-4 rounded-xl bg-gradient-to-r from-primary/10 via-primary/5 to-transparent border border-primary/10 hidden lg:block">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
+                <BookOpen className="h-5 w-5 text-primary" />
+              </div>
+              <div>
+                <h1 className="text-base font-semibold">Bem-vindo ao Guia do Touch Run</h1>
+                <p className="text-xs text-muted-foreground mt-0.5">Explore todas as funcionalidades do sistema. Clique nas seções para expandir ou recolher o conteúdo.</p>
+              </div>
+            </div>
+          </div>
           {/* Mobile nav */}
           <div className="lg:hidden mb-4">
             <div className="flex items-center gap-2 mb-3">
@@ -1765,6 +1813,19 @@ export function GuidePage() {
             </div>
           )}
         </div>
+        </div>
+        {/* Scroll hint */}
+        <div className="absolute bottom-0 left-0 right-0 h-6 bg-gradient-to-t from-muted to-transparent pointer-events-none z-[5]" />
+        {/* Back to top */}
+        {showBackToTop && (
+          <button
+            onClick={scrollToTop}
+            className="absolute bottom-4 right-6 w-9 h-9 rounded-full bg-primary text-primary-foreground shadow-lg flex items-center justify-center hover:bg-primary/90 transition-all z-10"
+            title="Voltar ao topo"
+          >
+            <ArrowUp className="h-4 w-4" />
+          </button>
+        )}
       </div>
     </div>
   );
